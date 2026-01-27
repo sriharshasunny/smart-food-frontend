@@ -200,7 +200,7 @@ export const mockDishes = [
     { id: 603, name: "Vada", price: 70, description: "Fried savory donut-shaped snacks.", image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=800&q=80", restaurantId: 6, category: "Snacks", rating: 4.6, isVeg: true },
     { id: 604, name: "Uttapam", price: 110, description: "Thick pancake with toppings.", image: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&w=800&q=80", restaurantId: 6, category: "Breakfast", rating: 4.4, isVeg: true },
     { id: 605, name: "Filter Coffee", price: 40, description: "Authentic South Indian coffee.", image: filterCoffee, restaurantId: 6, category: "Beverage", rating: 4.9, isVeg: true },
-    { id: 606, name: "Rava Dosa", price: 130, description: "Crispy semolina crepe with spices.", image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2022/03/rava-dosa-recipe.jpg", restaurantId: 6, category: "Dosa", rating: 4.7, isVeg: true },
+    { id: 606, name: "Rava Dosa", price: 130, description: "Crispy semolina crepe with spices.", image: "/assets/food/rava_dosa.png", restaurantId: 6, category: "Dosa", rating: 4.7, isVeg: true },
 
     // 7. Pizza Hut
     { id: 701, name: "Veggie Supreme", price: 420, description: "Loaded with fresh vegetables.", image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=80", restaurantId: 7, category: "Pizza", rating: 4.5, isVeg: true },
@@ -211,8 +211,8 @@ export const mockDishes = [
 
     // 8. Healthy Bites
     { id: 801, name: "Greek Salad", price: 280, description: "Fresh salad with feta cheese and olives.", image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80", restaurantId: 8, category: "Salad", rating: 4.7, isVeg: true },
-    { id: 802, name: "Avocado Toast", price: 250, description: "Toasted bread with mashed avocado.", image: "https://www.jessicagavin.com/wp-content/uploads/2018/06/avocado-toast-11-1200.jpg", restaurantId: 8, category: "Breakfast", rating: 4.8, isVeg: true },
-    { id: 803, name: "Green Smoothie", price: 180, description: "Blend of spinach, apple, and ginger.", image: "https://www.loveandlemons.com/wp-content/uploads/2023/03/green-smoothie.jpg", restaurantId: 8, category: "Smoothie", rating: 4.6, isVeg: true },
+    { id: 802, name: "Avocado Toast", price: 250, description: "Toasted bread with mashed avocado.", image: "/assets/food/avocado_toast.png", restaurantId: 8, category: "Breakfast", rating: 4.8, isVeg: true },
+    { id: 803, name: "Green Smoothie", price: 180, description: "Blend of spinach, apple, and ginger.", image: "/assets/food/green_smoothie.png", restaurantId: 8, category: "Smoothie", rating: 4.6, isVeg: true },
     { id: 804, name: "Quinoa Power Bowl", price: 320, description: "Protein-packed bowl with veggies.", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80", restaurantId: 8, category: "Bowl", rating: 4.9, isVeg: true },
-    { id: 805, name: "Fruit Parfait", price: 160, description: "Yogurt layered with fresh berries.", image: "https://walkingonsunshinerecipes.com/wp-content/uploads/2020/05/Fruit-Parfait-with-Whipped-Cream-square.jpg", restaurantId: 8, category: "Dessert", rating: 4.8, isVeg: true }
+    { id: 805, name: "Fruit Parfait", price: 160, description: "Yogurt layered with fresh berries.", image: "/assets/food/fruit_parfait.png", restaurantId: 8, category: "Dessert", rating: 4.8, isVeg: true }
 ];
