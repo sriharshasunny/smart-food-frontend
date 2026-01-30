@@ -44,7 +44,7 @@ const LandingPage = () => {
 
         // 3D Particles
         const particles = [];
-        const numParticles = 100;
+        const numParticles = 50;
         const focalLength = 400; // Determines "lens" width
 
         // Initialization
@@ -63,7 +63,7 @@ const LandingPage = () => {
         const render = () => {
             // High Performance Clear
             ctx.fillStyle = '#0f0f13'; // Dark background
-            ctx.fillRect(0, 0, width, height);
+            ctx.clearRect(0, 0, width, height);
 
             // Draw Dynamic Gradient Background (Cheap)
             const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width);
@@ -112,8 +112,8 @@ const LandingPage = () => {
                     // Draw
                     ctx.font = `${size}px Arial`;
                     // Glow effect for "Insane" look
-                    ctx.shadowColor = 'rgba(255, 100, 50, 0.5)';
-                    ctx.shadowBlur = size * 0.5;
+                    // ctx.shadowColor = 'rgba(255, 100, 50, 0.5)'; // Removed for perf
+                    // ctx.shadowBlur = size * 0.5; // Removed for perf
                     ctx.fillText(p.emoji, 0, 0);
 
                     ctx.restore();
