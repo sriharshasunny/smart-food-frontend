@@ -30,21 +30,23 @@ const LandingPage = () => {
             // --- RESPONSIVE POSITIONING ---
             if (width >= 768) {
                 // Desktop: System on the RIGHT
-                centerX = width * 0.75; // 75% to the right
-                centerY = height * 0.5; // Vertically centered
-                scale = Math.min(width, height) * 0.0012; // Base scale on screen size
+                centerX = width * 0.75;
+                centerY = height * 0.5;
+                scale = Math.min(width, height) * 0.0012;
             } else {
-                // Mobile: System BELOW text
-                centerX = width * 0.5; // Horizontally centered
-                centerY = height * 0.7; // Pushed down (70% down)
-                scale = Math.min(width, height) * 0.0015; // Slightly larger relative to screen
+                // Mobile: System in the MIDDLE (between text parts)
+                centerX = width * 0.5;
+                centerY = height * 0.45; // Slightly higher to fit between text
+                scale = Math.min(width, height) * 0.0014;
             }
         };
         window.addEventListener('resize', resize);
         resize();
 
         // --- Assets ---
-        // 9 Planets for 9 Orbits
+        const foodEmojis = ['🍔', '🍕', '🌮', '🍩', '🍪', '🥗', '🍱', '🍜', '🍤', '🍗', '🥪', '🥨', '🧁', '🍟'];
+
+        // 1. Solar System Planets
         const planets = [
             { emoji: '🍔', speed: 0.004, offset: 0, distance: 100, size: 40 },
             { emoji: '🍕', speed: 0.003, offset: 2, distance: 160, size: 45 },
@@ -57,8 +59,8 @@ const LandingPage = () => {
             { emoji: '🥤', speed: 0.006, offset: 2.5, distance: 580, size: 34 },
         ];
 
-        // Stars
-        const starCount = 200;
+        // 2. Stars
+        const starCount = 150;
         const stars = [];
         for (let i = 0; i < starCount; i++) {
             stars.push({
@@ -70,12 +72,26 @@ const LandingPage = () => {
             });
         }
 
+        // 3. Food Rain (Background Particles)
+        const rainCount = 40;
+        const rain = [];
+        for (let i = 0; i < rainCount; i++) {
+            rain.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
+                size: Math.random() * 20 + 10,
+                speed: Math.random() * 0.5 + 0.2,
+                opacity: Math.random() * 0.3 + 0.1
+            });
+        }
+
         let time = 0;
 
         const render = () => {
             time += 1;
 
-            // 1. Clear & Background
+            // Clear & Background
             const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) * 1.5);
             bgGradient.addColorStop(0, '#0f0c29');
             bgGradient.addColorStop(0.5, '#302b63');
@@ -83,24 +99,38 @@ const LandingPage = () => {
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Draw Stars (Background)
+            // Draw Stars
             ctx.fillStyle = 'white';
             stars.forEach(star => {
                 ctx.globalAlpha = star.opacity;
                 ctx.beginPath();
-                // Star positions relative to width/height to survive resize nicely-ish
+                // Relative positioning
                 ctx.arc(star.x * width, star.y * height, star.size, 0, Math.PI * 2);
                 ctx.fill();
-
-                // Twinkle
                 star.opacity += star.twinkleSpeed;
                 if (star.opacity > 1 || star.opacity < 0.1) star.twinkleSpeed *= -1;
             });
+
+            // Draw Food Rain
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            rain.forEach(drop => {
+                ctx.globalAlpha = drop.opacity;
+                ctx.font = `${drop.size}px Arial`;
+                const x = drop.x > 1 ? drop.x : drop.x * width; // Handle initial vs resize
+                ctx.fillText(drop.emoji, x, drop.y);
+
+                // Fall
+                drop.y += drop.speed;
+                if (drop.y > height) {
+                    drop.y = -50;
+                    drop.x = Math.random() * width;
+                }
+            });
             ctx.globalAlpha = 1;
 
-            // 3. Draw Solar System
-            // Sun Glow
-            const sunRadius = 60 * scale * 300; // Arbitrary sizing based on scale
+            // Draw Solar System (Sun)
+            const sunRadius = 60 * scale * 300;
             const sunGlow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 120 * scale * 4);
             sunGlow.addColorStop(0, '#ffaa00');
             sunGlow.addColorStop(0.4, '#ff5500');
@@ -110,44 +140,32 @@ const LandingPage = () => {
             ctx.arc(centerX, centerY, 150 * scale * 4, 0, Math.PI * 2);
             ctx.fill();
 
-            // Sun Body
             ctx.fillStyle = '#ff8800';
             ctx.beginPath();
             ctx.arc(centerX, centerY, 40 * scale * 4, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = '#ffcc00'; // Inner core
+            ctx.fillStyle = '#ffcc00';
             ctx.beginPath();
             ctx.arc(centerX, centerY, 25 * scale * 4, 0, Math.PI * 2);
             ctx.fill();
 
-
-            // Planets & Orbits
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
+            // Draw Planets
             planets.forEach((planet, index) => {
-                const currentDistance = planet.distance * scale * 3.5; // Adjust spread
+                const currentDistance = planet.distance * scale * 3.5;
                 const angle = time * planet.speed + planet.offset;
-
-                // Orbit Path (Elliptical look via persepctive simulation or just circles? User said "solar system". Circles are cleaner top-down)
-                // Let's do slight ellipse to give 3D tilt
-                const tilt = 0.3; // 1 = circle, 0 = flat line
-
                 const x = centerX + Math.cos(angle) * currentDistance;
-                const y = centerY + Math.sin(angle) * currentDistance * 0.8; // 0.8 compression for slight tilt
+                const y = centerY + Math.sin(angle) * currentDistance * 0.8;
 
-                // Draw Orbit Line
+                // Orbit Line
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.ellipse(centerX, centerY, currentDistance, currentDistance * 0.8, 0, 0, Math.PI * 2);
                 ctx.stroke();
 
-                // Draw Planet (Emoji)
+                // Planet
                 const fontSize = planet.size * scale * 4;
                 ctx.font = `${fontSize}px Arial`;
-
-                // Shadow for depth
                 ctx.shadowColor = 'black';
                 ctx.shadowBlur = 4;
                 ctx.fillText(planet.emoji, x, y);
@@ -171,8 +189,8 @@ const LandingPage = () => {
     return (
         <div className="min-h-screen text-white font-sans overflow-x-hidden relative">
 
-            {/* CANVAS BACKGROUND (Fixed) */}
-            <canvas ref={canvasRef} className="fixed inset-0 z-0" />
+            {/* CANVAS BACKGROUND */}
+            <canvas ref={canvasRef} className="fixed inset-0 z-0 bg-black" />
 
             {/* Navbar */}
             <nav className="fixed w-full z-50 top-0 left-0 border-b border-white/5 bg-black/20 backdrop-blur-md">
@@ -195,28 +213,37 @@ const LandingPage = () => {
             </nav>
 
             {/* SPLIT HERO SECTION */}
-            <section className="relative min-h-screen flex items-center pt-20 px-6 max-w-7xl mx-auto z-10">
-                <div className="grid md:grid-cols-2 gap-12 w-full h-full items-center">
+            <section className="relative min-h-screen flex items-center pt-28 px-6 max-w-7xl mx-auto z-10 w-full">
+                <div className="grid md:grid-cols-2 gap-4 w-full h-full">
 
                     {/* LEFT COLUMN: Text & CTA */}
-                    <div className="text-center md:text-left flex flex-col items-center md:items-start space-y-8 order-1 md:order-1 pt-10 md:pt-0">
+                    <div className="text-center md:text-left flex flex-col items-center md:items-start space-y-6 md:space-y-8 order-1 md:order-1 relative">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
+                            className="w-full flex flex-col items-center md:items-start"
                         >
+                            {/* HEADING ALWAYS TOP */}
                             <h1 className="text-5xl md:text-7xl font-black leading-tight drop-shadow-2xl">
                                 Taste the <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500">
                                     Galaxy
                                 </span>
                             </h1>
-                            <p className="text-xl md:text-2xl text-gray-300 mt-6 max-w-lg mx-auto md:mx-0 leading-relaxed shadow-black drop-shadow-md">
+
+                            {/* MOBILE SPACER FOR SOLAR SYSTEM */}
+                            <div className="h-[350px] w-full md:hidden" aria-hidden="true">
+                                {/* This empty space allows the background Canvas Solar System (centered vertically) to be seen here */}
+                            </div>
+
+                            {/* DESCRIPTION & CTA BELOW SPACER ON MOBILE */}
+                            <p className="text-xl md:text-2xl text-gray-300 mt-2 max-w-lg leading-relaxed shadow-black drop-shadow-md">
                                 The first interplanetary food delivery service.
                                 Orbiting flavor delivered at lightspeed.
                             </p>
 
-                            <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center md:justify-start">
+                            <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center md:justify-start w-full md:w-auto">
                                 <button onClick={() => navigate('/login')} className="px-8 py-4 bg-white text-black text-lg font-bold rounded-full hover:bg-gray-100 transition-all shadow-xl hover:shadow-white/20 active:scale-95 flex items-center gap-2 justify-center">
                                     Launch Order <ChevronRight className="w-5 h-5" />
                                 </button>
@@ -227,18 +254,15 @@ const LandingPage = () => {
                         </motion.div>
                     </div>
 
-                    {/* RIGHT COLUMN: Spacer for Solar System (which is on canvas behind) */}
-                    {/* On Desktop: This space is empty to show the System. */}
-                    {/* On Mobile: We might need a spacer if the canvas draws below. */}
-                    {/* The Canvas logic positions the system at 70% height on mobile, so we need some height here or just let the page flow. */}
-                    <div className="h-[40vh] md:h-auto order-2 md:order-2 pointer-events-none">
-                        {/* Invisible spacer to push content if needed, designs rely on Fixed Canvas */}
+                    {/* RIGHT COLUMN (DESKTOP) */}
+                    {/* On Desktop, this is empty to show the System on right. On Mobile, it collapses/hides. */}
+                    <div className="hidden md:block h-full order-2 pointer-events-none">
                     </div>
                 </div>
             </section>
 
-            {/* Features Section - Pushed down to clear the "System" on mobile */}
-            <section id="features" className="relative py-32 px-6 bg-black/80 backdrop-blur-lg border-t border-white/10 mt-[20vh] md:mt-0 z-10">
+            {/* Features Section */}
+            <section id="features" className="relative py-32 px-6 bg-black/80 backdrop-blur-lg border-t border-white/10 mt-12 md:mt-0 z-10 w-full">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold mb-4">Galactic Features</h2>
