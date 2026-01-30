@@ -28,16 +28,17 @@ const LandingPage = () => {
             ctx.scale(dpr, dpr);
 
             // --- RESPONSIVE POSITIONING ---
+            // Reduced Scale for "Long Distance" View
             if (width >= 768) {
                 // Desktop: System on the RIGHT
                 centerX = width * 0.75;
                 centerY = height * 0.5;
-                scale = Math.min(width, height) * 0.0012;
+                scale = Math.min(width, height) * 0.0006; // 50% smaller
             } else {
                 // Mobile: System in the MIDDLE (between text parts)
                 centerX = width * 0.5;
-                centerY = height * 0.45; // Slightly higher to fit between text
-                scale = Math.min(width, height) * 0.0014;
+                centerY = height * 0.45;
+                scale = Math.min(width, height) * 0.0007; // 50% smaller
             }
         };
         window.addEventListener('resize', resize);
@@ -92,12 +93,36 @@ const LandingPage = () => {
             time += 1;
 
             // Clear & Background
+            // Deep Space Base
             const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) * 1.5);
-            bgGradient.addColorStop(0, '#0f0c29');
-            bgGradient.addColorStop(0.5, '#302b63');
-            bgGradient.addColorStop(1, '#24243e');
+            bgGradient.addColorStop(0, '#020010'); // Darker center
+            bgGradient.addColorStop(0.5, '#0a0a2a');
+            bgGradient.addColorStop(1, '#050510');
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
+
+            // NEBULA LAYERS (New)
+            // 1. Purple Haze (Top Left)
+            const nebula1 = ctx.createRadialGradient(width * 0.2, height * 0.3, 0, width * 0.2, height * 0.3, width * 0.6);
+            nebula1.addColorStop(0, 'rgba(76, 29, 149, 0.15)'); // Violet
+            nebula1.addColorStop(1, 'transparent');
+            ctx.fillStyle = nebula1;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Blue Glow (Bottom Right)
+            const nebula2 = ctx.createRadialGradient(width * 0.8, height * 0.8, 0, width * 0.8, height * 0.8, width * 0.5);
+            nebula2.addColorStop(0, 'rgba(30, 58, 138, 0.15)'); // Blue
+            nebula2.addColorStop(1, 'transparent');
+            ctx.fillStyle = nebula2;
+            ctx.fillRect(0, 0, width, height);
+
+            // 3. Pink/Orange Accent (Near Center)
+            const nebula3 = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.4);
+            nebula3.addColorStop(0, 'rgba(219, 39, 119, 0.05)'); // Pink
+            nebula3.addColorStop(1, 'transparent');
+            ctx.fillStyle = nebula3;
+            ctx.fillRect(0, 0, width, height);
+
 
             // Draw Stars
             ctx.fillStyle = 'white';
@@ -157,7 +182,7 @@ const LandingPage = () => {
                 const y = centerY + Math.sin(angle) * currentDistance * 0.8;
 
                 // Orbit Line
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; // Slightly fainter for distance
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.ellipse(centerX, centerY, currentDistance, currentDistance * 0.8, 0, 0, Math.PI * 2);
