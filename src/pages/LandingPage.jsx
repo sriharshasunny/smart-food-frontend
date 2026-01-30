@@ -1,30 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    ChevronRight, Star, Clock, MapPin,
-    ShieldCheck, Zap, Heart, Utensils
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronRight, Clock, ShieldCheck, Utensils } from 'lucide-react';
 
 const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
 
-    // --- 3D CANVAS ENGINE (Rotating Food Sphere + Core) ---
+    // --- SOLAR SYSTEM ENGINE ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for no transparency on bg
+        const ctx = canvas.getContext('2d', { alpha: false });
         let animationFrameId;
 
         let width, height, centerX, centerY;
-        let rotationX = 0;
-        let rotationY = 0;
+        let scale = 1;
 
         const resize = () => {
             width = window.innerWidth;
             height = window.innerHeight;
-            // Handle high DPI displays
             const dpr = window.devicePixelRatio || 1;
             canvas.width = width * dpr;
             canvas.height = height * dpr;
@@ -32,162 +27,136 @@ const LandingPage = () => {
             canvas.style.height = `${height}px`;
             ctx.scale(dpr, dpr);
 
-            centerX = width / 2;
-            centerY = height / 2;
+            // --- RESPONSIVE POSITIONING ---
+            if (width >= 768) {
+                // Desktop: System on the RIGHT
+                centerX = width * 0.75; // 75% to the right
+                centerY = height * 0.5; // Vertically centered
+                scale = Math.min(width, height) * 0.0012; // Base scale on screen size
+            } else {
+                // Mobile: System BELOW text
+                centerX = width * 0.5; // Horizontally centered
+                centerY = height * 0.7; // Pushed down (70% down)
+                scale = Math.min(width, height) * 0.0015; // Slightly larger relative to screen
+            }
         };
         window.addEventListener('resize', resize);
         resize();
 
         // --- Assets ---
-        const foodEmojis = ['🍔', '🍕', '🌮', '🍩', '🍪', '🥗', '🍱', '🍜', '🍤', '🍗', '🥪', '🥨', '🧁', '🍟'];
+        // 9 Planets for 9 Orbits
+        const planets = [
+            { emoji: '🍔', speed: 0.004, offset: 0, distance: 100, size: 40 },
+            { emoji: '🍕', speed: 0.003, offset: 2, distance: 160, size: 45 },
+            { emoji: '🍩', speed: 0.005, offset: 4, distance: 220, size: 35 },
+            { emoji: '🌮', speed: 0.002, offset: 1, distance: 280, size: 42 },
+            { emoji: '🍜', speed: 0.0035, offset: 5, distance: 340, size: 40 },
+            { emoji: '🍟', speed: 0.0025, offset: 3, distance: 400, size: 38 },
+            { emoji: '🥗', speed: 0.0045, offset: 0.5, distance: 460, size: 42 },
+            { emoji: '🍦', speed: 0.0015, offset: 6, distance: 520, size: 36 },
+            { emoji: '🥤', speed: 0.006, offset: 2.5, distance: 580, size: 34 },
+        ];
 
-        // --- Configuration ---
-        const particleCount = 60; // Optimized count for visuals vs performance
-        const radiusPercent = window.innerWidth < 768 ? 0.35 : 0.28; // Medium size
-
-        // --- State ---
-        const particles = [];
+        // Stars
+        const starCount = 200;
         const stars = [];
-
-        // Initialize Stars
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < starCount; i++) {
             stars.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
+                x: Math.random(),
+                y: Math.random(),
                 size: Math.random() * 2,
                 opacity: Math.random(),
-                speed: Math.random() * 0.5 + 0.1
+                twinkleSpeed: Math.random() * 0.02
             });
         }
 
-        // Initialize Food Particles (Fibonacci Sphere)
-        for (let i = 0; i < particleCount; i++) {
-            const y = 1 - (i / (particleCount - 1)) * 2;
-            const radiusAtY = Math.sqrt(1 - y * y);
-            const theta = i * Math.PI * (3 - Math.sqrt(5)); // Golden Angle
+        let time = 0;
 
-            particles.push({
-                x: Math.cos(theta) * radiusAtY,
-                y: y,
-                z: Math.sin(theta) * radiusAtY,
-                emoji: foodEmojis[i % foodEmojis.length],
-                scale: 1
-            });
-        }
+        const render = () => {
+            time += 1;
 
-        let lastTime = 0;
-
-        const render = (time) => {
-            const deltaTime = time - lastTime;
-            lastTime = time;
-
-            // Clear Screen
-            // Dark Space Background
-            const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));
-            bgGradient.addColorStop(0, '#1a1a2e');
-            bgGradient.addColorStop(1, '#000000');
+            // 1. Clear & Background
+            const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) * 1.5);
+            bgGradient.addColorStop(0, '#0f0c29');
+            bgGradient.addColorStop(0.5, '#302b63');
+            bgGradient.addColorStop(1, '#24243e');
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
-            // --- Draw Stars (Background) ---
-            ctx.fillStyle = '#ffffff';
+            // 2. Draw Stars (Background)
+            ctx.fillStyle = 'white';
             stars.forEach(star => {
-                ctx.globalAlpha = star.opacity * 0.8;
+                ctx.globalAlpha = star.opacity;
                 ctx.beginPath();
-                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                // Star positions relative to width/height to survive resize nicely-ish
+                ctx.arc(star.x * width, star.y * height, star.size, 0, Math.PI * 2);
                 ctx.fill();
+
                 // Twinkle
-                star.opacity += (Math.random() - 0.5) * 0.1;
-                star.opacity = Math.max(0.1, Math.min(1, star.opacity));
+                star.opacity += star.twinkleSpeed;
+                if (star.opacity > 1 || star.opacity < 0.1) star.twinkleSpeed *= -1;
             });
             ctx.globalAlpha = 1;
 
-            // --- Rotation Logic ---
-            // Constant smooth rotation
-            rotationY += 0.003;
-            rotationX = Math.sin(time * 0.0005) * 0.2; // Gentle tilt
-
-            // --- Draw Central Planet (The "Core") ---
-            // This adds the "3D Object" feel requested
-            const coreRadius = Math.min(width, height) * (window.innerWidth < 768 ? 0.15 : 0.12);
-
-            // Outer Glow
-            const glowGradient = ctx.createRadialGradient(centerX, centerY, coreRadius * 0.8, centerX, centerY, coreRadius * 1.5);
-            glowGradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
-            glowGradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
-            ctx.fillStyle = glowGradient;
+            // 3. Draw Solar System
+            // Sun Glow
+            const sunRadius = 60 * scale * 300; // Arbitrary sizing based on scale
+            const sunGlow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 120 * scale * 4);
+            sunGlow.addColorStop(0, '#ffaa00');
+            sunGlow.addColorStop(0.4, '#ff5500');
+            sunGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = sunGlow;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, coreRadius * 1.5, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 150 * scale * 4, 0, Math.PI * 2);
             ctx.fill();
 
-            // Planet Body
-            const planetGradient = ctx.createRadialGradient(centerX - coreRadius * 0.3, centerY - coreRadius * 0.3, 0, centerX, centerY, coreRadius);
-            planetGradient.addColorStop(0, '#ff9a9e');
-            planetGradient.addColorStop(0.5, '#fe8c00');
-            planetGradient.addColorStop(1, '#d32f2f');
-            ctx.fillStyle = planetGradient;
+            // Sun Body
+            ctx.fillStyle = '#ff8800';
             ctx.beginPath();
-            ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 40 * scale * 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffcc00'; // Inner core
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25 * scale * 4, 0, Math.PI * 2);
             ctx.fill();
 
-            // --- Draw Particles ---
-            const orbitRadius = Math.min(width, height) * radiusPercent;
 
-            // Project particles
-            const projectedParticles = particles.map(p => {
-                // Rotate around Y
-                let x1 = p.x * Math.cos(rotationY) - p.z * Math.sin(rotationY);
-                let z1 = p.z * Math.cos(rotationY) + p.x * Math.sin(rotationY);
-
-                // Rotate around X
-                let y1 = p.y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
-                let z2 = z1 * Math.cos(rotationX) + p.y * Math.sin(rotationX);
-
-                // Perspective PROJECTION
-                // Camera is at z = 2
-                const fov = 1.5;
-                const scale = fov / (fov + z2 * 0.5);
-
-                return {
-                    x: centerX + x1 * orbitRadius * scale,
-                    y: centerY + y1 * orbitRadius * scale,
-                    z: z2,
-                    scale: scale,
-                    emoji: p.emoji
-                };
-            });
-
-            // Sort by Z index (painter's algorithm)
-            projectedParticles.sort((a, b) => b.z - a.z);
-
+            // Planets & Orbits
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            projectedParticles.forEach(p => {
-                // If behind the planet, check simplified occlusion or just draw all for transparency feel
-                // But for "3D", things behind should be hidden or faded. 
-                // However, the planet is small enough. Let's just draw.
+            planets.forEach((planet, index) => {
+                const currentDistance = planet.distance * scale * 3.5; // Adjust spread
+                const angle = time * planet.speed + planet.offset;
 
-                // Dynamic Opacity based on Z
-                const alpha = Math.max(0.2, p.scale); // Fade out back items
-                ctx.globalAlpha = alpha;
+                // Orbit Path (Elliptical look via persepctive simulation or just circles? User said "solar system". Circles are cleaner top-down)
+                // Let's do slight ellipse to give 3D tilt
+                const tilt = 0.3; // 1 = circle, 0 = flat line
 
-                const size = 30 * p.scale;
-                ctx.font = `${size}px Arial`;
+                const x = centerX + Math.cos(angle) * currentDistance;
+                const y = centerY + Math.sin(angle) * currentDistance * 0.8; // 0.8 compression for slight tilt
+
+                // Draw Orbit Line
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, currentDistance, currentDistance * 0.8, 0, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Draw Planet (Emoji)
+                const fontSize = planet.size * scale * 4;
+                ctx.font = `${fontSize}px Arial`;
 
                 // Shadow for depth
-                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                ctx.shadowBlur = 5;
-
-                ctx.fillText(p.emoji, p.x, p.y);
-
+                ctx.shadowColor = 'black';
+                ctx.shadowBlur = 4;
+                ctx.fillText(planet.emoji, x, y);
                 ctx.shadowBlur = 0;
             });
-            ctx.globalAlpha = 1;
 
             animationFrameId = requestAnimationFrame(render);
         };
-        render(0);
+        render();
 
         return () => {
             window.removeEventListener('resize', resize);
@@ -195,128 +164,98 @@ const LandingPage = () => {
         };
     }, []);
 
-    // Scroll to features
     const scrollToFeatures = () => {
         document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
     };
 
     return (
-        <div className="min-h-screen bg-[#0f0f13] text-white font-sans overflow-x-hidden relative">
+        <div className="min-h-screen text-white font-sans overflow-x-hidden relative">
 
-            {/* 3D CANVAS BACKGROUND */}
-            <canvas
-                ref={canvasRef}
-                className="fixed inset-0 z-0 pointer-events-none"
-            />
+            {/* CANVAS BACKGROUND (Fixed) */}
+            <canvas ref={canvasRef} className="fixed inset-0 z-0" />
 
             {/* Navbar */}
-            <nav className="fixed w-full z-50 top-0 left-0 border-b border-white/10 bg-black/50 backdrop-blur-md">
+            <nav className="fixed w-full z-50 top-0 left-0 border-b border-white/5 bg-black/20 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <span className="text-xl">🚀</span>
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">FoodVerse</span>
-                    </div>
-                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-                        <a href="#features" className="hover:text-white transition-colors">Features</a>
-                        <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-                        <a href="#reviews" className="hover:text-white transition-colors">Reviews</a>
+                        <span className="text-2xl">🪐</span>
+                        <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-600">
+                            FoodSpace
+                        </span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate('/login')} className="px-5 py-2.5 text-sm font-bold text-white hover:text-orange-400 transition-colors">
+                        <button onClick={() => navigate('/login')} className="px-5 py-2.5 font-bold hover:text-orange-400 transition-colors">
                             Log In
                         </button>
-                        <button onClick={() => navigate('/login')} className="px-5 py-2.5 bg-white text-black rounded-full text-sm font-bold hover:bg-orange-50 transition-colors shadow-lg shadow-white/10">
+                        <button onClick={() => navigate('/login')} className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-red-600 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
                             Sign Up
                         </button>
                     </div>
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <section className="relative min-h-screen flex items-center justify-center pt-20 px-6">
-                <div className="relative z-10 max-w-5xl mx-auto text-center">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
-                    >
-                        <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <span className="text-sm font-medium text-gray-300">Now serving the entire galaxy</span>
-                    </motion.div>
+            {/* SPLIT HERO SECTION */}
+            <section className="relative min-h-screen flex items-center pt-20 px-6 max-w-7xl mx-auto z-10">
+                <div className="grid md:grid-cols-2 gap-12 w-full h-full items-center">
 
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-5xl md:text-8xl font-black tracking-tight leading-tight mb-8 relative z-10 drop-shadow-lg"
-                    >
-                        <span className="md:bg-transparent bg-black/30 backdrop-blur-md rounded-3xl px-4 box-decoration-clone">
-                            Food Delivery at <br />
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
-                                Warp Speed
-                            </span>
-                        </span>
-                    </motion.h1>
+                    {/* LEFT COLUMN: Text & CTA */}
+                    <div className="text-center md:text-left flex flex-col items-center md:items-start space-y-8 order-1 md:order-1 pt-10 md:pt-0">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            <h1 className="text-5xl md:text-7xl font-black leading-tight drop-shadow-2xl">
+                                Taste the <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500">
+                                    Galaxy
+                                </span>
+                            </h1>
+                            <p className="text-xl md:text-2xl text-gray-300 mt-6 max-w-lg mx-auto md:mx-0 leading-relaxed shadow-black drop-shadow-md">
+                                The first interplanetary food delivery service.
+                                Orbiting flavor delivered at lightspeed.
+                            </p>
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="text-xl md:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed"
-                    >
-                        Experience the fastest delivery in the universe. Fresh, hot, and instantly at your doorstep.
-                    </motion.p>
+                            <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center md:justify-start">
+                                <button onClick={() => navigate('/login')} className="px-8 py-4 bg-white text-black text-lg font-bold rounded-full hover:bg-gray-100 transition-all shadow-xl hover:shadow-white/20 active:scale-95 flex items-center gap-2 justify-center">
+                                    Launch Order <ChevronRight className="w-5 h-5" />
+                                </button>
+                                <button onClick={scrollToFeatures} className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-lg font-bold rounded-full transition-all backdrop-blur-sm">
+                                    Explore System
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.6 }}
-                        className="flex flex-col sm:flex-row items-center justify-center gap-4"
-                    >
-                        <button onClick={() => navigate('/login')} className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-full text-lg font-bold shadow-xl shadow-orange-500/20 hover:shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all overflow-hidden">
-                            <span className="relative z-10 flex items-center gap-2">
-                                Start Your Order <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </span>
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                        </button>
-                        <button onClick={scrollToFeatures} className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-lg font-bold hover:bg-white/10 transition-all backdrop-blur-sm">
-                            Learn More
-                        </button>
-                    </motion.div>
+                    {/* RIGHT COLUMN: Spacer for Solar System (which is on canvas behind) */}
+                    {/* On Desktop: This space is empty to show the System. */}
+                    {/* On Mobile: We might need a spacer if the canvas draws below. */}
+                    {/* The Canvas logic positions the system at 70% height on mobile, so we need some height here or just let the page flow. */}
+                    <div className="h-[40vh] md:h-auto order-2 md:order-2 pointer-events-none">
+                        {/* Invisible spacer to push content if needed, designs rely on Fixed Canvas */}
+                    </div>
                 </div>
             </section>
 
-            {/* Features Section */}
-            <section id="features" className="relative py-32 px-6 bg-[#0a0a0f]/80 backdrop-blur-lg border-t border-white/5">
+            {/* Features Section - Pushed down to clear the "System" on mobile */}
+            <section id="features" className="relative py-32 px-6 bg-black/80 backdrop-blur-lg border-t border-white/10 mt-[20vh] md:mt-0 z-10">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-20">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-6">Why Choose FoodVerse?</h2>
-                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">We don't just deliver food; we deliver an experience.</p>
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-bold mb-4">Galactic Features</h2>
+                        <p className="text-gray-400">Why the universe chooses us.</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { icon: <Clock className="w-8 h-8 text-orange-400" />, title: "Hyper-Fast Delivery", desc: "Our drone fleet ensures your food arrives hot, usually within 15 minutes." },
-                            { icon: <ShieldCheck className="w-8 h-8 text-green-400" />, title: "Secure Handling", desc: "Tamper-proof packaging and real-time temperature tracking for every order." },
-                            { icon: <Utensils className="w-8 h-8 text-blue-400" />, title: "Premium Restaurants", desc: "Curated selection of the finest eateries in your local star system." }
+                            { icon: <Clock className="w-8 h-8 text-orange-400" />, title: "Hyper-Speed", desc: "Warp drive delivery technology." },
+                            { icon: <ShieldCheck className="w-8 h-8 text-green-400" />, title: "Zero-G Shielded", desc: "Food stays intact, even through asteroid fields." },
+                            { icon: <Utensils className="w-8 h-8 text-blue-400" />, title: "Universal Menu", desc: "Dishes from 12 different star systems." }
                         ].map((feature, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.2 }}
-                                className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-orange-500/30 hover:bg-white/10 transition-all group"
-                            >
-                                <div className="w-16 h-16 bg-black/50 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform">
-                                    {feature.icon}
-                                </div>
-                                <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-                                <p className="text-gray-400 leading-relaxed">{feature.desc}</p>
-                            </motion.div>
+                            <div key={i} className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                                <div className="mb-4">{feature.icon}</div>
+                                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                                <p className="text-gray-400">{feature.desc}</p>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -343,3 +282,4 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+```
