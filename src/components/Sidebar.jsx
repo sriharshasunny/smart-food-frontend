@@ -13,9 +13,10 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     const menuItems = [
         { icon: Home, label: 'Home', path: '/home' },
-        { icon: Compass, label: 'Explore', path: '/restaurants' },
+        { icon: Compass, label: 'Restaurants', path: '/restaurants' },
+        { icon: Zap, label: 'AI Picks', path: '/recommendations' },
         { icon: Heart, label: 'Wishlist', path: '/wishlist' },
-        { icon: Clock, label: 'History', path: '/history' }, // Consolidated Orders & History
+        { icon: Clock, label: 'History', path: '/history' },
         { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 

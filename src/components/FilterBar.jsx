@@ -36,7 +36,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         transition-all duration-200
                         ${isSticky
                             ? 'flex flex-row items-center gap-2 h-full'
-                            : 'flex flex-col gap-1.5 max-h-[90px] overflow-y-auto hide-scrollbar pl-2 py-1 items-end'
+                            : 'flex flex-row md:flex-col gap-2 md:gap-1.5 overflow-x-auto md:overflow-hidden md:max-h-[90px] md:overflow-y-auto hide-scrollbar pl-0 md:pl-2 py-1 items-center md:items-end w-full md:w-auto'
                         }
                     `}>
 

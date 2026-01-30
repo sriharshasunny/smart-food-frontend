@@ -15,7 +15,7 @@ const Navbar = ({ toggleSidebar }) => {
     const navItems = [
         { path: '/home', label: 'Home' },
         { path: '/restaurants', label: 'Restaurants' },
-        { path: '/recommendations', label: 'AI Rec', isBeta: true }
+        { path: '/recommendations', label: 'AI Picks', isBeta: true }
     ];
 
     return (
