@@ -258,22 +258,19 @@ const LandingPage = () => {
                             </h1>
 
                             {/* MOBILE SPACER FOR SOLAR SYSTEM */}
-                            <div className="h-[350px] w-full md:hidden" aria-hidden="true">
-                                {/* This empty space allows the background Canvas Solar System (centered vertically) to be seen here */}
-                            </div>
+                            <div className="h-[300px] w-full md:hidden" aria-hidden="true"></div>
 
-                            {/* DESCRIPTION & CTA BELOW SPACER ON MOBILE */}
-                            <p className="text-xl md:text-2xl text-gray-300 mt-2 max-w-lg leading-relaxed shadow-black drop-shadow-md">
-                                The first interplanetary food delivery service.
-                                Orbiting flavor delivered at lightspeed.
+                            <p className="text-lg md:text-xl text-gray-400 mt-2 max-w-lg leading-relaxed">
+                                Premium dining delivered from the furthest reaches of the galaxy.
+                                Experince warp-speed logistics for your next meal.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center md:justify-start w-full md:w-auto">
-                                <button onClick={() => navigate('/login')} className="px-8 py-4 bg-white text-black text-lg font-bold rounded-full hover:bg-gray-100 transition-all shadow-xl hover:shadow-white/20 active:scale-95 flex items-center gap-2 justify-center">
-                                    Launch Order <ChevronRight className="w-5 h-5" />
+                                <button onClick={() => navigate('/login')} className="px-8 py-4 bg-gradient-to-r from-orange-600 to-rose-600 text-white text-lg font-bold rounded-xl hover:shadow-lg hover:shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center gap-2 justify-center">
+                                    Initialize Order <ChevronRight className="w-5 h-5" />
                                 </button>
-                                <button onClick={scrollToFeatures} className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-lg font-bold rounded-full transition-all backdrop-blur-sm">
-                                    Explore System
+                                <button onClick={scrollToFeatures} className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-lg font-medium rounded-xl transition-all backdrop-blur-sm">
+                                    View Protocol
                                 </button>
                             </div>
                         </motion.div>
