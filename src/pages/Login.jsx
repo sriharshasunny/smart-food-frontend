@@ -43,11 +43,11 @@ const Auth = () => {
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
 
-    // --- DEEP SPACE + FLOATING FOOD ENGINE ---
+    // --- CLASSIC ENGINE (No Starfield, Just Food) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false });
+        const ctx = canvas.getContext('2d'); // Standard alpha context for gradient bg
         let animationFrameId;
 
         const resize = () => {
@@ -59,19 +59,11 @@ const Auth = () => {
 
         const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🥗', '🍱', '🍜', '🍤', '🥓'];
 
-        // ENTITIES
-        const stars = Array.from({ length: 100 }).map(() => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2,
-            speed: Math.random() * 0.5 + 0.1
-        }));
-
         const foods = Array.from({ length: 15 }).map(() => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
-            size: 20 + Math.random() * 30, // 20-50px
+            size: 20 + Math.random() * 30,
             dx: (Math.random() - 0.5) * 2,
             dy: (Math.random() - 0.5) * 2,
             rotation: Math.random() * Math.PI * 2,
@@ -79,24 +71,10 @@ const Auth = () => {
         }));
 
         const render = () => {
-            // 1. Deep Space Background
-            ctx.fillStyle = '#050510';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Clear screen (Transparent, letting CSS gradient show)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 2. Draw Stars
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            stars.forEach(star => {
-                star.y += star.speed;
-                if (star.y > canvas.height) {
-                    star.y = 0;
-                    star.x = Math.random() * canvas.width;
-                }
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // 3. Draw Floating Food
+            // Draw Floating Food
             foods.forEach(food => {
                 food.x += food.dx;
                 food.y += food.dy;
@@ -112,7 +90,7 @@ const Auth = () => {
                 ctx.font = `${food.size}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.globalAlpha = 0.8;
+                ctx.globalAlpha = 0.6; // Subtle
                 ctx.fillText(food.emoji, 0, 0);
                 ctx.restore();
             });
@@ -154,8 +132,9 @@ const Auth = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#050510] text-white flex items-center justify-center relative overflow-hidden font-sans">
-            <canvas ref={canvasRef} className="absolute inset-0 z-0 bg-[#050510]" />
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-center relative overflow-hidden font-sans">
+            {/* CANVAS (Transparent) */}
+            <canvas ref={canvasRef} className="absolute inset-0 z-0 bg-transparent" />
             <FloatingUFO />
 
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-lg p-6">
@@ -166,9 +145,9 @@ const Auth = () => {
                     <h1 className="text-4xl font-extrabold mb-2 tracking-tight drop-shadow-lg">{mode === 'login' ? 'Welcome Back!' : mode === 'register' ? 'Join the Feast' : 'Reset Password'}</h1>
                 </div>
 
-                <div className="bg-black/70 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
-                    <div className="absolute inset-0 border border-white/5 rounded-[2rem] pointer-events-none"></div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
 
+                    {/* Mode Toggle - Orange */}
                     {mode !== 'forgot' && (
                         <div className="flex bg-black/40 rounded-xl p-1 mb-8 border border-white/5 relative">
                             <motion.div className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-orange-600 rounded-lg shadow-lg" animate={{ left: mode === 'register' ? 'calc(50% + 2px)' : '2px' }} transition={{ type: "spring", stiffness: 300, damping: 25 }} />
@@ -185,24 +164,24 @@ const Auth = () => {
                     <AnimatePresence mode="wait">
                         {mode === 'login' && (
                             <motion.form key="login" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 20, opacity: 0 }} onSubmit={handleLogin} className="space-y-5">
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">EMAIL</label><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="name@example.com" required /></div></div>
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">PASSWORD</label><div className="relative"><Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="••••••••" required /></div></div>
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-300">EMAIL</label><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="name@example.com" required /></div></div>
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-300">PASSWORD</label><div className="relative"><Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="••••••••" required /></div></div>
                                 <div className="flex justify-end"><button type="button" onClick={() => switchMode('forgot')} className="text-xs text-orange-400 hover:text-white">Forgot?</button></div>
                                 <button type="submit" disabled={loading} className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20">{loading ? 'Logging...' : 'Login'}</button>
                             </motion.form>
                         )}
                         {mode === 'register' && (
                             <motion.form key="register" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} onSubmit={handleRegister} className="space-y-5">
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">NAME</label><div className="relative"><User className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" required /></div></div>
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">EMAIL</label><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" required /></div></div>
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">PASSWORD</label><div className="relative"><Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" required /></div></div>
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-300">NAME</label><div className="relative"><User className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" required /></div></div>
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-300">EMAIL</label><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" required /></div></div>
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-300">PASSWORD</label><div className="relative"><Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" required /></div></div>
                                 <button type="submit" disabled={loading} className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20">{loading ? 'Signing up...' : 'Sign Up'}</button>
                             </motion.form>
                         )}
                         {mode === 'forgot' && (<motion.form key="forgot" className="space-y-5" onSubmit={step === 1 ? handleSendResetOtp : handleResetPassword}>
                             <button type="button" onClick={() => switchMode('login')} className="text-xs font-bold text-gray-400 hover:text-white mb-4">Back</button>
-                            {step === 1 ? (<><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="Email" required /></div><button type="submit" className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold">Send Code</button></>) :
-                                (<><input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="OTP" /><input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="New Password" /><button type="submit" className="w-full py-4 bg-green-600 text-white rounded-xl font-bold">Reset</button></>)}
+                            {step === 1 ? (<><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="Email" required /></div><button type="submit" className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold">Send Code</button></>) :
+                                (<><input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="OTP" /><input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="New Password" /><button type="submit" className="w-full py-4 bg-orange-600 text-white rounded-xl font-bold">Reset</button></>)}
                         </motion.form>)}
                     </AnimatePresence>
                 </div>
