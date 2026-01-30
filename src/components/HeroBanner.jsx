@@ -65,7 +65,7 @@ const HeroBanner = () => {
     const IconComponent = currentOffer.icon;
 
     return (
-        <div className="relative w-full h-[380px] md:h-[480px] rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto group select-none">
+        <div className="relative w-full h-[280px] sm:h-[380px] md:h-[480px] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto group select-none">
             {/* Carousel Container */}
             <div className="relative h-full w-full bg-gray-900">
                 {premiumOffers.map((offer, index) => (
@@ -88,28 +88,28 @@ const HeroBanner = () => {
                         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-black/20" />
 
                         {/* Content Area */}
-                        <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-24 max-w-5xl text-white">
+                        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-24 max-w-5xl text-white">
                             <div
                                 className={`transition-all duration-1000 delay-300 transform ${index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                                     }`}
                             >
-                                <div className="flex items-center gap-3 mb-5 flex-wrap">
+                                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-5 flex-wrap">
                                     <span
-                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-gradient-to-r ${offer.accent} shadow-lg`}
+                                        className={`inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest bg-gradient-to-r ${offer.accent} shadow-lg`}
                                     >
-                                        <IconComponent size={14} />
+                                        <IconComponent size={12} className="md:w-3.5 md:h-3.5" />
                                         {offer.subtitle}
                                     </span>
-                                    <div className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold bg-white/10 backdrop-blur-md px-3 py-2 rounded-xl border border-white/20">
-                                        <Sparkles size={14} /> LIMITED OFFER
+                                    <div className="flex items-center gap-1.5 text-yellow-400 text-[10px] md:text-xs font-bold bg-white/10 backdrop-blur-md px-2.5 py-1.5 md:px-3 md:py-2 rounded-xl border border-white/20">
+                                        <Sparkles size={12} className="md:w-3.5 md:h-3.5" /> LIMITED OFFER
                                     </div>
                                 </div>
 
-                                <h2 className="text-5xl md:text-7xl font-black mb-5 leading-tight tracking-tight drop-shadow-2xl">
+                                <h2 className="text-3xl sm:text-4xl md:text-7xl font-black mb-3 md:mb-5 leading-tight tracking-tight drop-shadow-2xl">
                                     {offer.title}
                                 </h2>
 
-                                <p className="text-lg md:text-2xl font-light mb-8 text-gray-100 max-w-2xl leading-relaxed">
+                                <p className="text-sm sm:text-lg md:text-2xl font-light mb-5 md:mb-8 text-gray-100 max-w-2xl leading-relaxed line-clamp-2 md:line-clamp-none">
                                     {offer.description}
                                 </p>
 

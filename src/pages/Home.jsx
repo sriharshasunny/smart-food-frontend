@@ -166,7 +166,7 @@ const Home = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
             {/* Increased Horizontal padding (approx 30px+) */}
-            <div className="w-full px-8 md:px-10 lg:px-12 pt-6 space-y-8 max-w-[1600px] mx-auto">
+            <div className="w-full px-4 md:px-10 lg:px-12 pt-4 md:pt-6 space-y-4 md:space-y-8 max-w-[1600px] mx-auto">
 
                 {/* Header / Search */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-0 pb-1">
@@ -197,7 +197,7 @@ const Home = () => {
                 {/* --- Content Sections --- */}
 
                 {/* Split Top Section: Restaurants (Large Left) + Quick Recs (Small Right) */}
-                <div className="flex flex-col xl:flex-row gap-4 mb-0 h-[400px]">
+                <div className="flex flex-col xl:flex-row gap-3 md:gap-4 mb-0 h-auto xl:h-[400px]">
 
                     {/* Left: Top Restaurants (Flexible to fill space) */}
                     <div className="flex-1 min-w-0 bg-white rounded-[2rem] p-4 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col justify-center h-full group transition-transform duration-300 transform-gpu">
@@ -355,9 +355,9 @@ const Home = () => {
 
                 {/* Instance 2: Sticky Sentinel (Zero Height, Anchor) */}
                 {/* This div sticks to the top, but has 0 height. It acts as an anchor for the absolute child. */}
-                <div className="sticky top-[54px] md:top-[70px] z-40 h-0 w-full -mx-8 md:-mx-10 lg:-mx-12 px-8 md:px-10 lg:px-12 pointer-events-none">
+                <div className="sticky top-[54px] md:top-[70px] z-40 h-0 w-full -mx-4 md:-mx-10 lg:-mx-12 px-4 md:px-10 lg:px-12 pointer-events-none">
                     {/* Floating Filter (Fixed Position - Viewport Relative with 15px gaps) */}
-                    <div className={`fixed top-[54px] md:top-[70px] left-[15px] right-[15px] z-40 w-auto transition-all duration-200 ease-out ${isSticky ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+                    <div className={`fixed top-[54px] md:top-[70px] left-[10px] right-[10px] md:left-[15px] md:right-[15px] z-40 w-auto transition-all duration-200 ease-out ${isSticky ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-full opacity-0 pointer-events-none'}`}>
                         <FilterBar
                             activeCategory={activeCategory}
                             setActiveCategory={setActiveCategory}
