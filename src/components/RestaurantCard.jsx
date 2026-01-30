@@ -22,7 +22,7 @@ const RestaurantCard = ({ restaurant }) => {
                 transition={{ duration: 0.3 }}
             >
                 {/* Image Section */}
-                <div className="relative h-40 overflow-hidden shrink-0">
+                <div className="relative h-32 md:h-40 overflow-hidden shrink-0">
                     <img
                         src={image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80"}
                         alt={name}

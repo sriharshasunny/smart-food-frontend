@@ -49,8 +49,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                     >
                         {/* Header with Gradient Border */}
                         <div className="relative rounded-tr-[2rem]">
-                            {/* Gradient Border */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 animate-gradient-x p-[1.5px] rounded-tr-[2rem]">
+                            {/* Gradient Border - Static on Mobile, Animated on Desktop */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 md:animate-gradient-x p-[1.5px] rounded-tr-[2rem]">
                                 <div className="h-full w-full bg-white rounded-tr-[calc(2rem-1.5px)]"></div>
                             </div>
 
