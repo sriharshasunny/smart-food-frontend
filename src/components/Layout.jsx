@@ -9,11 +9,17 @@ const Layout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
-            <div className="w-full max-w-[1920px] mx-auto bg-white shadow-2xl min-h-screen flex flex-col relative">
+        <div className="min-h-screen flex bg-gray-50">
+            {/* Sidebar (Fixed/Sticky on Desktop, Absolute on Mobile) */}
+            <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+            {/* Main Content Wrapper */}
+            <div className="flex-1 flex flex-col min-h-screen relative w-full transition-all duration-300">
+                {/* Navbar */}
                 <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-                <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-                <main className="flex-grow">
+
+                {/* Page Content */}
+                <main className="flex-grow p-4 md:p-6 lg:p-8">
                     {children}
                 </main>
                 <Chatbot />
