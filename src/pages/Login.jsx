@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,90 +8,13 @@ import {
     AlertCircle, Sparkles, ChevronRight
 } from 'lucide-react';
 
-// Floating Food Component - Optimized
-const FloatingFood = ({ emoji, x, y, delay, scale, index }) => {
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{
-                opacity: [0, 0, 0.3, 0.3, 0.3, 0.3, 0, 0], // Reduced max opacity
-            }}
-            transition={{
-                duration: 6 + (index % 3) * 1.5,
-                delay: delay,
-                repeat: Infinity,
-                repeatDelay: index * 0.4,
-                ease: "easeInOut"
-            }}
-            className="absolute pointer-events-none select-none will-change-transform" // Added will-change
-            style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                fontSize: `${scale * 1.5}rem`, // Slightly smaller
-                // Removed heavy drop-shadow, kept simple text-shadow
-                textShadow: '0 0 5px rgba(255,255,255,0.2)',
-            }}
-        >
-            {emoji}
-        </motion.div>
-    );
-};
-
-// Falling Meteor Component - Optimized
-const FallingMeteor = ({ emoji, startX, delay, index }) => {
-    return (
-        <motion.div
-            initial={{
-                x: 0,
-                y: -100,
-                opacity: 0,
-                rotate: -45
-            }}
-            animate={{
-                x: [0, 200],
-                y: [-100, window.innerHeight + 100],
-                opacity: [0, 1, 1, 0.8, 0],
-                rotate: -45
-            }}
-            transition={{
-                duration: 3.5 + Math.random() * 1.5,
-                delay: delay,
-                repeat: Infinity,
-                repeatDelay: 10 + Math.random() * 8,
-                ease: "linear"
-            }}
-            className="absolute pointer-events-none select-none will-change-transform"
-            style={{
-                left: `${startX}%`,
-                top: 0,
-                fontSize: '2.5rem',
-                // Single drop-shadow instead of double, reduced blur
-                filter: 'drop-shadow(0 0 10px rgba(255, 80, 0, 0.8))',
-            }}
-        >
-            {emoji}
-            {/* Simplified Fire Trail - CSS only, no extra divs if possible, or simplified */}
-            <div style={{ position: 'absolute', right: '100%', top: '50%', transform: 'translateY(-50%)' }}>
-                <div style={{
-                    width: '60px',
-                    height: '6px',
-                    background: 'linear-gradient(to left, rgba(255, 60, 0, 0.8), transparent)',
-                    borderRadius: '50%',
-                    filter: 'blur(2px)', // Reduced blur radius
-                    position: 'absolute'
-                }} />
-            </div>
-        </motion.div>
-    );
-};
-
-// UFO Animation - Optimized
+// UFO Animation - Keeps DOM for complex interactions/css-transforms which are cheap for single elements
 const FloatingUFO = () => {
     const [message, setMessage] = React.useState("Hi! 👋");
     const [position, setPosition] = React.useState({ x: 110, y: 20 });
     const [duration, setDuration] = React.useState(3.5);
     const [opacity, setOpacity] = React.useState(1);
-    const isMounted = React.useRef(true); // Usage of ref for mounted state
+    const isMounted = React.useRef(true);
 
     React.useEffect(() => {
         isMounted.current = true;
@@ -100,7 +23,7 @@ const FloatingUFO = () => {
             if (!isMounted.current) return;
             const messages = ["Hi! 👋", "Order Fast! 🚀", "Yum! 🍔", "Hungry? 🍕", "Vroom! 💨"];
             setMessage(prev => messages[(messages.indexOf(prev) + 1) % messages.length]);
-        }, 4000); // Slower updates
+        }, 4000);
 
         return () => {
             clearInterval(messageInterval);
@@ -114,15 +37,15 @@ const FloatingUFO = () => {
         const moveUFO = async () => {
             if (!isMounted.current) return;
 
-            // 1. ENTERING / ROAMING SEQUENCE
-            const moves = 4; // Fixed number of moves, less random churn
+            // 1. ENTERING / ROAMING
+            const moves = 4;
 
             for (let i = 0; i < moves; i++) {
                 if (!isMounted.current) return;
                 const newX = 10 + Math.random() * 80;
                 const newY = 10 + Math.random() * 60;
 
-                setDuration(4); // Slower, smoother
+                setDuration(4);
                 setPosition({ x: newX, y: newY });
 
                 await new Promise(r => timeoutId = setTimeout(r, 4500));
@@ -162,14 +85,14 @@ const FloatingUFO = () => {
             animate={{
                 x: `${position.x}vw`,
                 y: `${position.y}vh`,
-                rotate: [0, -3, 3, 0], // Reduced rotation
+                rotate: [0, -3, 3, 0],
             }}
             transition={{
                 x: { duration: duration, ease: "easeInOut" },
                 y: { duration: duration, ease: "easeInOut" },
                 rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
             }}
-            className="will-change-transform" // CSS optimization
+            className="will-change-transform"
             style={{
                 position: 'fixed',
                 zIndex: 1,
@@ -205,16 +128,14 @@ const FloatingUFO = () => {
     );
 };
 
-// ... Auth Component ...
-// (We will update the number of particles in the Auth component next)
-
 const Auth = () => {
     const navigate = useNavigate();
     const { login, register } = useAuth();
+    const canvasRef = useRef(null);
 
     // Mode: 'login' | 'register' | 'forgot'
     const [mode, setMode] = useState('login');
-    const [step, setStep] = useState(1); // Only for 'forgot' mode (1: Email, 2: OTP/Reset)
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
     // Form State
@@ -228,58 +149,182 @@ const Auth = () => {
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
 
-    // Dynamic Background Elements
-    const [stars, setStars] = useState([]);
-    const [foods, setFoods] = useState([]);
-    const [meteors, setMeteors] = useState([]);
-
+    // --- CANVAS ANIMATION ENGINE ---
     useEffect(() => {
-        // Generate Stars
-        const genStars = Array.from({ length: 20 }).map((_, i) => ({ // Reduced from 40 to 20
-            id: i,
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            size: Math.random() * 2 + 0.5,
-            delay: Math.random() * 5
-        }));
-        setStars(genStars);
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
 
-        // Generate Subtle Floating Food - Reduced
-        const foodEmojis = ['🍔', '🍕', '🍩', '🍦']; // Reduced to 4 items
-        const genFoods = foodEmojis.map((emoji, i) => {
-            let x, y;
-            let attempts = 0;
-            // Spread across entire page, only avoid the small center login box
-            do {
-                x = Math.random() * 100;
-                y = Math.random() * 100;
-                attempts++;
-                // Only exclude the actual login box area (much smaller)
-            } while (attempts < 50 && x > 35 && x < 65 && y > 25 && y < 75);
+        // Resize Canvas
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-            return {
-                id: i,
-                emoji,
-                x,
-                y,
-                delay: i * 0.5, // Staggered delays for one-by-one effect
-                scale: Math.random() * 0.4 + 0.9,
-                index: i
-            };
-        });
-        setFoods(genFoods);
+        // Assets
+        const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🍦', '🍪'];
 
-        // Generate Falling Meteors - Reduced
-        const meteorEmojis = ['🍕', '🍔', '🌮']; // Reduced to 3 items
-        const genMeteors = meteorEmojis.map((emoji, i) => ({
-            id: i,
-            emoji,
-            startX: Math.random() * 80, // Start from different X positions
-            delay: i * 4, // More staggered start times
-            index: i
-        }));
-        setMeteors(genMeteors);
+        // Entities
+        const stars = [];
+        const foods = [];
+        const meteors = [];
+
+        // Helper: Random Range
+        const random = (min, max) => Math.random() * (max - min) + min;
+
+        // Initialize Objects
+        const init = () => {
+            // Create Stars
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: random(0, canvas.width),
+                    y: random(0, canvas.height),
+                    size: random(0.5, 2.5),
+                    opacity: random(0.1, 0.8),
+                    speed: random(0.05, 0.2)
+                });
+            }
+
+            // Create Floating Food
+            for (let i = 0; i < 8; i++) {
+                foods.push({
+                    x: random(0, canvas.width),
+                    y: random(0, canvas.height),
+                    emoji: foodEmojis[Math.floor(random(0, foodEmojis.length))],
+                    size: random(20, 40),
+                    speedX: random(-0.3, 0.3),
+                    speedY: random(-0.3, 0.3),
+                    opacity: 0,
+                    targetOpacity: 0.6,
+                    fadeSpeed: 0.01,
+                    phase: 'in' // in, wait, out
+                });
+            }
+        };
+
+        // Draw Frame
+        const render = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Stars
+            ctx.fillStyle = "white";
+            stars.forEach(star => {
+                ctx.globalAlpha = star.opacity;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Move Stars (Parallax effect)
+                star.y -= star.speed;
+                if (star.y < 0) {
+                    star.y = canvas.height;
+                    star.x = random(0, canvas.width);
+                }
+            });
+
+            // 2. Draw Meteors (Random Chance spawn)
+            if (Math.random() < 0.005) { // Spawn chance
+                meteors.push({
+                    x: random(0, canvas.width),
+                    y: -50,
+                    size: random(2, 4),
+                    speed: random(5, 10),
+                    angle: Math.PI / 4 // 45 degrees
+                });
+            }
+
+            // Render & Update Meteors
+            for (let i = meteors.length - 1; i >= 0; i--) {
+                const m = meteors[i];
+                ctx.globalAlpha = 1;
+
+                // Draw Trail
+                const gradient = ctx.createLinearGradient(m.x, m.y, m.x - 50, m.y - 50);
+                gradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
+                gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = m.size;
+                ctx.beginPath();
+                ctx.moveTo(m.x, m.y);
+                ctx.lineTo(m.x - 80, m.y - 80); // Trail length
+                ctx.stroke();
+
+                // Draw Head
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Move
+                m.x += m.speed;
+                m.y += m.speed;
+
+                // Remove if out of bounds
+                if (m.y > canvas.height + 100) {
+                    meteors.splice(i, 1);
+                }
+            }
+
+            // 3. Draw Floating Food
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            foods.forEach(food => {
+                // Update Opacity
+                if (food.phase === 'in') {
+                    food.opacity += food.fadeSpeed;
+                    if (food.opacity >= food.targetOpacity) food.phase = 'wait';
+                } else if (food.phase === 'wait') {
+                    // slight chance to start fading out
+                    if (Math.random() < 0.005) food.phase = 'out';
+                } else if (food.phase === 'out') {
+                    food.opacity -= food.fadeSpeed;
+                    if (food.opacity <= 0) {
+                        // Respawn
+                        food.opacity = 0;
+                        food.x = random(0, canvas.width);
+                        food.y = random(0, canvas.height);
+                        food.phase = 'in';
+                        food.emoji = foodEmojis[Math.floor(random(0, foodEmojis.length))];
+                    }
+                }
+
+                // Move
+                food.x += food.speedX;
+                food.y += food.speedY;
+
+                // Wrap around screen
+                if (food.x > canvas.width) food.x = 0;
+                if (food.x < 0) food.x = canvas.width;
+                if (food.y > canvas.height) food.y = 0;
+                if (food.y < 0) food.y = canvas.height;
+
+                // Draw
+                ctx.globalAlpha = Math.max(0, food.opacity);
+                ctx.font = `${food.size}px Arial`;
+                // Simple Shadow
+                ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+                ctx.shadowBlur = 10;
+                ctx.fillText(food.emoji, food.x, food.y);
+                ctx.shadowBlur = 0; // Reset
+            });
+
+            animationFrameId = requestAnimationFrame(render);
+        };
+
+        init();
+        render();
+
+        return () => {
+            window.removeEventListener('resize', resizeCanvas);
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
+
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -291,7 +336,7 @@ const Auth = () => {
         setStep(1);
         setError(null);
         setSuccessMsg(null);
-        setFormData(prev => ({ ...prev, otp: '', newPassword: '' })); // Clear sensitive/temp fields
+        setFormData(prev => ({ ...prev, otp: '', newPassword: '' }));
     };
 
     // --- SUBMISSION HANDLERS ---
@@ -387,26 +432,15 @@ const Auth = () => {
 
     return (
         <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center relative overflow-hidden font-sans">
-            {/* Backgrounds */}
-            <div className="absolute inset-0 z-0">
-                {stars.map(star => (
-                    <div key={star.id} className="absolute bg-white rounded-full opacity-60" style={{ left: `${star.x}%`, top: `${star.y}%`, width: `${star.size}px`, height: `${star.size}px` }} />
-                ))}
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-900/20 via-transparent to-orange-900/20" />
-            </div>
-            <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-                {foods.map(food => (
-                    <FloatingFood key={food.id} {...food} />
-                ))}
-                {meteors.map(meteor => (
-                    <FallingMeteor key={`meteor-${meteor.id}`} {...meteor} />
-                ))}
-            </div>
+            {/* CANVAS BACKGROUND */}
+            <canvas
+                ref={canvasRef}
+                className="absolute inset-0 z-0"
+                style={{ background: 'linear-gradient(to bottom right, #0a0a0f, #1a1a2e)' }}
+            />
 
-
-            {/* Floating UFO */}
+            {/* Floating UFO (Kept as DOM element for simplicity) */}
             <FloatingUFO />
-
 
             {/* Auth Card */}
             <motion.div
