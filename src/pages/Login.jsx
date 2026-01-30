@@ -8,13 +8,13 @@ import {
     AlertCircle, Sparkles, ChevronRight
 } from 'lucide-react';
 
-// Floating Food Component with mysterious twinkling effect like space stars
+// Floating Food Component - Optimized
 const FloatingFood = ({ emoji, x, y, delay, scale, index }) => {
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{
-                opacity: [0, 0, 0.35, 0.35, 0.35, 0.35, 0, 0], // Reduced visibility - more subtle
+                opacity: [0, 0, 0.3, 0.3, 0.3, 0.3, 0, 0], // Reduced max opacity
             }}
             transition={{
                 duration: 6 + (index % 3) * 1.5,
@@ -23,13 +23,13 @@ const FloatingFood = ({ emoji, x, y, delay, scale, index }) => {
                 repeatDelay: index * 0.4,
                 ease: "easeInOut"
             }}
-            className="absolute pointer-events-none select-none"
+            className="absolute pointer-events-none select-none will-change-transform" // Added will-change
             style={{
                 left: `${x}%`,
                 top: `${y}%`,
-                fontSize: `${scale * 2}rem`, // Slightly smaller
-                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.2))',
-                textShadow: '0 0 8px rgba(255,255,255,0.3)',
+                fontSize: `${scale * 1.5}rem`, // Slightly smaller
+                // Removed heavy drop-shadow, kept simple text-shadow
+                textShadow: '0 0 5px rgba(255,255,255,0.2)',
             }}
         >
             {emoji}
@@ -37,7 +37,7 @@ const FloatingFood = ({ emoji, x, y, delay, scale, index }) => {
     );
 };
 
-// Falling Meteor Food Component - Professional fire effects like real meteors
+// Falling Meteor Component - Optimized
 const FallingMeteor = ({ emoji, startX, delay, index }) => {
     return (
         <motion.div
@@ -60,126 +60,99 @@ const FallingMeteor = ({ emoji, startX, delay, index }) => {
                 repeatDelay: 10 + Math.random() * 8,
                 ease: "linear"
             }}
-            className="absolute pointer-events-none select-none"
+            className="absolute pointer-events-none select-none will-change-transform"
             style={{
                 left: `${startX}%`,
                 top: 0,
-                fontSize: '3rem',
-                filter: 'drop-shadow(0 0 25px rgba(255, 80, 0, 1)) drop-shadow(0 0 50px rgba(255, 120, 0, 0.6))',
-                textShadow: '0 0 30px rgba(255, 80, 0, 1), 0 0 50px rgba(255, 120, 0, 0.8)',
+                fontSize: '2.5rem',
+                // Single drop-shadow instead of double, reduced blur
+                filter: 'drop-shadow(0 0 10px rgba(255, 80, 0, 0.8))',
             }}
         >
             {emoji}
-            {/* Realistic Fire Trail */}
+            {/* Simplified Fire Trail - CSS only, no extra divs if possible, or simplified */}
             <div style={{ position: 'absolute', right: '100%', top: '50%', transform: 'translateY(-50%)' }}>
-                {/* Main fire trail */}
                 <div style={{
-                    width: '80px',
-                    height: '8px',
-                    background: 'linear-gradient(to left, rgba(255, 60, 0, 0.95), rgba(255, 120, 0, 0.7), rgba(255, 180, 0, 0.4), transparent)',
+                    width: '60px',
+                    height: '6px',
+                    background: 'linear-gradient(to left, rgba(255, 60, 0, 0.8), transparent)',
                     borderRadius: '50%',
-                    filter: 'blur(3px)',
+                    filter: 'blur(2px)', // Reduced blur radius
                     position: 'absolute'
-                }} />
-                {/* Outer glow */}
-                <div style={{
-                    width: '100px',
-                    height: '15px',
-                    background: 'linear-gradient(to left, rgba(255, 100, 0, 0.6), rgba(255, 150, 0, 0.3), transparent)',
-                    borderRadius: '50%',
-                    filter: 'blur(6px)',
-                    position: 'absolute',
-                    top: '-4px'
                 }} />
             </div>
         </motion.div>
     );
 };
 
-// UFO Animation - Roams, Leaves, and Returns
+// UFO Animation - Optimized
 const FloatingUFO = () => {
     const [message, setMessage] = React.useState("Hi! 👋");
-    // Initial state: visible on screen
-    const [position, setPosition] = React.useState({ x: 110, y: 20 }); // Start off-screen right
+    const [position, setPosition] = React.useState({ x: 110, y: 20 });
     const [duration, setDuration] = React.useState(3.5);
     const [opacity, setOpacity] = React.useState(1);
+    const isMounted = React.useRef(true); // Usage of ref for mounted state
 
     React.useEffect(() => {
-        // Alternate messages
+        isMounted.current = true;
+
         const messageInterval = setInterval(() => {
+            if (!isMounted.current) return;
             const messages = ["Hi! 👋", "Order Fast! 🚀", "Yum! 🍔", "Hungry? 🍕", "Vroom! 💨"];
             setMessage(prev => messages[(messages.indexOf(prev) + 1) % messages.length]);
-        }, 3000);
+        }, 4000); // Slower updates
 
-        return () => clearInterval(messageInterval);
+        return () => {
+            clearInterval(messageInterval);
+            isMounted.current = false;
+        };
     }, []);
 
     React.useEffect(() => {
-        let isMounted = true;
         let timeoutId;
 
         const moveUFO = async () => {
-            if (!isMounted) return;
+            if (!isMounted.current) return;
 
             // 1. ENTERING / ROAMING SEQUENCE
-            // We'll do a set of 5-8 random moves on screen
-            const moves = Math.floor(Math.random() * 4) + 5; // 5 to 8 moves
+            const moves = 4; // Fixed number of moves, less random churn
 
             for (let i = 0; i < moves; i++) {
-                if (!isMounted) return;
-                // Random position within 10-90% width, 10-80% height
+                if (!isMounted.current) return;
                 const newX = 10 + Math.random() * 80;
-                const newY = 10 + Math.random() * 70;
+                const newY = 10 + Math.random() * 60;
 
-                setDuration(3 + Math.random() * 2); // 3-5 seconds duration
+                setDuration(4); // Slower, smoother
                 setPosition({ x: newX, y: newY });
-                setOpacity(1);
 
-                // Wait for movement to finish
-                await new Promise(r => timeoutId = setTimeout(r, 4000));
+                await new Promise(r => timeoutId = setTimeout(r, 4500));
             }
 
-            // 2. LEAVING SEQUENCE
-            if (!isMounted) return;
-            // Decide exit direction (Left or Right)
+            // 2. LEAVING
+            if (!isMounted.current) return;
             const exitRight = Math.random() > 0.5;
-            const exitX = exitRight ? 120 : -20;
-            const exitY = 20 + Math.random() * 60;
+            setDuration(3);
+            setPosition({ x: exitRight ? 120 : -20, y: 30 });
+            await new Promise(r => timeoutId = setTimeout(r, 3000));
 
-            setDuration(2.5); // Fast exit
-            setPosition({ x: exitX, y: exitY });
-
-            // Wait for exit to finish
-            await new Promise(r => timeoutId = setTimeout(r, 2500));
-
-            // 3. GONE SEQUENCE
-            if (!isMounted) return;
-            setOpacity(0); // Hide just in case, though it's off screen
-            const goneDuration = 5000 + Math.random() * 10000; // 5 to 15 seconds gone
+            // 3. GONE
+            if (!isMounted.current) return;
+            const goneDuration = 8000;
             await new Promise(r => timeoutId = setTimeout(r, goneDuration));
 
-            // 4. PREPARE RE-ENTRY
-            if (!isMounted) return;
-            // Teleport to random side for re-entry (hidden)
+            // 4. RETURN
+            if (!isMounted.current) return;
             const enterRight = Math.random() > 0.5;
-            const startX = enterRight ? 120 : -20;
-            const startY = 20 + Math.random() * 60;
-
-            setDuration(0); // Instant teleport
-            setPosition({ x: startX, y: startY });
-
-            // Small pause to ensure teleport processed
+            setDuration(0);
+            setPosition({ x: enterRight ? 120 : -20, y: 40 });
             await new Promise(r => timeoutId = setTimeout(r, 100));
-            setOpacity(1); // Make visible again for next loop
 
-            // Loop restarts
             moveUFO();
         };
 
         moveUFO();
 
         return () => {
-            isMounted = false;
             clearTimeout(timeoutId);
         };
     }, []);
@@ -189,19 +162,14 @@ const FloatingUFO = () => {
             animate={{
                 x: `${position.x}vw`,
                 y: `${position.y}vh`,
-                opacity: opacity,
-                rotate: [0, -5, 5, -3, 3, 0],
+                rotate: [0, -3, 3, 0], // Reduced rotation
             }}
             transition={{
                 x: { duration: duration, ease: "easeInOut" },
                 y: { duration: duration, ease: "easeInOut" },
-                opacity: { duration: 0.5 },
-                rotate: {
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                }
+                rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
             }}
+            className="will-change-transform" // CSS optimization
             style={{
                 position: 'fixed',
                 zIndex: 1,
@@ -210,79 +178,35 @@ const FloatingUFO = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '10px',
-                filter: 'drop-shadow(0 0 20px rgba(0, 255, 100, 0.6))'
             }}
         >
-            {/* UFO */}
-            <motion.div
-                animate={{
-                    y: [0, -10, 0],
-                    scale: [1, 1.05, 1]
-                }}
-                transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                }}
-                style={{
-                    fontSize: '4rem',
-                    filter: 'drop-shadow(0 0 15px rgba(0, 255, 100, 0.8))'
-                }}
-            >
+            <div style={{ fontSize: '4rem', filter: 'drop-shadow(0 0 8px rgba(0, 255, 100, 0.4))' }}>
                 🛸
-            </motion.div>
+            </div>
 
-            {/* Alien-Style Message Bubble */}
             <motion.div
                 key={message}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
                 style={{
-                    background: 'rgba(0, 20, 10, 0.9)',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
+                    background: 'rgba(0, 20, 10, 0.8)',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
                     color: '#00ff66',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
+                    fontSize: '0.9rem',
                     fontFamily: 'monospace',
-                    letterSpacing: '2px',
-                    textTransform: 'uppercase',
-                    boxShadow: '0 0 20px rgba(0, 255, 100, 0.6), inset 0 0 10px rgba(0, 255, 100, 0.2)',
-                    whiteSpace: 'nowrap',
-                    border: '1px solid rgba(0, 255, 100, 0.5)',
-                    textShadow: '0 0 10px rgba(0, 255, 100, 0.8)'
+                    border: '1px solid rgba(0, 255, 100, 0.3)',
                 }}
             >
                 {message}
             </motion.div>
-
-            {/* UFO Beam Effect */}
-            <motion.div
-                animate={{
-                    opacity: [0.3, 0.6, 0.3],
-                    scaleY: [0.8, 1, 0.8]
-                }}
-                transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                }}
-                style={{
-                    position: 'absolute',
-                    top: '60px',
-                    width: '80px',
-                    height: '100px',
-                    background: 'linear-gradient(to bottom, rgba(0, 255, 100, 0.4), transparent)',
-                    clipPath: 'polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%)',
-                    filter: 'blur(8px)',
-                    zIndex: -1
-                }}
-            />
         </motion.div>
     );
 };
+
+// ... Auth Component ...
+// (We will update the number of particles in the Auth component next)
 
 const Auth = () => {
     const navigate = useNavigate();
@@ -311,17 +235,17 @@ const Auth = () => {
 
     useEffect(() => {
         // Generate Stars
-        const genStars = Array.from({ length: 40 }).map((_, i) => ({
+        const genStars = Array.from({ length: 20 }).map((_, i) => ({ // Reduced from 40 to 20
             id: i,
             x: Math.random() * 100,
             y: Math.random() * 100,
-            size: Math.random() * 2.5 + 0.5,
+            size: Math.random() * 2 + 0.5,
             delay: Math.random() * 5
         }));
         setStars(genStars);
 
-        // Generate Subtle Floating Food - Reduced by 70%
-        const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🍦', '🍪']; // Only 6 items instead of 20
+        // Generate Subtle Floating Food - Reduced
+        const foodEmojis = ['🍔', '🍕', '🍩', '🍦']; // Reduced to 4 items
         const genFoods = foodEmojis.map((emoji, i) => {
             let x, y;
             let attempts = 0;
@@ -345,13 +269,13 @@ const Auth = () => {
         });
         setFoods(genFoods);
 
-        // Generate Falling Meteors
-        const meteorEmojis = ['🍕', '🍔', '🌮', '🍩', '🍟'];
+        // Generate Falling Meteors - Reduced
+        const meteorEmojis = ['🍕', '🍔', '🌮']; // Reduced to 3 items
         const genMeteors = meteorEmojis.map((emoji, i) => ({
             id: i,
             emoji,
             startX: Math.random() * 80, // Start from different X positions
-            delay: i * 2.5, // Staggered start times
+            delay: i * 4, // More staggered start times
             index: i
         }));
         setMeteors(genMeteors);

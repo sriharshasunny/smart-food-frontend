@@ -49,16 +49,13 @@ const LandingPage = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Food Rain Configuration
+    // Food Rain Configuration - Reduced count
     const foodItems = [
-        { emoji: "🍔", x: 10, delay: 0, size: 40, duration: 15 },
-        { emoji: "🍕", x: 25, delay: 5, size: 30, duration: 12 },
-        { emoji: "🍟", x: 40, delay: 2, size: 35, duration: 18 },
-        { emoji: "🌭", x: 60, delay: 8, size: 45, duration: 20 },
-        { emoji: "🍿", x: 75, delay: 3, size: 25, duration: 14 },
-        { emoji: "🍩", x: 90, delay: 6, size: 50, duration: 16 },
-        { emoji: "🥑", x: 15, delay: 10, size: 30, duration: 22 },
-        { emoji: "🌮", x: 80, delay: 12, size: 40, duration: 19 },
+        { emoji: "🍔", x: 10, delay: 0, size: 40, duration: 25 }, // Slower duration
+        { emoji: "🍕", x: 25, delay: 5, size: 30, duration: 20 },
+        { emoji: "🍟", x: 75, delay: 2, size: 35, duration: 28 },
+        { emoji: "🍩", x: 90, delay: 6, size: 50, duration: 24 },
+        { emoji: "🥑", x: 50, delay: 10, size: 30, duration: 30 },
     ];
 
     return (
@@ -73,18 +70,26 @@ const LandingPage = () => {
 
             {/* ==================== 1. APPETIZING HERO ==================== */}
             <div className="relative min-h-[95vh] flex items-center justify-center overflow-hidden px-4 md:px-10">
-                {/* Dynamic Backgrounds */}
-                <motion.div
-                    animate={{
-                        background: [
-                            "radial-gradient(circle at 50% 50%, rgba(255,100,0,0.15) 0%, rgba(0,0,0,0) 50%)",
-                            "radial-gradient(circle at 60% 40%, rgba(255,0,0,0.15) 0%, rgba(0,0,0,0) 50%)",
-                            "radial-gradient(circle at 40% 60%, rgba(255,100,0,0.15) 0%, rgba(0,0,0,0) 50%)"
-                        ]
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, repeatType: "mirror" }}
-                    className="absolute inset-0 z-0"
-                ></motion.div>
+                {/* Dynamic Backgrounds - Optimized: No layout shift or heavy repaints */}
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                    {/* Static gradient blobs that move slowly via transform */}
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.2, 1],
+                            opacity: [0.3, 0.5, 0.3]
+                        }}
+                        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-orange-600/20 blur-[100px]"
+                    />
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.1, 1],
+                            opacity: [0.2, 0.4, 0.2]
+                        }}
+                        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                        className="absolute bottom-[-20%] right-[-10%] w-[80vw] h-[80vw] rounded-full bg-purple-900/20 blur-[100px]"
+                    />
+                </div>
 
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
 
@@ -93,7 +98,7 @@ const LandingPage = () => {
                     {/* Text Content */}
                     <motion.div
                         style={{ opacity: heroOpacity, y: heroY }}
-                        className="space-y-8 text-center lg:text-left"
+                        className="space-y-8 text-center lg:text-left will-change-transform" // Optimized
                     >
                         <motion.div
                             initial={{ width: 0 }}
