@@ -289,9 +289,9 @@ const RestaurantDetails = () => {
                                             </span>
                                             <div className="flex-1 h-px bg-gradient-to-l from-gray-200 to-transparent"></div>
                                         </div>
-                                        <div className="grid grid-cols-1 gap-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                             {displayGroups[category].map((item) => (
-                                                <FoodCard key={item.id} food={item} variant="horizontal" />
+                                                <FoodCard key={item.id} food={item} />
                                             ))}
                                         </div>
                                     </motion.div>

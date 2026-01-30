@@ -18,6 +18,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ShopProvider } from './context/ShopContext';
 import Chatbot from './components/Chatbot';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
       <ThemeProvider>
         <ShopProvider>
           <Router>
+            <ScrollToTop />
             <Routes>
               {/* Landing Page Route (No Layout) */}
               <Route path="/" element={<LandingPage />} />
