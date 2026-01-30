@@ -3,7 +3,7 @@ import { Star, Plus, Heart, Clock, Flame } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { motion } from 'framer-motion';
 
-const FoodCard = ({ food, restaurantName, variant = 'vertical' }) => {
+const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = false }) => {
     const { addToCart, toggleWishlist, isInWishlist, cart } = useShop();
     const isWishlisted = isInWishlist(food.id);
 
@@ -135,8 +135,8 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical' }) => {
     return (
         <div className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-500 overflow-hidden group border border-gray-100 hover:border-orange-100 flex flex-col h-full transform hover:-translate-y-1 relative">
 
-            {/* Image Section - Taller (h-44) & Premium */}
-            <div className="relative h-44 overflow-hidden rounded-t-[1.5rem]">
+            {/* Image Section - Adaptive Height for Bento Grid */}
+            <div className={`relative overflow-hidden rounded-t-[1.5rem] ${isFeatured ? 'h-52 md:h-60' : 'h-44'}`}>
                 <img
                     src={food.image}
                     alt={food.name}
