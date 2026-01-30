@@ -10,11 +10,11 @@ const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
 
-    // --- 3D CANVAS ENGINE (Rotating Food Sphere) ---
+    // --- 3D CANVAS ENGINE (Rotating Food Sphere + Core) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false });
+        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for no transparency on bg
         let animationFrameId;
 
         let width, height, centerX, centerY;
@@ -24,108 +24,170 @@ const LandingPage = () => {
         const resize = () => {
             width = window.innerWidth;
             height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+            // Handle high DPI displays
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.scale(dpr, dpr);
+
             centerX = width / 2;
             centerY = height / 2;
         };
         window.addEventListener('resize', resize);
         resize();
 
-        // Assets
-        const foodEmojis = ['🍔', '🍕', '🌮', '🍩', '🍪', '🥗', '🍱', '🍜', '🍤', '🍗', '🥪', '🥨'];
+        // --- Assets ---
+        const foodEmojis = ['🍔', '🍕', '🌮', '🍩', '🍪', '🥗', '🍱', '🍜', '🍤', '🍗', '🥪', '🥨', '🧁', '🍟'];
 
-        // Sphere Configuration
-        const radius = Math.min(width, height) * 0.4; // Slightly larger
+        // --- Configuration ---
+        const particleCount = 60; // Optimized count for visuals vs performance
+        const radiusPercent = window.innerWidth < 768 ? 0.35 : 0.28; // Medium size
+
+        // --- State ---
         const particles = [];
-        const numParticles = 80; // More particles for fuller look
+        const stars = [];
 
-        // Initialize Particles on Sphere Surface (Fibonacci Sphere)
-        for (let i = 0; i < numParticles; i++) {
-            const y = 1 - (i / (numParticles - 1)) * 2;
-            const radiusAtY = Math.sqrt(1 - y * y);
-            const theta = i * Math.PI * (3 - Math.sqrt(5)); // Golden Angle
-
-            const x = Math.cos(theta) * radiusAtY;
-            const z = Math.sin(theta) * radiusAtY;
-
-            particles.push({
-                x: x * radius,
-                y: y * radius,
-                z: z * radius,
-                emoji: foodEmojis[i % foodEmojis.length],
-                origX: x * radius,
-                origY: y * radius,
-                origZ: z * radius
+        // Initialize Stars
+        for (let i = 0; i < 150; i++) {
+            stars.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 2,
+                opacity: Math.random(),
+                speed: Math.random() * 0.5 + 0.1
             });
         }
 
-        const render = () => {
-            // Clear
-            ctx.fillStyle = '#0a0a0f';
+        // Initialize Food Particles (Fibonacci Sphere)
+        for (let i = 0; i < particleCount; i++) {
+            const y = 1 - (i / (particleCount - 1)) * 2;
+            const radiusAtY = Math.sqrt(1 - y * y);
+            const theta = i * Math.PI * (3 - Math.sqrt(5)); // Golden Angle
+
+            particles.push({
+                x: Math.cos(theta) * radiusAtY,
+                y: y,
+                z: Math.sin(theta) * radiusAtY,
+                emoji: foodEmojis[i % foodEmojis.length],
+                scale: 1
+            });
+        }
+
+        let lastTime = 0;
+
+        const render = (time) => {
+            const deltaTime = time - lastTime;
+            lastTime = time;
+
+            // Clear Screen
+            // Dark Space Background
+            const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));
+            bgGradient.addColorStop(0, '#1a1a2e');
+            bgGradient.addColorStop(1, '#000000');
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
-            // Draw Background Gradient - Darker for mobile text contrast
-            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.8);
-            gradient.addColorStop(0, '#131325');
-            gradient.addColorStop(1, '#000000');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
+            // --- Draw Stars (Background) ---
+            ctx.fillStyle = '#ffffff';
+            stars.forEach(star => {
+                ctx.globalAlpha = star.opacity * 0.8;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                // Twinkle
+                star.opacity += (Math.random() - 0.5) * 0.1;
+                star.opacity = Math.max(0.1, Math.min(1, star.opacity));
+            });
+            ctx.globalAlpha = 1;
 
-            // Rotate Globa
-            rotationY += 0.002; // Slower, smoother rotation (User requested smooth)
-            rotationX += 0.0005;
+            // --- Rotation Logic ---
+            // Constant smooth rotation
+            rotationY += 0.003;
+            rotationX = Math.sin(time * 0.0005) * 0.2; // Gentle tilt
 
-            particles.forEach(p => {
+            // --- Draw Central Planet (The "Core") ---
+            // This adds the "3D Object" feel requested
+            const coreRadius = Math.min(width, height) * (window.innerWidth < 768 ? 0.15 : 0.12);
+
+            // Outer Glow
+            const glowGradient = ctx.createRadialGradient(centerX, centerY, coreRadius * 0.8, centerX, centerY, coreRadius * 1.5);
+            glowGradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
+            glowGradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreRadius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Planet Body
+            const planetGradient = ctx.createRadialGradient(centerX - coreRadius * 0.3, centerY - coreRadius * 0.3, 0, centerX, centerY, coreRadius);
+            planetGradient.addColorStop(0, '#ff9a9e');
+            planetGradient.addColorStop(0.5, '#fe8c00');
+            planetGradient.addColorStop(1, '#d32f2f');
+            ctx.fillStyle = planetGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // --- Draw Particles ---
+            const orbitRadius = Math.min(width, height) * radiusPercent;
+
+            // Project particles
+            const projectedParticles = particles.map(p => {
                 // Rotate around Y
-                let x1 = p.origX * Math.cos(rotationY) - p.origZ * Math.sin(rotationY);
-                let z1 = p.origZ * Math.cos(rotationY) + p.origX * Math.sin(rotationY);
+                let x1 = p.x * Math.cos(rotationY) - p.z * Math.sin(rotationY);
+                let z1 = p.z * Math.cos(rotationY) + p.x * Math.sin(rotationY);
 
                 // Rotate around X
-                let y1 = p.origY * Math.cos(rotationX) - z1 * Math.sin(rotationX);
-                let z2 = z1 * Math.cos(rotationX) + p.origY * Math.sin(rotationX);
+                let y1 = p.y * Math.cos(rotationX) - z1 * Math.sin(rotationX);
+                let z2 = z1 * Math.cos(rotationX) + p.y * Math.sin(rotationX);
 
-                // Project
-                const scale = 500 / (500 + z2); // Perspective
-                const screenX = centerX + x1 * scale;
-                const screenY = centerY + y1 * scale;
-                const fontSize = 40 * scale;
+                // Perspective PROJECTION
+                // Camera is at z = 2
+                const fov = 1.5;
+                const scale = fov / (fov + z2 * 0.5);
 
-                // Store projected values for sorting
-                p.screenX = screenX;
-                p.screenY = screenY;
-                p.scale = scale;
-                p.z = z2;
-                p.fontSize = fontSize;
+                return {
+                    x: centerX + x1 * orbitRadius * scale,
+                    y: centerY + y1 * orbitRadius * scale,
+                    z: z2,
+                    scale: scale,
+                    emoji: p.emoji
+                };
             });
 
-            // Painter's Algorithm: Sort by Z (farthest first)
-            particles.sort((a, b) => b.z - a.z);
+            // Sort by Z index (painter's algorithm)
+            projectedParticles.sort((a, b) => b.z - a.z);
 
-            // Draw
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            particles.forEach(p => {
-                ctx.globalAlpha = p.scale; // Fade remote items
-                ctx.font = `${p.fontSize}px Arial`;
+            projectedParticles.forEach(p => {
+                // If behind the planet, check simplified occlusion or just draw all for transparency feel
+                // But for "3D", things behind should be hidden or faded. 
+                // However, the planet is small enough. Let's just draw.
 
-                // Add Glow to close items
-                if (p.z < 0) {
-                    ctx.shadowColor = 'rgba(255, 165, 0, 0.5)';
-                    ctx.shadowBlur = 10;
-                } else {
-                    ctx.shadowBlur = 0;
-                }
+                // Dynamic Opacity based on Z
+                const alpha = Math.max(0.2, p.scale); // Fade out back items
+                ctx.globalAlpha = alpha;
 
-                ctx.fillText(p.emoji, p.screenX, p.screenY);
+                const size = 30 * p.scale;
+                ctx.font = `${size}px Arial`;
+
+                // Shadow for depth
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 5;
+
+                ctx.fillText(p.emoji, p.x, p.y);
+
+                ctx.shadowBlur = 0;
             });
-            ctx.shadowBlur = 0; // Reset
             ctx.globalAlpha = 1;
 
             animationFrameId = requestAnimationFrame(render);
         };
-        render();
+        render(0);
 
         return () => {
             window.removeEventListener('resize', resize);

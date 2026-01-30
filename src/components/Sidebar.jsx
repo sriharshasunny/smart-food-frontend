@@ -38,7 +38,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={toggleSidebar}
-                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 md:hidden"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
                     />
                 )}
             </AnimatePresence>
@@ -46,9 +46,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             {/* Sidebar Container */}
             <motion.div
                 className={`fixed top-0 left-0 h-full w-[280px] z-[60] transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
-                    } md:translate-x-0 md:sticky md:top-0 md:h-screen md:w-[280px] shrink-0`}
+                    } shrink-0`}
             >
-                <div className="h-full w-full relative overflow-hidden md:rounded-tr-[2.5rem] shadow-2xl flex flex-col bg-white">
+                <div className="h-full w-full relative overflow-hidden rounded-tr-[2.5rem] shadow-2xl flex flex-col bg-white">
 
                     {/* Header with Gradient Border */}
                     <div className="relative rounded-tr-[2.5rem] shrink-0">
@@ -68,7 +68,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             </div>
                             <button
                                 onClick={toggleSidebar}
-                                className="md:hidden p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-all active:scale-90"
+                                className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-all active:scale-90"
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -84,7 +84,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 <Link
                                     key={item.label}
                                     to={item.path}
-                                    onClick={() => window.innerWidth < 1024 && toggleSidebar()}
+                                    onClick={toggleSidebar}
                                     className="relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group"
                                 >
                                     {/* Liquid Background Animation */}
