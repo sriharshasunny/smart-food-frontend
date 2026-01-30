@@ -92,37 +92,26 @@ const Home = () => {
     const filterRef = React.useRef(null);
     const sectionHeaderRef = React.useRef(null); // Track the "Explore Food Items" text
 
-    // Filter Bar Sticky Observer - Precise 75%/50% synchronization
+    // Filter Bar Sticky Observer - Optimized with IntersectionObserver (Zero Layout Thrashing)
     React.useEffect(() => {
-        const handleScroll = () => {
-            if (filterRef.current) {
-                const rect = filterRef.current.getBoundingClientRect();
-                const navbarHeight = window.innerWidth >= 768 ? 70 : 54;
-                const filterHeight = rect.height;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // When sentinel scrolls out of view (isIntersecting false) & bounding box is above top (negative top), stick it.
+                // However, simpler: if sentinel is NOT intersecting and its bounding rect is near top.
+                // Actually, let's just track if the sentinel is visible.
+                // We want sticky to be active when the static filter bar is scrolled PAST.
+                // So we place a sentinel right AFTER the static bar.
+                setIsSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+            },
+            { threshold: 0, rootMargin: "-80px 0px 0px 0px" } // Adjust rootMargin based on navbar height
+        );
 
-                // Calculate the position thresholds
-                // Sticky appears when 75% of the filter is hidden (top + 75% of height crosses navbar bottom)
-                const appearThreshold = rect.top + (filterHeight * 0.75);
-                // Sticky disappears when 50% of the filter is visible (top + 50% of height is above navbar bottom)
-                const disappearThreshold = rect.top + (filterHeight * 0.5);
+        if (filterRef.current) {
+            observer.observe(filterRef.current);
+        }
 
-                // Show sticky when filter is 75% hidden behind navbar
-                // Hide sticky when filter is 50% or more visible
-                if (appearThreshold <= navbarHeight) {
-                    setIsSticky(true);
-                } else if (disappearThreshold > navbarHeight) {
-                    setIsSticky(false);
-                }
-            }
-        };
-
-        // Initial check
-        handleScroll();
-        window.addEventListener('scroll', handleScroll);
-        window.addEventListener('resize', handleScroll); // Recalculate on resize
         return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleScroll);
+            observer.disconnect();
         };
     }, []);
 
@@ -211,9 +200,9 @@ const Home = () => {
                 <div className="flex flex-col xl:flex-row gap-4 mb-0 h-[400px]">
 
                     {/* Left: Top Restaurants (Flexible to fill space) */}
-                    <div className="flex-1 min-w-0 bg-gradient-to-br from-white to-orange-50/30 rounded-[2rem] p-4 border border-orange-200 shadow-sm hover:shadow-orange-100/50 relative overflow-hidden flex flex-col justify-center h-full group hover:shadow-md transition-shadow duration-500">
-                        {/* Background Blob */}
-                        <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50 rounded-full -translate-x-1/3 -translate-y-1/3 blur-3xl opacity-50" />
+                    <div className="flex-1 min-w-0 bg-white rounded-[2rem] p-4 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col justify-center h-full group transition-transform duration-300 transform-gpu">
+                        {/* Background Blob - Optimized (No Blur, just Gradient) */}
+                        <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
 
                         <div className="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center mb-2 pt-1 px-1 shrink-0 gap-2">
                             <div>
@@ -267,9 +256,9 @@ const Home = () => {
 
 
                     {/* Right: Quick Recommendations (Adjusted Width - 410px) */}
-                    <div className="w-full xl:w-[410px] shrink-0 bg-white rounded-[2rem] p-4 border border-yellow-200 shadow-sm hover:shadow-yellow-100/50 relative overflow-hidden group flex flex-col h-full">
-                        {/* Background Decoration */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50 rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl opacity-50" />
+                    <div className="w-full xl:w-[410px] shrink-0 bg-white rounded-[2rem] p-4 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-full">
+                        {/* Background Decoration - Optimized */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50/50 rounded-full translate-x-1/3 -translate-y-1/3 opacity-50" />
 
                         <div className="flex justify-between items-center mb-3 relative z-10 shrink-0">
                             <div>
@@ -291,7 +280,7 @@ const Home = () => {
                             {filteredData.dishes.slice(0, 6).map((dish) => (
                                 <div
                                     key={dish.id}
-                                    className="bg-white/40 backdrop-blur-xl relative overflow-hidden rounded-[1.25rem] p-2 flex gap-3 transition-all duration-500 cursor-pointer border border-white/60 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(249,115,22,0.15)] hover:bg-white/80 hover:border-orange-200 hover:-translate-y-0.5 group/item items-center shrink-0"
+                                    className="bg-white relative overflow-hidden rounded-[1.25rem] p-2 flex gap-3 transition-transform duration-200 cursor-pointer border border-gray-100 hover:border-orange-200 hover:-translate-y-0.5 group/item items-center shrink-0 shadow-sm"
                                 >
                                     {/* Glossy Border Overlay */}
                                     <div className="absolute inset-0 rounded-[1.25rem] border border-white/50 pointer-events-none z-20" />
