@@ -191,7 +191,7 @@ const LandingPage = () => {
                         className="text-6xl md:text-8xl font-black tracking-tight leading-tight mb-8"
                     >
                         Food Delivery at <br />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600 animate-gradient-x">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
                             Warp Speed
                         </span>
                     </motion.h1>
