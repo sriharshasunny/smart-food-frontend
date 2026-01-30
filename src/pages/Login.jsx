@@ -2,61 +2,43 @@ import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Rocket, User, Mail, Lock, CheckCircle,
     AlertCircle, Sparkles, ChevronRight
 } from 'lucide-react';
 
-const RoamingUFO = () => {
-    // ACTIVE ROAMING UFO (User Liked This)
-    const controls = useAnimation();
+// CLASSIC UFO COMPONENT
+const FloatingUFO = () => {
     const [message, setMessage] = useState("Hi! 👋");
 
     useEffect(() => {
-        let isMounted = true;
-
-        const roam = async () => {
-            if (!isMounted) return;
-            // Random destination (10% to 90% screen space)
-            const nextX = Math.random() * 80 + 10;
-            const nextY = Math.random() * 80 + 10;
-            const duration = Math.random() * 4 + 3; // Slow, drifting movement
-
-            await controls.start({
-                left: `${nextX}%`,
-                top: `${nextY}%`,
-                transition: { duration: duration, ease: "easeInOut" }
-            });
-
-            if (isMounted) setTimeout(roam, Math.random() * 1000 + 500);
-        };
-        roam();
-
-        const msgInterval = setInterval(() => {
-            const msgs = ["Hungry? 🍔", "Scanning... 🛸", "Warp Speed! 🚀", "Tasty! 🍩", "Beep Boop 🤖"];
+        const interval = setInterval(() => {
+            const msgs = ["Hi! 👋", "Pizza Time? 🍕", "Tasty! 😋", "Hungry? 🍔"];
             setMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-        }, 4000);
-
-        return () => { isMounted = false; clearInterval(msgInterval); };
-    }, [controls]);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <motion.div
-            animate={controls}
-            className="fixed z-20 pointer-events-none flex flex-col items-center"
-            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+            animate={{
+                y: [0, -20, 0], // Gentle bobbing
+                rotate: [0, -5, 5, 0] // Gentle tilt
+            }}
+            transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+            }}
+            className="fixed top-20 right-[15%] z-20 flex flex-col items-center pointer-events-none"
         >
+            <div className="text-6xl filter drop-shadow-xl">🛸</div>
             <motion.div
-                animate={{ rotate: [0, 5, -5, 0], y: [0, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="text-6xl filter drop-shadow-[0_0_20px_rgba(0,255,100,0.6)]"
-            >
-                🛸
-            </motion.div>
-            <motion.div
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={message}
-                className="mt-2 text-sm font-mono bg-black/80 text-[#00ff66] px-3 py-1 rounded-full border border-[#00ff66]/30 backdrop-blur-md whitespace-nowrap"
+                key={message}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 bg-white/90 text-black px-3 py-1 rounded-full text-sm font-bold shadow-lg"
             >
                 {message}
             </motion.div>
@@ -68,18 +50,24 @@ const Auth = () => {
     const navigate = useNavigate();
     const { login, register } = useAuth();
     const canvasRef = useRef(null);
+
+    // Mode: 'login' | 'register' | 'forgot'
     const [mode, setMode] = useState('login');
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', newPassword: '', otp: '' });
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: '', email: '', password: '', newPassword: '', otp: ''
+    });
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
 
-    // --- HYBRID ENGINE: Floating Food + Light Meteors ---
+    // --- CLASSIC FLOATING FOOD ENGINE ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false });
+        const ctx = canvas.getContext('2d');
         let animationFrameId;
 
         const resize = () => {
@@ -89,205 +77,290 @@ const Auth = () => {
         window.addEventListener('resize', resize);
         resize();
 
-        const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🥗', '🍱', '🍜', '🍤', '🥓'];
+        const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🥗', '🍱', '🍜', '🍤', '🥓', '🍗', '🍟'];
 
-        // Entities
-        const meteors = [];
-        const foods = [];
-
-        // Meteor Class (Shooting Stars)
-        class Meteor {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height * 0.5; // Top half spawn
-                this.length = Math.random() * 80 + 20;
-                this.speed = Math.random() * 10 + 5;
-                this.angle = Math.PI / 4; // 45 deg
-                this.opacity = 0;
-                this.active = false;
-                this.wait = Math.random() * 200; // Delay spawn
-            }
-            update() {
-                if (this.wait > 0) {
-                    this.wait--;
-                    if (this.wait <= 0) {
-                        this.active = true;
-                        this.opacity = 1;
-                    }
-                    return;
-                }
-                if (!this.active) return;
-
-                this.x += this.speed;
-                this.y += this.speed;
-                this.opacity -= 0.02; // Fade out trail
-
-                if (this.opacity <= 0 || this.x > canvas.width || this.y > canvas.height) {
-                    this.reset();
-                    this.wait = Math.random() * 500; // Reset delay
-                }
-            }
-            draw() {
-                if (!this.active || this.opacity <= 0) return;
-                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y);
-                ctx.lineTo(this.x - this.length, this.y - this.length);
-                ctx.stroke();
-            }
-        }
-
-        // Floating Food Class (Disappearing)
-        class FloatingFood {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.emoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
-                this.size = Math.random() * 20 + 20;
-                this.dx = (Math.random() - 0.5) * 0.5; // Slow drift
-                this.dy = (Math.random() - 0.5) * 0.5;
-
-                // Opacity Cycle
-                this.opacity = 0;
-                this.phase = 'in'; // in, wait, out
-                this.fadeSpeed = 0.01 + Math.random() * 0.01;
-                this.waitTimer = Math.random() * 200 + 100;
-            }
-            update() {
-                this.x += this.dx;
-                this.y += this.dy;
-
-                if (this.phase === 'in') {
-                    this.opacity += this.fadeSpeed;
-                    if (this.opacity >= 0.6) this.phase = 'wait';
-                } else if (this.phase === 'wait') {
-                    this.waitTimer--;
-                    if (this.waitTimer <= 0) this.phase = 'out';
-                } else if (this.phase === 'out') {
-                    this.opacity -= this.fadeSpeed;
-                    if (this.opacity <= 0) this.reset();
-                }
-            }
-            draw() {
-                ctx.globalAlpha = Math.max(0, this.opacity);
-                ctx.font = `${this.size}px Arial`;
-                ctx.fillText(this.emoji, this.x, this.y);
-                ctx.globalAlpha = 1;
-            }
-        }
-
-        // Populate
-        for (let i = 0; i < 5; i++) meteors.push(new Meteor()); // Few shooting stars
-        for (let i = 0; i < 15; i++) foods.push(new FloatingFood());
+        // Entities for Fast & Smooth movement
+        const foods = Array.from({ length: 20 }).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
+            size: 20 + Math.random() * 30, // 20-50px
+            dx: (Math.random() - 0.5) * 3, // Fast drift X
+            dy: (Math.random() - 0.5) * 3, // Fast drift Y
+            rotation: Math.random() * Math.PI * 2,
+            dr: (Math.random() - 0.5) * 0.1
+        }));
 
         const render = () => {
-            // Background
-            ctx.fillStyle = '#050510';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Clear entire screen (Standard Draw)
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Transparent background
 
-            // Stars (Static)
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-            for (let i = 0; i < 80; i++) {
-                const x = (i * 137) % canvas.width;
-                const y = (i * 541) % canvas.height;
-                ctx.fillRect(x, y, 2, 2);
-            }
+            foods.forEach(food => {
+                // Update
+                food.x += food.dx;
+                food.y += food.dy;
+                food.rotation += food.dr;
 
-            meteors.forEach(m => { m.update(); m.draw(); });
-            foods.forEach(f => { f.update(); f.draw(); });
+                // Bounce off walls
+                if (food.x < 0 || food.x > canvas.width) food.dx *= -1;
+                if (food.y < 0 || food.y > canvas.height) food.dy *= -1;
+
+                // Draw
+                ctx.save();
+                ctx.translate(food.x, food.y);
+                ctx.rotate(food.rotation);
+                ctx.font = `${food.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = 0.6; // Slightly transparent
+                ctx.fillText(food.emoji, 0, 0);
+                ctx.restore();
+            });
 
             animationFrameId = requestAnimationFrame(render);
         };
         render();
 
-        return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+        return () => {
+            window.removeEventListener('resize', resize);
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
-    const handleChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); setError(null); };
-    const switchMode = (mode) => { setMode(mode); setStep(1); setError(null); setSuccessMsg(null); };
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setError(null);
+    };
 
-    // ... (Keep existing handlers slightly compacted)
+    const switchMode = (newMode) => {
+        setMode(newMode);
+        setStep(1);
+        setError(null);
+        setSuccessMsg(null);
+        setFormData(prev => ({ ...prev, otp: '', newPassword: '' }));
+    };
+
     const handleLogin = async (e) => {
-        e.preventDefault(); setLoading(true);
-        try { const res = await login(formData.email, formData.password); if (res.success) navigate('/home'); else setError(res.message); }
-        catch { setError('Error'); } finally { setLoading(false); }
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await login(formData.email, formData.password);
+            if (res.success) navigate('/home');
+            else setError(res.message || 'Login failed');
+        } catch (err) { setError('An unexpected error occurred.'); }
+        finally { setLoading(false); }
     };
+
     const handleRegister = async (e) => {
-        e.preventDefault(); setLoading(true);
-        try { const res = await register(formData.name, formData.email, formData.password); if (res.success) navigate('/home'); else setError(res.message); }
-        catch { setError('Error'); } finally { setLoading(false); }
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await register(formData.name, formData.email, formData.password);
+            if (res.success) navigate('/home');
+            else setError(res.message || 'Registration failed');
+        } catch (err) { setError('An unexpected error occurred.'); }
+        finally { setLoading(false); }
     };
+
     const handleSendResetOtp = async (e) => {
-        e.preventDefault(); setLoading(true);
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
         try {
-            const res = await fetch(`${API_URL}/api/auth/send-otp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: formData.email, type: 'reset' }) });
+            const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: formData.email, type: 'reset' })
+            });
             const data = await res.json();
-            if (res.ok) { setStep(2); if (data.devCode) console.log(data.devCode); } else setError(data.message);
-        } catch { setError('Error'); } finally { setLoading(false); }
+            if (res.ok) {
+                setStep(2);
+                if (data.devCode) console.log("DEV OTP:", data.devCode);
+            } else { setError(data.message || 'Failed to send code'); }
+        } catch (err) { setError('Network error'); }
+        finally { setLoading(false); }
     };
+
     const handleResetPassword = async (e) => {
-        e.preventDefault(); setLoading(true);
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
         try {
-            const res = await fetch(`${API_URL}/api/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: formData.email, otp: formData.otp, newPassword: formData.newPassword }) });
-            if (res.ok) { setSuccessMsg('Success! Login now.'); setTimeout(() => switchMode('login'), 2000); } else setError('Failed');
-        } catch { setError('Error'); } finally { setLoading(false); }
+            const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: formData.email, otp: formData.otp, newPassword: formData.newPassword })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setSuccessMsg('Password Reset Successfully! Redirecting...');
+                setTimeout(() => {
+                    switchMode('login');
+                    setSuccessMsg('Please login with your new password.');
+                    setFormData(prev => ({ ...prev, password: '' }));
+                }, 2000);
+            } else { setError(data.message || 'Reset failed'); }
+        } catch (err) { setError('Verification failed'); }
+        finally { setLoading(false); }
     };
 
     return (
-        <div className="min-h-screen bg-[#050510] text-white flex items-center justify-center relative overflow-hidden font-sans">
-            <canvas ref={canvasRef} className="absolute inset-0 z-0 bg-[#050510]" />
-            <RoamingUFO />
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-center relative overflow-hidden font-sans">
 
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-lg p-6">
+            {/* CANVAS BACKGROUND */}
+            <canvas ref={canvasRef} className="absolute inset-0 z-0 bg-transparent" />
+
+            {/* CLASSIC UFO */}
+            <FloatingUFO />
+
+            {/* Auth Card */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                className="relative z-10 w-full max-w-lg p-6"
+            >
+                {/* Header */}
                 <div className="text-center mb-8">
-                    <motion.div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-rose-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-4 z-20 relative"><Rocket className="w-10 h-10 text-white" /></motion.div>
-                    <h1 className="text-4xl font-black mb-2 tracking-tight drop-shadow-lg">{mode === 'login' ? 'Pilot Access' : mode === 'register' ? 'New Recruit' : 'Recovery Mode'}</h1>
+                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-20 h-20 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-3xl mx-auto flex items-center justify-center shadow-lg hover:rotate-3 transition-transform duration-500 mb-4 z-20 relative">
+                        <Rocket className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <h1 className="text-4xl font-extrabold mb-2 tracking-tight drop-shadow-lg">
+                        {mode === 'login' && 'Welcome Back!'}
+                        {mode === 'register' && 'Join the Feast'}
+                        {mode === 'forgot' && 'Reset Password'}
+                    </h1>
+                    <p className="text-gray-400">Your galactic delivery service awaits.</p>
                 </div>
 
-                <div className="bg-black/70 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
-                    <div className="absolute inset-0 border border-white/5 rounded-[2rem] pointer-events-none"></div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+
+                    {/* Mode Toggle */}
                     {mode !== 'forgot' && (
                         <div className="flex bg-black/40 rounded-xl p-1 mb-8 border border-white/5 relative">
-                            <motion.div className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-orange-500 to-rose-600 rounded-lg shadow-lg" animate={{ left: mode === 'register' ? 'calc(50% + 2px)' : '2px' }} transition={{ type: "spring", stiffness: 300, damping: 25 }} />
-                            <button onClick={() => switchMode('login')} className="flex-1 py-3 text-sm font-bold z-10 relative text-white">Login</button>
-                            <button onClick={() => switchMode('register')} className="flex-1 py-3 text-sm font-bold z-10 relative text-white">Sign Up</button>
+                            <motion.div
+                                className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-orange-500 rounded-lg shadow-lg"
+                                animate={{ left: mode === 'register' ? 'calc(50% + 2px)' : '2px' }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            />
+                            <button onClick={() => switchMode('login')} className={`flex-1 py-3 text-sm font-bold z-10 relative transition-colors ${mode === 'login' ? 'text-white' : 'text-gray-400'}`}>Login</button>
+                            <button onClick={() => switchMode('register')} className={`flex-1 py-3 text-sm font-bold z-10 relative transition-colors ${mode === 'register' ? 'text-white' : 'text-gray-400'}`}>Sign Up</button>
                         </div>
                     )}
 
+                    {/* Messages */}
                     <AnimatePresence>
-                        {error && <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-6 flex items-start gap-3 text-red-200 text-sm"><AlertCircle className="w-4 h-4" /> {error}</motion.div>}
-                        {successMsg && <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 mb-6 flex items-start gap-3 text-green-200 text-sm"><CheckCircle className="w-4 h-4" /> {successMsg}</motion.div>}
+                        {error && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-red-500/20 border border-red-500/30 rounded-xl p-3 mb-6 flex items-start gap-3 text-red-200 text-sm overflow-hidden">
+                                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{error}</span>
+                            </motion.div>
+                        )}
+                        {successMsg && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-green-500/20 border border-green-500/30 rounded-xl p-3 mb-6 flex items-start gap-3 text-green-200 text-sm overflow-hidden">
+                                <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{successMsg}</span>
+                            </motion.div>
+                        )}
                     </AnimatePresence>
 
+                    {/* FORMS */}
                     <AnimatePresence mode="wait">
+                        {/* LOGIN */}
                         {mode === 'login' && (
                             <motion.form key="login" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 20, opacity: 0 }} onSubmit={handleLogin} className="space-y-5">
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">EMAIL</label><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" required /></div>
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">PASSWORD</label><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" required /></div>
-                                <div className="flex justify-end"><button type="button" onClick={() => switchMode('forgot')} className="text-xs text-orange-400 hover:text-white">Forgot?</button></div>
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-white text-black rounded-xl font-bold hover:bg-gray-200 flex justify-center gap-2">{loading ? '...' : 'Launch'}</button>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Email</label>
+                                    <div className="relative group">
+                                        <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="name@example.com" required />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Password</label>
+                                    <div className="relative group">
+                                        <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                                        <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="••••••••" required />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-orange-400 hover:text-orange-300 transition-colors font-medium">Forgot Password?</button>
+                                </div>
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 shadow-lg shadow-orange-500/30">
+                                    {loading ? 'Logging...' : <>Login <ChevronRight className="w-4 h-4" /></>}
+                                </button>
                             </motion.form>
                         )}
+
+                        {/* REGISTER */}
                         {mode === 'register' && (
                             <motion.form key="register" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} onSubmit={handleRegister} className="space-y-5">
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">NAME</label><input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" required /></div>
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">EMAIL</label><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" required /></div>
-                                <div className="space-y-2"><label className="text-xs font-bold text-gray-400">PASSWORD</label><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" required /></div>
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-white text-black rounded-xl font-bold hover:bg-gray-200 flex justify-center gap-2">{loading ? '...' : 'Join'}</button>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Full Name</label>
+                                    <div className="relative group">
+                                        <User className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                                        <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="Han Solo" required />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Email</label>
+                                    <div className="relative group">
+                                        <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="name@example.com" required />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Password</label>
+                                    <div className="relative group">
+                                        <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                                        <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="••••••••" required />
+                                    </div>
+                                </div>
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-orange-500/30">
+                                    {loading ? 'Signing up...' : <>Sign Up <ChevronRight className="w-4 h-4" /></>}
+                                </button>
                             </motion.form>
                         )}
-                        {mode === 'forgot' && (<motion.form key="forgot" className="space-y-5" onSubmit={step === 1 ? handleSendResetOtp : handleResetPassword}>
-                            <button type="button" onClick={() => switchMode('login')} className="text-xs font-bold text-gray-400 hover:text-white mb-4">Back</button>
-                            {step === 1 ? (<><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" placeholder="Email" required /><button type="submit" className="w-full py-4 bg-orange-600 text-white rounded-xl font-bold">Send Code</button></>) :
-                                (<><input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" placeholder="OTP" /><input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4" placeholder="New Password" /><button type="submit" className="w-full py-4 bg-green-600 text-white rounded-xl font-bold">Reset</button></>)}
-                        </motion.form>)}
+
+                        {/* FORGOT */}
+                        {mode === 'forgot' && (
+                            <motion.form key="forgot" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="space-y-5" onSubmit={step === 1 ? handleSendResetOtp : handleResetPassword}>
+                                <button type="button" onClick={() => switchMode('login')} className="flex items-center text-xs font-bold text-gray-400 hover:text-white mb-4 uppercase tracking-wider"><ChevronRight className="w-4 h-4 rotate-180 mr-1" /> Return</button>
+
+                                {step === 1 ? (
+                                    <>
+                                        <div className="text-center mb-6">
+                                            <Sparkles className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                                            <h3 className="text-lg font-bold">Resend Link?</h3>
+                                            <p className="text-sm text-gray-400">Enter email to restore access.</p>
+                                        </div>
+                                        <div className="relative group">
+                                            <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                                            <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="name@example.com" required />
+                                        </div>
+                                        <button type="submit" disabled={loading} className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 mt-2 transition-all">
+                                            {loading ? 'Sending...' : 'Send OTP'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="text-center mb-6">
+                                            <div className="w-full bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-green-400 text-sm font-mono mb-4">OTP Sent to {formData.email}</div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 text-center text-2xl tracking-[0.5em] text-white font-mono focus:border-orange-500 focus:outline-none transition-all" placeholder="••••••" required maxLength={6} />
+                                            <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-all" placeholder="New Password" required />
+                                        </div>
+                                        <button type="submit" disabled={loading} className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 mt-4 transition-all">
+                                            {loading ? 'Updating...' : 'Reset Password'}
+                                        </button>
+                                    </>
+                                )}
+                            </motion.form>
+                        )}
                     </AnimatePresence>
                 </div>
             </motion.div>
         </div>
     );
 };
+
 export default Auth;
