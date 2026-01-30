@@ -289,7 +289,7 @@ const RestaurantDetails = () => {
                                             </span>
                                             <div className="flex-1 h-px bg-gradient-to-l from-gray-200 to-transparent"></div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto grid-flow-dense">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto grid-flow-dense px-1">
                                             {displayGroups[category].map((item, index) => {
                                                 // Bento Logic: "Premium" items (High price or High Rating) span 2 columns
                                                 // Variable sizing to create "Masonry/Bento" feel

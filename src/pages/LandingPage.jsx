@@ -10,17 +10,17 @@ const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
 
-    // --- 3D CANVAS ENGINE ---
+    // --- 3D CANVAS ENGINE (Rotating Food Sphere) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for no transparency on base
+        const ctx = canvas.getContext('2d', { alpha: false });
         let animationFrameId;
 
         let width, height, centerX, centerY;
-        let mouseX = 0, mouseY = 0;
+        let rotationX = 0;
+        let rotationY = 0;
 
-        // Resize Handler
         const resize = () => {
             width = window.innerWidth;
             height = window.innerHeight;
@@ -32,102 +32,103 @@ const LandingPage = () => {
         window.addEventListener('resize', resize);
         resize();
 
-        // Mouse Parallax
-        const handleMouseMove = (e) => {
-            mouseX = (e.clientX - centerX) * 0.5;
-            mouseY = (e.clientY - centerY) * 0.5;
-        };
-        window.addEventListener('mousemove', handleMouseMove);
-
         // Assets
-        const foodEmojis = ['🍔', '🍕', 'Sushi', '🍩', '🍦', '🍪', '🌮', '🥗', '🥘'];
+        const foodEmojis = ['🍔', '🍕', '🌮', '🍩', '🍪', '🥗', '🍱', '🍜', '🍤', '🍗', '🥪', '🥨'];
 
-        // 3D Particles
+        // Sphere Configuration
+        const radius = Math.min(width, height) * 0.35; // Size of sphere
         const particles = [];
-        const numParticles = 50;
-        const focalLength = 400; // Determines "lens" width
+        const numParticles = 60;
 
-        // Initialization
+        // Initialize Particles on Sphere Surface (Fibonacci Sphere)
         for (let i = 0; i < numParticles; i++) {
+            const y = 1 - (i / (numParticles - 1)) * 2;
+            const radiusAtY = Math.sqrt(1 - y * y);
+            const theta = i * Math.PI * (3 - Math.sqrt(5)); // Golden Angle
+
+            const x = Math.cos(theta) * radiusAtY;
+            const z = Math.sin(theta) * radiusAtY;
+
             particles.push({
-                x: (Math.random() - 0.5) * width * 5, // Spread wide in 3D space
-                y: (Math.random() - 0.5) * height * 5,
-                z: Math.random() * 2000 + 500, // Depth
-                emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
-                rotation: Math.random() * Math.PI * 2,
-                spinSpeed: (Math.random() - 0.5) * 0.05
+                x: x * radius,
+                y: y * radius,
+                z: z * radius,
+                emoji: foodEmojis[i % foodEmojis.length],
+                origX: x * radius,
+                origY: y * radius,
+                origZ: z * radius
             });
         }
 
-        // Render Loop
         const render = () => {
-            // High Performance Clear
-            ctx.fillStyle = '#0f0f13'; // Dark background
-            ctx.clearRect(0, 0, width, height);
+            // Clear
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, width, height);
 
-            // Draw Dynamic Gradient Background (Cheap)
-            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width);
+            // Draw Background Gradient
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.8);
             gradient.addColorStop(0, '#1a1a2e');
             gradient.addColorStop(1, '#000000');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
 
-            // Sort particles by Z (Painter's Algorithm) so far items draw first
+            // Rotate Globa
+            rotationY += 0.003; // Auto Rotation
+            rotationX += 0.001;
+
+            particles.forEach(p => {
+                // Rotate around Y
+                let x1 = p.origX * Math.cos(rotationY) - p.origZ * Math.sin(rotationY);
+                let z1 = p.origZ * Math.cos(rotationY) + p.origX * Math.sin(rotationY);
+
+                // Rotate around X
+                let y1 = p.origY * Math.cos(rotationX) - z1 * Math.sin(rotationX);
+                let z2 = z1 * Math.cos(rotationX) + p.origY * Math.sin(rotationX);
+
+                // Project
+                const scale = 500 / (500 + z2); // Perspective
+                const screenX = centerX + x1 * scale;
+                const screenY = centerY + y1 * scale;
+                const fontSize = 40 * scale;
+
+                // Store projected values for sorting
+                p.screenX = screenX;
+                p.screenY = screenY;
+                p.scale = scale;
+                p.z = z2;
+                p.fontSize = fontSize;
+            });
+
+            // Painter's Algorithm: Sort by Z (farthest first)
             particles.sort((a, b) => b.z - a.z);
 
-            ctx.font = '30px Arial';
+            // Draw
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             particles.forEach(p => {
-                // Move towards camera
-                p.z -= 5; // Speed
+                ctx.globalAlpha = p.scale; // Fade remote items
+                ctx.font = `${p.fontSize}px Arial`;
 
-                // Respawn if behind camera
-                if (p.z <= 0) {
-                    p.z = 2000;
-                    p.x = (Math.random() - 0.5) * width * 5;
-                    p.y = (Math.random() - 0.5) * height * 5;
+                // Add Glow to close items
+                if (p.z < 0) {
+                    ctx.shadowColor = 'rgba(255, 165, 0, 0.5)';
+                    ctx.shadowBlur = 10;
+                } else {
+                    ctx.shadowBlur = 0;
                 }
 
-                // 3D Projection Math
-                const perspective = focalLength / p.z;
-                const screenX = centerX + (p.x - mouseX) * perspective;
-                const screenY = centerY + (p.y - mouseY) * perspective;
-                const size = 50 * perspective;
-
-                // Only draw if visible
-                if (screenX > -100 && screenX < width + 100 && screenY > -100 && screenY < height + 100) {
-                    ctx.save();
-                    ctx.translate(screenX, screenY);
-
-                    // Rotation
-                    p.rotation += p.spinSpeed;
-                    ctx.rotate(p.rotation);
-
-                    // Opacity based on depth (fog)
-                    const opacity = Math.min(1, (2000 - p.z) / 1000);
-                    ctx.globalAlpha = opacity;
-
-                    // Draw
-                    ctx.font = `${size}px Arial`;
-                    // Glow effect for "Insane" look
-                    // ctx.shadowColor = 'rgba(255, 100, 50, 0.5)'; // Removed for perf
-                    // ctx.shadowBlur = size * 0.5; // Removed for perf
-                    ctx.fillText(p.emoji, 0, 0);
-
-                    ctx.restore();
-                }
+                ctx.fillText(p.emoji, p.screenX, p.screenY);
             });
+            ctx.shadowBlur = 0; // Reset
+            ctx.globalAlpha = 1;
 
             animationFrameId = requestAnimationFrame(render);
         };
-
         render();
 
         return () => {
             window.removeEventListener('resize', resize);
-            window.removeEventListener('mousemove', handleMouseMove);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
