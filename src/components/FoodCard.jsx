@@ -38,7 +38,7 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical' }) => {
 
                     {/* Bestseller Badge */}
                     {food.price > 300 && (
-                        <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-orange-500/90 backdrop-blur-sm px-2 py-0.5 rounded-md">
+                        <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-orange-500/95 px-2 py-0.5 rounded-md">
                             <Flame className="w-3 h-3 text-white" />
                             <span className="text-[9px] font-bold text-white uppercase tracking-wide">Bestseller</span>
                         </div>
@@ -51,8 +51,8 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical' }) => {
                             toggleWishlist(food);
                         }}
                         className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
-                                ? 'bg-red-500/90 text-white'
-                                : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
+                            ? 'bg-red-500/90 text-white'
+                            : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
                             }`}
                     >
                         <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current' : ''}`} />
@@ -157,13 +157,13 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical' }) => {
                 )}
 
                 {/* Compact Rating Badge */}
-                <div className="absolute bottom-2 left-2 flex items-center gap-0.5 bg-white/20 backdrop-blur-md px-1.5 py-0.5 rounded-lg border border-white/20 shadow-sm hover:bg-white/30 transition-colors">
+                <div className="absolute bottom-2 left-2 flex items-center gap-0.5 bg-black/60 px-1.5 py-0.5 rounded-lg border border-white/20 shadow-sm transition-colors">
                     <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
                     <span className="text-[9px] font-bold text-white leading-none">{food.rating}</span>
                 </div>
 
                 {/* Compact Time Badge */}
-                <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-lg border border-white/10 text-white text-[9px] font-bold shadow-sm">
+                <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-black/60 px-1.5 py-0.5 rounded-lg border border-white/10 text-white text-[9px] font-bold shadow-sm">
                     <Clock className="w-2.5 h-2.5" />
                     {food.time || '25'}m
                 </div>
@@ -174,7 +174,7 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical' }) => {
                         e.stopPropagation();
                         toggleWishlist(food);
                     }}
-                    className={`absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-sm transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
+                    className={`absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
                         ? 'bg-red-500/90 text-white'
                         : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
                         }`}

@@ -103,7 +103,7 @@ const RestaurantDetails = () => {
                 <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-20">
                     <button
                         onClick={() => navigate(-1)}
-                        className="bg-white/10 backdrop-blur-xl hover:bg-white text-white hover:text-gray-900 rounded-2xl p-3 transition-all duration-300 group/btn border border-white/20 hover:border-white shadow-lg hover:shadow-xl"
+                        className="bg-white/90 hover:bg-white text-gray-900 rounded-2xl p-3 transition-all duration-300 group/btn border border-white/20 hover:border-white shadow-lg hover:shadow-xl"
                     >
                         <ChevronLeft className="w-6 h-6 group-hover/btn:-translate-x-0.5 transition-transform" />
                     </button>
@@ -119,18 +119,18 @@ const RestaurantDetails = () => {
                     >
                         {/* Cuisine Badge */}
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 backdrop-blur-sm rounded-xl text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/30">
+                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-orange-500/30">
                                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                                 {restaurant.cuisine}
                             </span>
                             {restaurant.rating >= 4.5 && (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/90 backdrop-blur-sm rounded-lg text-xs font-bold text-gray-900 shadow-md">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 rounded-lg text-xs font-bold text-gray-900 shadow-md">
                                     <Star className="w-3 h-3 fill-current" />
                                     Top Rated
                                 </span>
                             )}
                             {parseInt(restaurant.deliveryTime) <= 30 && (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/90 backdrop-blur-sm rounded-lg text-xs font-bold text-white shadow-md">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 rounded-lg text-xs font-bold text-white shadow-md">
                                     <Clock className="w-3 h-3" />
                                     Fast Delivery
                                 </span>
@@ -237,7 +237,7 @@ const RestaurantDetails = () => {
                     {/* Menu Items - More Space */}
                     <div className="col-span-12 lg:col-span-10">
                         {/* Search & Filter Bar */}
-                        <div className="bg-white/95 backdrop-blur-xl p-2.5 rounded-2xl shadow-lg border border-gray-100 flex items-center justify-between mb-8 sticky top-24 z-30">
+                        <div className="bg-white p-2.5 rounded-2xl shadow-lg border border-gray-100 flex items-center justify-between mb-8 sticky top-24 z-30">
                             <div className="flex-1 flex items-center px-4 gap-3">
                                 <Search className="w-5 h-5 text-gray-400" />
                                 <input

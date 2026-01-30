@@ -33,7 +33,7 @@ const RestaurantCard = ({ restaurant }) => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60" />
 
                     {/* Time Badge */}
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm flex items-center gap-1 text-gray-800">
+                    <div className="absolute top-3 left-3 bg-white/95 px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm flex items-center gap-1 text-gray-800">
                         <Clock className="w-3 h-3 text-orange-500" />
                         {deliveryTime || "30m"}
                     </div>
@@ -44,7 +44,7 @@ const RestaurantCard = ({ restaurant }) => {
                             e.stopPropagation();
                             toggleWishlist(restaurant);
                         }}
-                        className={`absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-sm transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
+                        className={`absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
                             ? 'bg-red-500/90 text-white'
                             : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
                             }`}
@@ -53,7 +53,7 @@ const RestaurantCard = ({ restaurant }) => {
                     </button>
 
                     {/* Prominent Rating */}
-                    <div className="absolute bottom-3 left-3 bg-green-500/90 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-bold shadow-sm flex items-center gap-1">
+                    <div className="absolute bottom-3 left-3 bg-green-500/95 px-2 py-1 rounded-lg text-white text-[10px] font-bold shadow-sm flex items-center gap-1">
                         {rating || 4.5} <Star className="w-2.5 h-2.5 fill-current" />
                     </div>
                 </div>
