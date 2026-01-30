@@ -2,83 +2,94 @@ import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import {
     Rocket, User, Mail, Lock, CheckCircle,
     AlertCircle, Sparkles, ChevronRight
 } from 'lucide-react';
 
-const SmoothUFO = () => {
-    // PHYSICS BASED UFO
-    // Uses CSS transform for GPU acceleration, but controlled by React state? 
-    // No, rAF is better for continuous fluid motion.
-
-    const ufoRef = useRef(null);
+const RoamingUFO = () => {
+    // ACTIVE ROAMING UFO
+    const controls = useAnimation();
     const [message, setMessage] = useState("Hi! 👋");
+    const containerRef = useRef(null);
 
     useEffect(() => {
-        const ufo = ufoRef.current;
-        if (!ufo) return;
+        let isMounted = true;
 
-        let animationId;
-        let t = 0;
+        const roam = async () => {
+            if (!isMounted) return;
 
-        // Physics variables for smooth sine wave motion
-        // Hover: Y axis sine wave
-        // Drift: X axis sine wave (slower)
-        const baseX = window.innerWidth > 768 ? 80 : 50; // % position
-        const baseY = 20; // % position
+            // 1. Pick a random destination
+            // Avoid edges: 10% to 90%
+            const nextX = Math.random() * 80 + 10; // %
+            const nextY = Math.random() * 80 + 10; // %
 
-        const animate = () => {
-            t += 0.02;
+            // 2. Calculate duration based on distance (uniform speed)
+            // Simple random duration for "drifting" feel
+            const duration = Math.random() * 3 + 2; // 2-5s
 
-            // Smooth Hover (Bobbing)
-            const hoverY = Math.sin(t * 2) * 15; // +/- 15px
+            // 3. Move
+            await controls.start({
+                left: `${nextX}%`,
+                top: `${nextY}%`,
+                transition: {
+                    duration: duration,
+                    ease: "easeInOut", // Smooth start/stop
+                }
+            });
 
-            // Smooth Drift (Side to Side)
-            const driftX = Math.cos(t * 0.5) * 30; // +/- 30px
-
-            // Tilt (based on X movement)
-            const tilt = Math.cos(t * 0.5) * 5; // +/- 5 deg
-
-            if (ufo) {
-                ufo.style.transform = `translate(${driftX}px, ${hoverY}px) rotate(${tilt}deg)`;
+            // 4. Wait a bit then move again
+            if (isMounted) {
+                setTimeout(roam, Math.random() * 1000 + 500);
             }
-
-            animationId = requestAnimationFrame(animate);
         };
 
-        animate();
+        roam();
 
-        // Message Rotation
+        // Message Cycle
         const msgInterval = setInterval(() => {
-            const msgs = ["Hi! 👋", "Hungry? 🍔", "Warp Speed! 🚀", "Ordering? 🍕"];
+            const msgs = [
+                "Hungry? 🍔", "Incoming! 🍕", "Scanning... 🛸",
+                "Warp Speed! 🚀", "Lost? 🗺️", "Tasty! 🍩",
+                "Beep Boop 🤖", "Delivery! 📦"
+            ];
             setMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-        }, 3000);
+        }, 3500);
 
         return () => {
-            cancelAnimationFrame(animationId);
+            isMounted = false;
             clearInterval(msgInterval);
         };
-    }, []);
+    }, [controls]);
 
     return (
-        <div
-            ref={ufoRef}
+        <motion.div
+            animate={controls}
             className="fixed z-20 pointer-events-none flex flex-col items-center"
             style={{
-                right: '10%', // Base position
-                top: '15%',
-                willChange: 'transform' // Hint for GPU
+                left: '50%', // Start center
+                top: '50%',
+                transform: 'translate(-50%, -50%)', // Center anchor
+                willChange: 'left, top'
             }}
         >
-            <div className="text-6xl filter drop-shadow-[0_0_15px_rgba(0,255,100,0.5)]">
+            <motion.div
+                animate={{ rotate: [0, 5, -5, 0], y: [0, -10, 0] }} // Subtle hover bob while moving
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="text-6xl filter drop-shadow-[0_0_20px_rgba(0,255,100,0.6)]"
+            >
                 🛸
-            </div>
-            <div className="mt-2 text-sm font-mono bg-black/60 text-[#00ff66] px-3 py-1 rounded-full border border-[#00ff66]/30 backdrop-blur-md">
+            </motion.div>
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={message} // Re-animate on change
+                className="mt-2 text-sm font-mono bg-black/80 text-[#00ff66] px-3 py-1 rounded-full border border-[#00ff66]/30 backdrop-blur-md whitespace-nowrap"
+            >
                 {message}
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 };
 
@@ -94,68 +105,101 @@ const Auth = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        newPassword: '',
-        otp: ''
+        name: '', email: '', password: '', newPassword: '', otp: ''
     });
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
 
-    // --- OPTIMIZED CANVAS ENGINE ---
+    // --- FOOD RAIN / ASTEROID ENGINE ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false }); // Optimization
+        const ctx = canvas.getContext('2d', { alpha: false });
         let animationFrameId;
 
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Redraw background immediately
-            ctx.fillStyle = '#0a0a0f';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
         };
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Entities
-        const stars = [];
-        const STAR_COUNT = 150;
+        const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🥗', '🍱', '🍜', '🍤', '🥓', '🍗', '🍟', '🧀'];
 
-        for (let i = 0; i < STAR_COUNT; i++) {
-            stars.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 2,
-                opacity: Math.random(),
-                speed: Math.random() * 0.2 + 0.05
-            });
+        // Entities
+        const entities = [];
+        const MAX_ENTITIES = 50;
+
+        class FoodAsteroid {
+            constructor() {
+                this.reset(true);
+            }
+
+            reset(randomY = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = randomY ? Math.random() * canvas.height : -100;
+                this.emoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+                this.size = Math.random() * 30 + 15; // 15-45px
+                this.speed = Math.random() * 2 + 1; // 1-3 px/frame
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.05;
+                this.opacity = Math.random() * 0.5 + 0.3; // 0.3-0.8
+            }
+
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+
+                if (this.y > canvas.height + 100) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Glow effect (Asteroid atmosphere)
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+                ctx.shadowBlur = 15;
+
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, 0, 0);
+
+                ctx.restore();
+            }
+        }
+
+        // Init
+        for (let i = 0; i < MAX_ENTITIES; i++) {
+            entities.push(new FoodAsteroid());
         }
 
         const render = () => {
-            // Clear
-            // Use fillRect with low opacity for trails? No, crisp for pro feel.
-            ctx.fillStyle = '#0a0a0f'; // Deep space background
+            // Clear with slight trail? No, clean rain.
+            // Dark Space Background
+            ctx.fillStyle = '#050510';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Stars
-            ctx.fillStyle = 'white';
-            stars.forEach(star => {
-                ctx.globalAlpha = star.opacity;
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                ctx.fill();
+            // Draw Stars (Static background layer)
+            // Optimize: Could be pre-rendered, but simple dots are fast.
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            for (let i = 0; i < 100; i++) {
+                // Pseudo-random stars based on index to avoid storing them just for background
+                const x = (Math.sin(i * 132.1) * canvas.width + canvas.width) % canvas.width;
+                const y = (Math.cos(i * 453.2) * canvas.height + canvas.height) % canvas.height;
+                ctx.fillRect(x, y, 2, 2);
+            }
 
-                // Parallax Move
-                star.y -= star.speed;
-                if (star.y < 0) {
-                    star.y = canvas.height;
-                    star.x = Math.random() * canvas.width;
-                }
+            // Update & Draw Food
+            entities.forEach(ent => {
+                ent.update();
+                ent.draw();
             });
-            ctx.globalAlpha = 1;
 
             animationFrameId = requestAnimationFrame(render);
         };
@@ -247,13 +291,13 @@ const Auth = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#050510] text-white flex items-center justify-center relative overflow-hidden font-sans">
 
             {/* CANVAS BACKGROUND */}
-            <canvas ref={canvasRef} className="absolute inset-0 z-0 bg-[#0a0a0f]" />
+            <canvas ref={canvasRef} className="absolute inset-0 z-0 bg-[#050510]" />
 
-            {/* SMOOTH UFO */}
-            <SmoothUFO />
+            {/* ROAMING UFO */}
+            <RoamingUFO />
 
             {/* Auth Card */}
             <motion.div
@@ -262,17 +306,17 @@ const Auth = () => {
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-20 h-20 bg-gradient-to-br from-orange-500 to-rose-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg hover:rotate-3 transition-transform duration-500 mb-4">
+                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-20 h-20 bg-gradient-to-br from-orange-500 to-rose-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg hover:rotate-3 transition-transform duration-500 mb-4 z-20 relative">
                         <Rocket className="w-10 h-10 text-white" />
                     </motion.div>
-                    <h1 className="text-4xl font-black mb-2 tracking-tight">
+                    <h1 className="text-4xl font-black mb-2 tracking-tight drop-shadow-lg">
                         {mode === 'login' && 'Pilot Access'}
                         {mode === 'register' && 'New Recruit'}
                         {mode === 'forgot' && 'Recovery Mode'}
                     </h1>
                 </div>
 
-                <div className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+                <div className="bg-black/70 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
 
                     {/* Gradient Border Overlay */}
                     <div className="absolute inset-0 border border-white/5 rounded-[2rem] pointer-events-none"></div>
