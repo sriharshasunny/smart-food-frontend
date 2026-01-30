@@ -205,31 +205,31 @@ const Home = () => {
                         {/* Background Blob */}
                         <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center mb-2 pt-1 px-1 shrink-0 gap-2">
-                            {/* Toggle Switcher */}
-                            <div className="flex items-center bg-gray-100 p-1 rounded-full relative">
+                        <div className="relative z-10 flex flex-row items-center justify-between mb-2 pt-1 px-1 shrink-0 gap-2 h-10">
+                            {/* Toggle Switcher - Compact */}
+                            <div className="flex items-center bg-gray-100 p-0.5 rounded-full relative shrink-0">
                                 <button
                                     onClick={() => setViewMode('restaurants')}
-                                    className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all z-10 ${viewMode === 'restaurants' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                    className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide transition-all z-10 ${viewMode === 'restaurants' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                                 >
                                     Restaurants
                                 </button>
                                 <button
                                     onClick={() => setViewMode('recs')}
-                                    className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all z-10 ${viewMode === 'recs' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                    className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide transition-all z-10 ${viewMode === 'recs' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                                 >
                                     AI Picks
                                 </button>
 
                                 {/* Sliding Background */}
-                                <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-black rounded-full transition-all duration-300 ease-spring ${viewMode === 'restaurants' ? 'left-1' : 'left-[calc(50%+2px)]'}`} />
+                                <div className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-black rounded-full transition-all duration-300 ease-spring ${viewMode === 'restaurants' ? 'left-0.5' : 'left-[calc(50%+1px)]'}`} />
                             </div>
 
-                            {/* Filters (Only visible for Restaurants view) */}
+                            {/* Filters (Only visible for Restaurants view) - Same Row */}
                             {viewMode === 'restaurants' && (
-                                <div className="flex gap-2 overflow-x-auto hide-scrollbar max-w-full pb-1">
-                                    <button onClick={() => setRestaurantFilters(prev => ({ ...prev, fastDelivery: !prev.fastDelivery }))} className={`whitespace-nowrap px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${restaurantFilters.fastDelivery ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>Fast Delivery</button>
-                                    <button onClick={() => setRestaurantFilters(prev => ({ ...prev, topRated: !prev.topRated }))} className={`whitespace-nowrap px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${restaurantFilters.topRated ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>Top Rated</button>
+                                <div className="flex gap-2 overflow-x-auto hide-scrollbar flex-1 justify-end items-center h-full">
+                                    <button onClick={() => setRestaurantFilters(prev => ({ ...prev, fastDelivery: !prev.fastDelivery }))} className={`whitespace-nowrap px-2.5 py-1 rounded-full text-[9px] font-bold transition-all border shrink-0 ${restaurantFilters.fastDelivery ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>Fast Delivery</button>
+                                    <button onClick={() => setRestaurantFilters(prev => ({ ...prev, topRated: !prev.topRated }))} className={`whitespace-nowrap px-2.5 py-1 rounded-full text-[9px] font-bold transition-all border shrink-0 ${restaurantFilters.topRated ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>Top Rated</button>
                                 </div>
                             )}
                         </div>

@@ -43,8 +43,13 @@ const Navbar = ({ toggleSidebar }) => {
                             <div className="bg-gradient-to-tr from-orange-500 to-red-500 p-1.5 rounded-lg shadow-lg shadow-orange-500/20 group-hover:scale-105 transition-transform duration-300">
                                 <ShoppingBag className="w-4.5 h-4.5 text-white" />
                             </div>
+                            {/* Desktop Logo */}
                             <span className="text-lg md:text-xl font-black bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent hidden sm:block tracking-tighter">
                                 SmartFood
+                            </span>
+                            {/* Mobile Page Title */}
+                            <span className="text-lg font-black text-gray-800 sm:hidden tracking-tight capitalize">
+                                {location.pathname === '/home' ? 'Home' : location.pathname.split('/')[1] || 'SmartFood'}
                             </span>
                         </Link>
                     </div>
