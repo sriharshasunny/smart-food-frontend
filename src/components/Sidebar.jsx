@@ -94,7 +94,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
             {/* Sidebar Container */}
             <motion.div
-                className={`fixed top-0 left-0 h-full w-[280px] z-50 transform transition-transform duration-300 ease-spring ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`fixed top-0 left-0 h-full w-[280px] z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
                     } md:translate-x-0 md:sticky md:top-0 md:h-screen md:w-[280px] shrink-0`}
             >
                 <div className="h-full w-full relative overflow-hidden md:rounded-tr-[2.5rem] shadow-2xl sidebar-container group bg-white md:bg-transparent">

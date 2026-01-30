@@ -36,9 +36,9 @@ const LandingPage = () => {
         const foodEmojis = ['🍔', '🍕', '🌮', '🍩', '🍪', '🥗', '🍱', '🍜', '🍤', '🍗', '🥪', '🥨'];
 
         // Sphere Configuration
-        const radius = Math.min(width, height) * 0.35; // Size of sphere
+        const radius = Math.min(width, height) * 0.4; // Slightly larger
         const particles = [];
-        const numParticles = 60;
+        const numParticles = 80; // More particles for fuller look
 
         // Initialize Particles on Sphere Surface (Fibonacci Sphere)
         for (let i = 0; i < numParticles; i++) {
@@ -65,16 +65,16 @@ const LandingPage = () => {
             ctx.fillStyle = '#0a0a0f';
             ctx.fillRect(0, 0, width, height);
 
-            // Draw Background Gradient
+            // Draw Background Gradient - Darker for mobile text contrast
             const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.8);
-            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(0, '#131325');
             gradient.addColorStop(1, '#000000');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
 
             // Rotate Globa
-            rotationY += 0.003; // Auto Rotation
-            rotationX += 0.001;
+            rotationY += 0.002; // Slower, smoother rotation (User requested smooth)
+            rotationX += 0.0005;
 
             particles.forEach(p => {
                 // Rotate around Y
@@ -189,11 +189,13 @@ const LandingPage = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-6xl md:text-8xl font-black tracking-tight leading-tight mb-8"
+                        className="text-5xl md:text-8xl font-black tracking-tight leading-tight mb-8 relative z-10 drop-shadow-lg"
                     >
-                        Food Delivery at <br />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
-                            Warp Speed
+                        <span className="md:bg-transparent bg-black/30 backdrop-blur-md rounded-3xl px-4 box-decoration-clone">
+                            Food Delivery at <br />
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
+                                Warp Speed
+                            </span>
                         </span>
                     </motion.h1>
 

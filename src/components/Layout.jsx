@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
         <div className="min-h-screen flex flex-col bg-gray-50">
             <div className="w-full max-w-[1920px] mx-auto bg-white shadow-2xl min-h-screen flex flex-col relative">
                 <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-                <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+                <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <main className="flex-grow">
                     {children}
                 </main>
