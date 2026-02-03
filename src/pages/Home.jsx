@@ -164,35 +164,32 @@ const Home = () => {
         return { dishes, restaurants };
     }, [searchQuery, activeCategory, subFilters, restaurantFilters]);
 
+    // Location Widget Logic within Render
+    const locationWidget = (
+        <div className="flex items-center gap-3 bg-black/30 backdrop-blur-md p-2 pl-3 pr-4 rounded-full border border-white/10 shadow-xl transition-transform hover:scale-105 cursor-pointer group" onClick={detectLocation}>
+            <button
+                className="bg-orange-500 p-2 rounded-full shadow-lg shadow-orange-500/20 group-hover:bg-orange-600 transition-colors"
+                title="Detect My Location"
+            >
+                <MapPin className={`text-white w-4 h-4 ${loadingLocation ? 'animate-bounce' : ''}`} />
+            </button>
+            <div className="flex flex-col items-start">
+                <h2 className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none mb-0.5">Delivering to</h2>
+                <h1 className="text-sm font-black text-white leading-none drop-shadow-md group-hover:text-orange-400 transition-colors max-w-[150px] truncate">
+                    {loadingLocation ? "Locating..." : locationName}
+                </h1>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
-            {/* Increased Horizontal padding (approx 30px+) */}
-            <div className="w-full px-4 md:px-10 lg:px-12 pt-4 md:pt-6 space-y-4 md:space-y-8 max-w-[1600px] mx-auto">
+            {/* Reduced Top Padding for more content space */}
+            <div className="w-full px-4 md:px-10 lg:px-12 pt-4 space-y-4 md:space-y-8 max-w-[1600px] mx-auto">
 
-                {/* Header / Search */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-0 pb-1">
-                    <div className="flex items-center gap-2 w-full md:w-auto">
-                        <button
-                            onClick={detectLocation}
-                            className="bg-orange-500 p-1.5 rounded-full shadow-lg shadow-orange-200 hover:scale-110 transition-transform active:scale-95 cursor-pointer flex items-center justify-center shrink-0"
-                            title="Detect My Location"
-                        >
-                            <MapPin className={`text-white w-3.5 h-3.5 ${loadingLocation ? 'animate-bounce' : ''}`} />
-                        </button>
-                        <div onClick={detectLocation} className="cursor-pointer group flex flex-col items-start">
-                            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight group-hover:text-orange-500 transition-colors">Delivering to</h2>
-                            <h1 className="text-lg font-black text-gray-800 leading-none group-hover:text-orange-600 transition-colors">
-                                {loadingLocation ? "Locating..." : locationName}
-                            </h1>
-                        </div>
-                    </div>
-                </div>
-
-
-
-                {/* Hero Banner (Offers) */}
+                {/* Hero Banner (Offers) WITH Location Widget Embedded */}
                 <ErrorBoundary key="hero">
-                    <HeroBanner />
+                    <HeroBanner topRightContent={locationWidget} />
                 </ErrorBoundary>
 
                 {/* --- Content Sections --- */}

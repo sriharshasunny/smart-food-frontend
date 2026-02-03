@@ -39,7 +39,7 @@ const premiumOffers = [
     }
 ];
 
-const HeroBanner = () => {
+const HeroBanner = ({ topRightContent }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -74,18 +74,18 @@ const HeroBanner = () => {
                         className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-0 scale-105'
                             }`}
                     >
-                        {/* Background Image with Better Fitting */}
+                        {/* Background Image with Better Fitting (Reduced Zoom) */}
                         <div className="absolute inset-0 overflow-hidden">
                             <img
                                 src={offer.image}
                                 alt={offer.title}
-                                className={`w-full h-full object-cover object-center transition-transform duration-[10000ms] ease-out ${index === currentIndex ? 'scale-110' : 'scale-100'
-                                    }`}
+                                className={`w-full h-full object-cover object-center transition-transform duration-[10000ms] ease-out ${index === currentIndex ? 'scale-105' : 'scale-100'}`}
                             />
                         </div>
 
-                        {/* Enhanced Gradient Overlay for Better Text Readability */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-black/20" />
+                        {/* Enhanced Gradient Overlay for Better Text Readability and Top Nav visibility */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-black/10" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
 
                         {/* Content Area */}
                         <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-24 max-w-5xl text-white">
@@ -133,6 +133,13 @@ const HeroBanner = () => {
                 ))}
             </div>
 
+            {/* Top Right Content Slot (Location Widget) - Above z-10 but below nav controls */}
+            {topRightContent && (
+                <div className="absolute top-4 right-4 md:top-8 md:right-8 z-40">
+                    {topRightContent}
+                </div>
+            )}
+
             {/* Premium Navigation Controls */}
             <div className="absolute inset-x-0 bottom-8 flex justify-between items-end px-8 md:px-12 z-20 pointer-events-none">
                 {/* Dots Indicator */}
@@ -168,14 +175,6 @@ const HeroBanner = () => {
                     </button>
                 </div>
             </div>
-
-            {/* Auto-play indicator */}
-            {isAutoPlaying && (
-                <div className="absolute top-6 right-6 z-20 flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-white text-xs font-bold">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                    AUTO
-                </div>
-            )}
         </div>
     );
 };
