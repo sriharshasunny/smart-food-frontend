@@ -111,7 +111,8 @@ const LandingPage = () => {
         }));
 
         let time = 0;
-        let coreIndex = 0; coreTimer = 0;
+        let coreIndex = 0;
+        let coreTimer = 0;
 
         // --- UPDATE ---
         const updatePhysics = () => {
