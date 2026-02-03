@@ -43,10 +43,13 @@ const LandingPage = () => {
             mouseX = clientX - rect.left;
             mouseY = clientY - rect.top;
 
-            // Click Hit Test (Generous 150px radius)
+            // Click Hit Test (Generous 150px radius for responsiveness)
             const dist = Math.hypot(mouseX - ufo.x, mouseY - ufo.y);
             if (dist < 150 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
+                // Add immediate burst for responsiveness
+                ufo.vx += (centerX - ufo.x) * 0.02; // Initial shove towards center
+                ufo.vy += (centerY - ufo.y) * 0.02;
             }
         };
 
@@ -58,7 +61,6 @@ const LandingPage = () => {
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
-
             // Layout: Split (Desktop) vs Center (Mobile)
             if (width >= 768) {
                 centerX = width * 0.75;
@@ -85,12 +87,12 @@ const LandingPage = () => {
             rotation: Math.random() * Math.PI
         }));
 
-        const stars = Array.from({ length: 120 }, () => ({
+        const stars = Array.from({ length: 140 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 1.5,
             opacity: Math.random() * 0.8,
-            speed: 0.2 + Math.random() * 0.5
+            speed: 0.1 + Math.random() * 0.4
         }));
 
         let time = 0;
@@ -99,65 +101,58 @@ const LandingPage = () => {
 
         // --- UPDATE LOGIC ---
         const updateUFO = () => {
-            // Message Cycling
             ufo.msgTimer++;
-            if (ufo.msgTimer > 180) { // Change every 3s
+            if (ufo.msgTimer > 180) {
                 ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length;
                 ufo.msgTimer = 0;
                 ufo.showMsg = true;
             }
 
             if (ufo.state === 'IDLE') {
-                // Smooth Wander
-                if (Math.random() < 0.01) {
+                // VERY SMOOTH WANDER: Lower friction, gentle springs
+                if (Math.random() < 0.005) { // Change target less often for smoothness
                     ufo.targetX = Math.random() * width;
                     ufo.targetY = Math.random() * (height * 0.6);
                 }
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
-                ufo.vx += dx * 0.0005;
-                ufo.vy += dy * 0.0005;
-                ufo.vx *= 0.97;
-                ufo.vy *= 0.97;
+                ufo.vx += dx * 0.0003; // Gentle acceleration
+                ufo.vy += dy * 0.0003;
+                ufo.vx *= 0.98; // Low friction for "floaty" space feel
+                ufo.vy *= 0.98;
 
-                ufo.rotation = ufo.vx * 0.05;
-                ufo.scale = 1;
-                ufo.opacity = 1;
+                ufo.rotation = ufo.vx * 0.03; // Subtle banking
+                ufo.scale = 1; ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
-                // FALL INTO SUN MIDDLE
-                const dx = centerX - ufo.x; // Target CenterX
-                const dy = centerY - ufo.y; // Target CenterY
+                // FALL INTO SUN
+                const dx = centerX - ufo.x;
+                const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
 
-                // Attraction Physics
-                ufo.vx += dx * 0.002;
-                ufo.vy += dy * 0.002;
-                ufo.vx *= 0.95;
-                ufo.vy *= 0.95;
+                ufo.vx += dx * 0.003;
+                ufo.vy += dy * 0.003;
+                ufo.vx *= 0.94;
+                ufo.vy *= 0.94;
 
-                // GRADUAL SHRINK: Scale based on distance to center
-                // 300px away = scale 1, 0px away = scale 0
-                const targetScale = Math.min(1, dist / 300);
+                // Scale based on distance
+                const targetScale = Math.min(1, dist / 250);
                 ufo.scale = targetScale;
+                ufo.rotation += 0.2;
 
-                ufo.rotation += 0.3; // Spin fast as it falls
-
-                // Disappear threshold
-                if (dist < 20 || ufo.scale < 0.1) {
+                if (dist < 15 || ufo.scale < 0.1) {
                     ufo.state = 'RESPAWNING';
-                    ufo.respawnTimer = 120; // 2 SECONDS (Requested)
+                    ufo.respawnTimer = 120; // 2s
                     ufo.opacity = 0;
                     ufo.x = -9999;
                 }
             } else if (ufo.state === 'RESPAWNING') {
                 ufo.respawnTimer--;
                 if (ufo.respawnTimer <= 0) {
-                    // Respawn
                     ufo.state = 'IDLE';
-                    ufo.x = -100; // Fly in from left
+                    ufo.x = -100;
                     ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 8; // Burst speed
+                    ufo.vx = 6;
                     ufo.opacity = 1;
                     ufo.scale = 1;
                 }
@@ -167,11 +162,11 @@ const LandingPage = () => {
             ufo.y += ufo.vy;
 
             // Trail
-            if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 0.5)) {
+            if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 0.4)) {
                 ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 3 + 2 });
             }
             for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                ufo.trail[i].life -= 0.06;
+                ufo.trail[i].life -= 0.05;
                 if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
             }
         };
@@ -185,30 +180,21 @@ const LandingPage = () => {
                 coreTimer = 0;
             }
 
-            // 1. Background (ENHANCED SPACE LOOK)
+            // 1. Background (DEEPER SPACE - DARKER)
             const bg = ctx.createLinearGradient(0, 0, 0, height);
-            bg.addColorStop(0, '#000000');
-            bg.addColorStop(0.5, '#050510');
-            bg.addColorStop(1, '#0a0a20'); // Deep nebula blue at bottom
+            bg.addColorStop(0, '#000000'); // Pure Black top
+            bg.addColorStop(0.6, '#020205'); // Very dark mid
+            bg.addColorStop(1, '#050510'); // Subtle dark blue tint only at bottom
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
-
-            // Subtle Nebula/Fog effect (Static for perf)
-            // No, dynamic is better for "Space Look". 
-            // Draw a very faint giant purple orb in corner
-            const nebula = ctx.createRadialGradient(width * 0.9, height * 0.9, 0, width * 0.9, height * 0.9, 600);
-            nebula.addColorStop(0, 'rgba(80, 0, 100, 0.1)');
-            nebula.addColorStop(1, 'transparent');
-            ctx.fillStyle = nebula;
-            ctx.fillRect(0, 0, width, height);
-
 
             // 2. Stars
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
-                ctx.globalAlpha = star.opacity * (0.7 + Math.sin(time * 0.05 + star.x) * 0.3); // Twinkle
+                // Faint stars for deep space look
+                ctx.globalAlpha = star.opacity * 0.8;
                 ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
@@ -232,14 +218,12 @@ const LandingPage = () => {
                 // UFO Glow
                 ctx.shadowColor = '#00ffff';
                 ctx.shadowBlur = 20;
-
-                // UFO Body
                 ctx.font = "40px Arial";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
 
                 // Message Bubble
-                if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) { // Only show scale > 0.8 (not while shrinking)
+                if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) {
                     ctx.shadowBlur = 0;
                     ctx.rotate(-ufo.rotation);
 
@@ -264,15 +248,16 @@ const LandingPage = () => {
                 ctx.restore();
             }
 
-            // 4. CORE SUN (Warm Space Glow)
+            // 4. CORE SUN (REDUCED GLOW)
             const sunSize = 90 * scale * 2.0;
 
-            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 3.0);
-            glow.addColorStop(0, 'rgba(255, 140, 0, 0.5)');
-            glow.addColorStop(0.5, 'rgba(255, 50, 0, 0.1)');
+            // REDUCED GLOW (Requested: "Reduce gold color... add deep space effect")
+            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 2.8);
+            glow.addColorStop(0, 'rgba(255, 140, 0, 0.3)'); // Reduced Opacity (was 0.5)
+            glow.addColorStop(0.5, 'rgba(255, 60, 0, 0.05)'); // Very faint
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
-            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 3.0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.8, 0, Math.PI * 2); ctx.fill();
 
             // Core Emoji
             const pulse = 1 + Math.sin(time * 0.05) * 0.02;
@@ -280,8 +265,8 @@ const LandingPage = () => {
             ctx.translate(centerX, centerY);
             ctx.scale(pulse, pulse);
             ctx.rotate(time * 0.015);
-            ctx.shadowColor = 'rgba(255, 100, 0, 0.6)';
-            ctx.shadowBlur = 30;
+            ctx.shadowColor = 'rgba(255, 100, 0, 0.4)'; // Reduced shadow intensity
+            ctx.shadowBlur = 25;
             ctx.font = `${sunSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
