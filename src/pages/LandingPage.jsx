@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, Star, Smartphone, MapPin, Truck, Play } from 'lucide-react';
+import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, Star, Smartphone, MapPin, Truck } from 'lucide-react';
 
 const LandingPage = () => {
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ const LandingPage = () => {
 
         // Assets
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        const CORE_EMOJIS = ['🍕', '🍔', '🍩', '🍣']; // Rotating Core Items
+        const CORE_EMOJIS = ['🍕', '🍔', '🍩']; // Rotating Core Items
 
         // Physics State
         let width, height, centerX, centerY;
@@ -32,36 +32,39 @@ const LandingPage = () => {
             isMobile = width < 768;
 
             if (!isMobile) {
-                centerX = width * 0.75;
+                // Desktop: Center the solar system on the right half
+                centerX = width * 0.70;
                 centerY = height * 0.5;
-                scale = Math.min(width, height) * 0.0013;
+                scale = Math.min(width, height) * 0.0012;
             } else {
+                // Mobile: Center it
                 centerX = width * 0.5;
-                centerY = height * 0.5; // Centered orbit on mobile behind text
-                scale = Math.min(width, height) * 0.001;
+                centerY = height * 0.5;
+                scale = Math.min(width, height) * 0.0009;
             }
         };
         window.addEventListener('resize', resize);
         resize();
 
         // Init Particles/Planets
-        const planets = Array.from({ length: 24 }, (_, i) => ({
+        const planets = Array.from({ length: 22 }, (_, i) => ({
             emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-            angle: (i / 24) * Math.PI * 2,
-            distance: 160 + (i % 4) * 55 + Math.random() * 30,
-            speed: 0.002 + Math.random() * 0.003,
+            angle: (i / 22) * Math.PI * 2, // Even spacing
+            distance: 150 + (i % 4) * 60 + Math.random() * 30, // Distinct layers
+            speed: 0.002 + Math.random() * 0.003, // varied speed
             size: 40 + Math.random() * 30,
-            heightOffset: (Math.random() - 0.5) * 200, // More vertical spread
-            rotationAxis: Math.random() * Math.PI
+            heightOffset: (Math.random() - 0.5) * 180, // Vertical spread
+            rotationAxis: Math.random() * Math.PI,
+            rotationSpeed: (Math.random() - 0.5) * 0.05
         }));
 
         // Stars
-        const stars = Array.from({ length: isMobile ? 80 : 300 }, () => ({
+        const stars = Array.from({ length: isMobile ? 60 : 250 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 2,
             opacity: Math.random(),
-            speed: 0.2 + Math.random() * 0.8
+            speed: 0.2 + Math.random() * 1.5 // Warp speed vertical
         }));
 
         let time = 0;
@@ -71,7 +74,7 @@ const LandingPage = () => {
         const render = () => {
             time++;
             coreTimer++;
-            if (coreTimer > 180) { // Switch core item slower
+            if (coreTimer > 200) { // Switch core item periodically
                 coreIndex = (coreIndex + 1) % CORE_EMOJIS.length;
                 coreTimer = 0;
             }
@@ -79,21 +82,22 @@ const LandingPage = () => {
             // 1. Clear & Deep Space Background
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#000000');
-            bg.addColorStop(0.5, '#0a0a12');
-            bg.addColorStop(1, '#1a1a2e');
+            bg.addColorStop(0.4, '#050510');
+            bg.addColorStop(1, '#0a0a20');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Moving Warp Stars
+            // 2. Stars (Warp Effect)
             ctx.fillStyle = "white";
             stars.forEach(star => {
-                star.y += star.speed; // Downward warp feel
+                star.y += star.speed;
                 if (star.y > height) {
                     star.y = 0;
                     star.x = Math.random() * width;
                 }
 
-                ctx.globalAlpha = star.opacity * (0.6 + Math.sin(time * 0.05) * 0.4);
+                // Twinkle / Trailing effect
+                ctx.globalAlpha = star.opacity * (0.5 + Math.sin(time * 0.1) * 0.3);
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -104,9 +108,11 @@ const LandingPage = () => {
             const items = [];
 
             // Core Rotating Food Sun
+            // CRITICAL FIX: Added x: centerX
             items.push({
                 type: 'sun',
                 z: 0,
+                x: centerX, // Ensure it's centered!
                 y: centerY,
                 scale: 1,
                 emoji: CORE_EMOJIS[coreIndex]
@@ -116,7 +122,7 @@ const LandingPage = () => {
             planets.forEach(p => {
                 p.angle += p.speed;
                 const radiusX = p.distance * scale * 2.8;
-                const radiusY = p.distance * scale * 0.8;
+                const radiusY = p.distance * scale * 0.8; // Tilt
 
                 const x = centerX + Math.cos(p.angle) * radiusX;
                 const zDepth = Math.sin(p.angle) * radiusY;
@@ -132,8 +138,8 @@ const LandingPage = () => {
                     z: zDepth,
                     scale: depthScale,
                     size: p.size,
-                    rotationAxis: p.rotationAxis,
-                    opacity: 0.1 + (depthScale * 0.9) // Strong fade for depth
+                    rotationAngle: time * p.rotationSpeed + p.rotationAxis,
+                    opacity: 0.15 + (depthScale * 0.85) // Fade far items
                 });
             });
 
@@ -147,25 +153,24 @@ const LandingPage = () => {
 
                 if (item.type === 'sun') {
                     // Core Glow
-                    const sunSize = 110 * scale * 2.2;
+                    const sunSize = 120 * scale * 2.5;
                     const glow = ctx.createRadialGradient(0, 0, sunSize * 0.2, 0, 0, sunSize * 2.5);
-                    glow.addColorStop(0, 'rgba(255, 120, 0, 0.7)');
-                    glow.addColorStop(0.5, 'rgba(255, 50, 0, 0.3)');
+                    glow.addColorStop(0, 'rgba(255, 100, 0, 0.7)');
                     glow.addColorStop(1, 'transparent');
                     ctx.fillStyle = glow;
-                    ctx.beginPath(); ctx.arc(0, 0, sunSize * 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(0, 0, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
 
                     // Rotating Core Food
-                    const pulse = 1 + Math.sin(time * 0.04) * 0.03;
+                    const pulse = 1 + Math.sin(time * 0.05) * 0.03;
                     ctx.scale(pulse, pulse);
-                    ctx.rotate(time * 0.01);
+                    ctx.rotate(time * 0.005);
                     ctx.font = `${sunSize}px "Segoe UI Emoji", "Apple Color Emoji", Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
                     // Core Shadow
-                    ctx.shadowColor = 'rgba(255, 80, 0, 0.9)';
-                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = 'rgba(255, 80, 0, 0.8)';
+                    ctx.shadowBlur = 50;
 
                     ctx.fillText(item.emoji, 0, 0);
 
@@ -176,17 +181,17 @@ const LandingPage = () => {
                     ctx.textBaseline = 'middle';
                     ctx.globalAlpha = item.opacity;
 
-                    // 3D Rotation
-                    ctx.rotate(time * 0.02 + item.rotationAxis);
+                    // Self Rotation
+                    ctx.rotate(item.rotationAngle);
 
                     // Depth Blur Simulation
                     if (item.scale > 1.1) {
-                        // Near items - Crisp + Shadow
-                        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+                        // Near items
+                        ctx.shadowColor = 'rgba(0,0,0,0.6)';
                         ctx.shadowBlur = 20;
                     } else if (item.scale < 0.8) {
-                        // Far items - Simulate blur with low opacity (canvas blur is slow)
-                        ctx.globalAlpha *= 0.6;
+                        // Far items
+                        ctx.globalAlpha *= 0.5;
                     }
 
                     ctx.fillText(item.emoji, 0, 0);
@@ -207,10 +212,10 @@ const LandingPage = () => {
     // Scroll Reveal Component
     const ScrollReveal = ({ children, delay = 0 }) => (
         <motion.div
-            initial={{ opacity: 0, y: 80 }}
+            initial={{ opacity: 0, y: 100 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.8, delay, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.0, delay, ease: [0.22, 1, 0.36, 1] }} // Custom easing
         >
             {children}
         </motion.div>
@@ -222,27 +227,25 @@ const LandingPage = () => {
             {/* BACKGROUND CANVAS - Fixed */}
             <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
 
-            {/* FLOAT PILL NAVBAR - Minimal & Premium */}
+            {/* NAVBAR - Floating Glass Pill */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
-                <div className="max-w-xl mx-auto pointer-events-auto">
-                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-6 py-2.5 flex items-center justify-between shadow-2xl shadow-black/80 ring-1 ring-white/5">
+                <div className="max-w-2xl mx-auto pointer-events-auto">
+                    <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full px-8 py-3 flex items-center justify-between shadow-2xl shadow-black/80">
                         {/* Logo */}
-                        <div className="flex items-center gap-2.5">
-                            <div className="bg-gradient-to-tr from-orange-500 to-rose-600 p-1.5 rounded-full shadow-lg shadow-orange-500/20">
-                                <Rocket className="w-3.5 h-3.5 text-white" fill="white" />
-                            </div>
-                            <span className="text-sm font-black tracking-widest text-white uppercase">
+                        <div className="flex items-center gap-3">
+                            <Rocket className="w-5 h-5 text-orange-500" />
+                            <span className="text-xl font-black tracking-tighter text-white">
                                 FoodVerse
                             </span>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1">
-                            <button onClick={() => navigate('/login')} className="px-4 py-1.5 text-xs font-bold text-gray-300 hover:text-white transition-colors">
-                                LOGIN
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => navigate('/login')} className="text-sm font-bold text-gray-300 hover:text-white transition-colors">
+                                Login
                             </button>
-                            <button onClick={() => navigate('/signup')} className="px-4 py-2 bg-white text-black text-[10px] font-black rounded-full hover:bg-gray-200 transition-all hover:scale-105 shadow-lg shadow-white/10 tracking-wider">
-                                GET STARTED
+                            <button onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-white text-black text-xs font-black rounded-full hover:bg-gray-200 transition-all hover:scale-105 shadow-lg tracking-wider">
+                                GET APP
                             </button>
                         </div>
                     </div>
@@ -253,32 +256,31 @@ const LandingPage = () => {
             <main className="relative z-10 flex flex-col w-full">
 
                 {/* HERO SECTION */}
-                <section className="min-h-screen flex flex-col justify-center pt-24 pb-12 px-6 max-w-7xl mx-auto w-full pointer-events-none">
+                <section className="min-h-screen flex flex-col justify-center pt-20 pb-12 px-6 max-w-7xl mx-auto w-full pointer-events-none">
                     <div className="grid md:grid-cols-2 gap-12 items-center pointer-events-auto">
 
                         {/* LEFT TEXT */}
                         <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1">
-                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }}>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md shadow-lg shadow-orange-500/5">
-                                    <Star className="w-3 h-3 fill-orange-400" /> #1 Galaxy Rated App
+                            <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 1.2, ease: "easeOut" }}>
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
+                                    <Star className="w-3 h-3 fill-orange-400" /> Voted #1 in Andromeda
                                 </div>
-                                <h1 className="text-6xl sm:text-7xl md:text-8xl font-black leading-[0.95] tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-gray-500 drop-shadow-2xl">
-                                    Taste the <br />
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-purple-600 animate-gradient-x">
-                                        Infinite
+                                <h1 className="text-6xl sm:text-7xl md:text-9xl font-black leading-[0.9] tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-gray-200 to-gray-600 drop-shadow-2xl">
+                                    Taste<br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-purple-600">
+                                        Future.
                                     </span>
                                 </h1>
-                                <p className="text-base sm:text-lg md:text-xl text-gray-400/80 max-w-lg mx-auto md:mx-0 leading-relaxed mb-10 font-medium">
-                                    Advanced culinary propulsion. Hyper-local delivery.
-                                    Experience the future of food, right at your pod.
+                                <p className="text-lg md:text-2xl text-gray-400 max-w-lg mx-auto md:mx-0 leading-relaxed mb-10 font-medium">
+                                    Defy gravity. Hyper-speed drone delivery from the galaxy's finest kitchens.
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto justify-center md:justify-start">
-                                    <button onClick={() => navigate('/login')} className="group px-8 py-4 bg-gradient-to-r from-orange-600 to-rose-600 text-white font-black rounded-2xl hover:shadow-2xl hover:shadow-orange-600/30 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-wider">
-                                        Launch Application <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    <button onClick={() => navigate('/login')} className="px-8 py-4 bg-gradient-to-br from-orange-500 to-red-600 text-white font-black rounded-2xl hover:shadow-2xl hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest transform hover:-translate-y-1">
+                                        Launch Order <ChevronRight className="w-4 h-4" />
                                     </button>
-                                    <button onClick={scrollToContent} className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl backdrop-blur-md transition-colors flex items-center justify-center gap-3 text-sm uppercase tracking-wider">
-                                        Mission Brief <ArrowDown className="w-4 h-4" />
+                                    <button onClick={scrollToContent} className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl backdrop-blur-md transition-colors flex items-center justify-center gap-3 text-sm uppercase tracking-widest">
+                                        Explore <ArrowDown className="w-4 h-4" />
                                     </button>
                                 </div>
                             </motion.div>
@@ -290,29 +292,29 @@ const LandingPage = () => {
                 </section>
 
                 {/* --- SCROLLING CONTENT SECTION --- */}
-                <div id="about" className="relative w-full bg-gradient-to-b from-transparent via-[#050510] to-[#000000] backdrop-blur-sm pt-32 pb-24">
+                <div id="about" className="relative w-full bg-gradient-to-b from-transparent via-[#050510] to-black backdrop-blur-sm pt-32 pb-40">
 
-                    {/* FEATURES GRID */}
+                    {/* FEATURES */}
                     <section className="px-6 max-w-7xl mx-auto">
                         <ScrollReveal>
                             <div className="text-center mb-24">
-                                <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Galactic Features</h2>
-                                <p className="text-gray-500 max-w-2xl mx-auto text-lg font-medium">Engineered for the modern space traveler.</p>
+                                <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Galactic Standard</h2>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-xl font-medium">Propulsion. Precision. Pizza.</p>
                             </div>
                         </ScrollReveal>
 
-                        <div className="grid md:grid-cols-3 gap-6 md:gap-10">
+                        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
                             {[
-                                { title: "Hyper-Local Ops", desc: "Precision landing at your coordinates.", icon: <MapPin className="w-6 h-6 text-rose-500" />, color: "border-rose-500/20 hover:border-rose-500/50" },
-                                { title: "Warp Speed", desc: "Hot food, defying physics.", icon: <Zap className="w-6 h-6 text-yellow-400" />, color: "border-yellow-400/20 hover:border-yellow-400/50" },
-                                { title: "Live Telemetry", desc: "Track pilot trajectory in real-time.", icon: <RadarComponent />, color: "border-blue-400/20 hover:border-blue-400/50" },
-                                { title: "Quantum Secure", desc: "Encrypted transactions.", icon: <ShieldCheck className="w-6 h-6 text-green-400" />, color: "border-green-400/20 hover:border-green-400/50" },
-                                { title: "Cosmic Menu", desc: "Dishes from 500+ star systems.", icon: <Utensils className="w-6 h-6 text-purple-400" />, color: "border-purple-400/20 hover:border-purple-400/50" },
-                                { title: "Command Center", desc: "Full control via handheld.", icon: <Smartphone className="w-6 h-6 text-orange-400" />, color: "border-orange-400/20 hover:border-orange-400/50" }
+                                { title: "Hyper-Local", desc: "Pinpoint landing at your pod.", icon: <MapPin className="w-8 h-8 text-rose-500" /> },
+                                { title: "Warp Speed", desc: "Hot food, faster than light.", icon: <Zap className="w-8 h-8 text-yellow-400" /> },
+                                { title: "Live Tracking", desc: "Watch your pilot's telemetry.", icon: <Truck className="w-8 h-8 text-blue-400" /> },
+                                { title: "Quantum Secure", desc: "Encrypted transactions.", icon: <ShieldCheck className="w-8 h-8 text-green-400" /> },
+                                { title: "Cosmic Menu", desc: "Dishes from 500+ sectors.", icon: <Utensils className="w-8 h-8 text-purple-400" /> },
+                                { title: "Command Deck", desc: "Full control via handheld.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
                             ].map((item, i) => (
                                 <ScrollReveal key={i} delay={i * 0.1}>
-                                    <div className={`group p-8 md:p-10 rounded-[2.5rem] bg-white/[0.03] border ${item.color} transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-white/[0.06]`}>
-                                        <div className="w-16 h-16 rounded-2xl bg-black/50 flex items-center justify-center mb-8 border border-white/5 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                    <div className="group h-full p-8 md:p-10 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-orange-500/20 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:bg-white/[0.08]">
+                                        <div className="mb-6 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500">
                                             {item.icon}
                                         </div>
                                         <h3 className="text-2xl font-black mb-3 text-gray-100">{item.title}</h3>
@@ -323,37 +325,11 @@ const LandingPage = () => {
                         </div>
                     </section>
 
-                    {/* STATS SECTION */}
-                    <section className="mt-32 px-6 max-w-7xl mx-auto">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 border-y border-white/10 py-16 bg-white/[0.02]">
-                            {[
-                                { val: "10M+", label: "Happy Pilots" },
-                                { val: "500+", label: "Sectors" },
-                                { val: "12m", label: "Avg Arrival" },
-                                { val: "4.9", label: "Star Rating" }
-                            ].map((stat, i) => (
-                                <ScrollReveal key={i} delay={0.2 + (i * 0.1)}>
-                                    <div className="text-center">
-                                        <div className="text-4xl md:text-5xl font-black text-white mb-2">{stat.val}</div>
-                                        <div className="text-xs md:text-sm text-gray-500 font-bold uppercase tracking-widest">{stat.label}</div>
-                                    </div>
-                                </ScrollReveal>
-                            ))}
-                        </div>
-                    </section>
                 </div>
 
             </main>
         </div>
     );
 };
-
-// Simple Icon Component for variety
-const RadarComponent = () => (
-    <div className="relative w-6 h-6">
-        <div className="absolute inset-0 rounded-full border-2 border-blue-400 opacity-50 animate-ping"></div>
-        <div className="absolute inset-2 bg-blue-400 rounded-full"></div>
-    </div>
-);
 
 export default LandingPage;
