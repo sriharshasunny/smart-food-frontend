@@ -16,21 +16,24 @@ const LandingPage = () => {
 
         let width, height, centerX, centerY;
         let scale = 1;
+        let isMobile = false;
 
         const resize = () => {
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
+            isMobile = width < 768;
 
-            if (width >= 768) { // Desktop
+            if (!isMobile) { // Desktop
                 centerX = width * 0.75; // Right side
                 centerY = height * 0.5;
                 scale = Math.min(width, height) * 0.0008;
             } else { // Mobile
                 centerX = width * 0.5;
-                centerY = height * 0.4;
-                scale = Math.min(width, height) * 0.0006;
+                // Move it down so it doesn't overlap header text too much
+                centerY = height * 0.65;
+                scale = Math.min(width, height) * 0.00055;
             }
         };
         window.addEventListener('resize', resize);
@@ -38,20 +41,22 @@ const LandingPage = () => {
 
         // Assets
         const foodEmojis = ['🍔', '🍩', '🌮', '🥗', '🍱', '🍜', '🍤', '🥓', '🍗', '🍟', '🧀', '🥒', '🥨'];
+        const sunEmojis = ['🍕', '🍔', '🥟', '🥪', '🍱']; // Rotating sun items
 
         // 1. Planets (Food Items)
         const planets = foodEmojis.map((emoji, i) => ({
             type: 'planet',
             emoji,
-            angle: (i / foodEmojis.length) * Math.PI * 2, // Evenly spaced
-            distance: 150 + (i % 3) * 60 + Math.random() * 40, // Varied distances
-            speed: 0.004 + Math.random() * 0.004, // Fast orbit
+            angle: (i / foodEmojis.length) * Math.PI * 2,
+            distance: 150 + (i % 3) * 60 + Math.random() * 40,
+            speed: 0.004 + Math.random() * 0.004,
             size: 30 + Math.random() * 25,
-            heightOffset: (Math.random() - 0.5) * 40 // Up/down variation
+            heightOffset: (Math.random() - 0.5) * 40
         }));
 
         // 2. Stars
-        const stars = Array.from({ length: 150 }, () => ({
+        // Reduce star count on mobile for higher FPS
+        const stars = Array.from({ length: isMobile ? 80 : 200 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 2,
@@ -60,19 +65,28 @@ const LandingPage = () => {
         }));
 
         let time = 0;
+        let sunIndex = 0;
+        let sunTimer = 0;
 
         const render = () => {
             time++;
 
+            // Cycle Sun Emoji every ~2 seconds (120 frames)
+            sunTimer++;
+            if (sunTimer > 120) {
+                sunIndex = (sunIndex + 1) % sunEmojis.length;
+                sunTimer = 0;
+            }
+
             // 1. Background (Deep Space)
-            const bg = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width);
+            const bg = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));
             bg.addColorStop(0, '#0a0a1a');
             bg.addColorStop(0.5, '#050508');
             bg.addColorStop(1, '#000000');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Stars (Moving + Blinking)
+            // 2. Stars
             stars.forEach(star => {
                 star.opacity += star.blinkSpeed;
                 const flicker = Math.abs(Math.sin(star.opacity));
@@ -85,33 +99,23 @@ const LandingPage = () => {
             // 3. Prepare 3D Scene Items
             const items = [];
 
-            // Add Sun (Central Pizza)
+            // Add Sun
             items.push({
                 type: 'sun',
-                z: 0, // Center
+                z: 0,
                 y: centerY,
-                scale: 1
+                scale: 1,
+                emoji: sunEmojis[sunIndex]
             });
 
-            // Add Planets (Calculated Positions)
+            // Add Planets
             planets.forEach(p => {
                 p.angle += p.speed;
-
-                // 3D Projection Logic
-                // We tilt the plane slightly: x is normal, y is compressed (z-depth)
                 const radiusX = p.distance * scale * 3;
-                const radiusY = p.distance * scale * 1.2; // Squashed Y for tilt effect
-
+                const radiusY = p.distance * scale * 1.2;
                 const x = centerX + Math.cos(p.angle) * radiusX;
-                // Z-depth approximation (y-position on screen relative to center)
                 const zDepth = Math.sin(p.angle) * radiusY;
-
-                // Visual Y position (tilted plane + depth)
                 const y = centerY + zDepth * 0.8 + p.heightOffset;
-
-                // Scale based on "Z" (pseudo-depth)
-                // If sin(angle) is > 0, it's "in front" (closer, larger). < 0 is "behind" (farther, smaller)
-                // Normalized scale factor: 0.7 to 1.3
                 const depthScale = 1 + (Math.sin(p.angle) * 0.3);
 
                 items.push({
@@ -119,24 +123,20 @@ const LandingPage = () => {
                     emoji: p.emoji,
                     x: x,
                     y: y,
-                    z: zDepth, // Used for sorting
+                    z: zDepth,
                     scale: depthScale,
                     size: p.size,
-                    opacity: 0.6 + (depthScale * 0.4) // Closer = brighter
+                    opacity: 0.6 + (depthScale * 0.4)
                 });
             });
 
-            // 4. Sort by Depth (Painter's Algorithm)
-            // Draw furthest (negative z / negative Sin) first
+            // 4. Sort by Depth
             items.sort((a, b) => a.z - b.z);
 
             // 5. Draw All
             items.forEach(item => {
                 if (item.type === 'sun') {
-                    // Draw Sun
                     const sunBaseSize = 100 * scale * 2.5;
-
-                    // Glow
                     const glow = ctx.createRadialGradient(centerX, centerY, sunBaseSize * 0.5, centerX, centerY, sunBaseSize * 3);
                     glow.addColorStop(0, 'rgba(255, 100, 0, 0.8)');
                     glow.addColorStop(0.4, 'rgba(255, 50, 0, 0.2)');
@@ -144,31 +144,29 @@ const LandingPage = () => {
                     ctx.fillStyle = glow;
                     ctx.beginPath(); ctx.arc(centerX, centerY, sunBaseSize * 3, 0, Math.PI * 2); ctx.fill();
 
-                    // Core (Pizza Emoji rotating)
+                    // Core
                     ctx.save();
                     ctx.translate(centerX, centerY);
-                    ctx.rotate(time * 0.005);
+                    const rotateSpeed = time * 0.005;
+                    // Add a little bounce on change?
+                    const scaleEffect = sunTimer < 10 ? 1.1 : 1.0;
+                    ctx.scale(scaleEffect, scaleEffect);
+                    ctx.rotate(rotateSpeed);
+
                     ctx.font = `${sunBaseSize}px Arial`;
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.shadowColor = "#ffaa00"; ctx.shadowBlur = 40;
-                    ctx.fillText("🍕", 0, 0);
+                    ctx.fillText(item.emoji, 0, 0);
                     ctx.restore();
-
                 } else {
-                    // Draw Planet
                     ctx.save();
                     ctx.translate(item.x, item.y);
-                    // Scale transform
                     ctx.scale(item.scale, item.scale);
-
                     ctx.font = `${item.size}px Arial`;
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.globalAlpha = item.opacity;
-
-                    // Shadow purely for aesthetics
                     ctx.shadowColor = item.scale > 1.1 ? "rgba(255,255,255,0.5)" : "transparent";
                     ctx.shadowBlur = 10;
-
                     ctx.fillText(item.emoji, 0, 0);
                     ctx.restore();
                 }
