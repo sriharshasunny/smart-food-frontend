@@ -8,7 +8,7 @@ const LandingPage = () => {
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- RESTORED "OLD" CENTRAL 3D ENGINE ---
+    // --- "BOTTOM RISING" 3D ENGINE (Old Style) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -31,30 +31,29 @@ const LandingPage = () => {
             canvas.height = height;
             isMobile = width < 768;
 
-            // USER REQUEST: "CNERT" (CENTER) for Laptop too.
-            // Absolute Center for everyone.
+            // UNIFIED LAYOUT: Always Bottom Center
             centerX = width * 0.5;
-            centerY = height * 0.5;
+            centerY = height * 0.85; // Pushed to bottom (Rising Sun effect)
 
             // Adjust scale
-            scale = Math.min(width, height) * (isMobile ? 0.001 : 0.0012);
+            scale = Math.min(width, height) * (isMobile ? 0.001 : 0.0011);
         };
         window.addEventListener('resize', resize);
         resize();
 
         // 3D Particles
-        const planets = Array.from({ length: 20 }, (_, i) => ({
+        const planets = Array.from({ length: 22 }, (_, i) => ({
             emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-            angle: (i / 20) * Math.PI * 2,
-            distance: 140 + (i % 4) * 60 + Math.random() * 40,
-            speed: 0.003 + Math.random() * 0.004,
-            size: 40 + Math.random() * 30,
-            heightOffset: (Math.random() - 0.5) * 150,
+            angle: (i / 22) * Math.PI * 2,
+            distance: 130 + (i % 4) * 60 + Math.random() * 40,
+            speed: 0.003 + Math.random() * 0.003,
+            size: 35 + Math.random() * 30,
+            heightOffset: (Math.random() - 0.5) * 120,
             rotation: Math.random() * Math.PI
         }));
 
         // Stars
-        const stars = Array.from({ length: isMobile ? 50 : 200 }, () => ({
+        const stars = Array.from({ length: isMobile ? 60 : 250 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 2,
@@ -69,15 +68,15 @@ const LandingPage = () => {
         const render = () => {
             time++;
             coreTimer++;
-            if (coreTimer > 150) { // Switch core item
+            if (coreTimer > 180) {
                 coreIndex = (coreIndex + 1) % CORE_EMOJIS.length;
                 coreTimer = 0;
             }
 
-            // 1. Clear & Background
+            // 1. Background
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#000000');
-            bg.addColorStop(1, '#111122');
+            bg.addColorStop(1, '#0a0a15');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
@@ -99,7 +98,7 @@ const LandingPage = () => {
             // 3. Prepare Items (Z-Sort)
             const items = [];
 
-            // CENTER SUN
+            // CENTER SUN (Bottom)
             items.push({
                 type: 'sun',
                 z: 0,
@@ -113,7 +112,7 @@ const LandingPage = () => {
             planets.forEach(p => {
                 p.angle += p.speed;
                 const radiusX = p.distance * scale * 2.8;
-                const radiusY = p.distance * scale * 0.9;
+                const radiusY = p.distance * scale * 0.8;
 
                 const x = centerX + Math.cos(p.angle) * radiusX;
                 const zDepth = Math.sin(p.angle) * radiusY;
@@ -142,23 +141,24 @@ const LandingPage = () => {
                 ctx.translate(item.x, item.y);
 
                 if (item.type === 'sun') {
-                    // Core Glow
-                    const sunSize = 120 * scale * 2.5;
-                    const glow = ctx.createRadialGradient(0, 0, sunSize * 0.2, 0, 0, sunSize * 2.5);
-                    glow.addColorStop(0, 'rgba(255, 100, 0, 0.6)');
+                    // Core Glow - Stronger for "Rising Sun" effect
+                    const sunSize = 130 * scale * 2.5;
+                    const glow = ctx.createRadialGradient(0, 0, sunSize * 0.1, 0, 0, sunSize * 2.0);
+                    glow.addColorStop(0, 'rgba(255, 140, 0, 0.8)');
+                    glow.addColorStop(0.5, 'rgba(255, 60, 0, 0.4)');
                     glow.addColorStop(1, 'transparent');
                     ctx.fillStyle = glow;
-                    ctx.beginPath(); ctx.arc(0, 0, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(0, 0, sunSize * 3, 0, Math.PI * 2); ctx.fill();
 
-                    const pulse = 1 + Math.sin(time * 0.05) * 0.04;
+                    const pulse = 1 + Math.sin(time * 0.05) * 0.03;
                     ctx.scale(pulse, pulse);
                     ctx.rotate(time * 0.01);
                     ctx.font = `${sunSize}px "Segoe UI Emoji", "Apple Color Emoji", Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    ctx.shadowColor = 'rgba(255, 100, 0, 0.8)';
-                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = 'rgba(255, 100, 0, 0.9)';
+                    ctx.shadowBlur = 50;
                     ctx.fillText(item.emoji, 0, 0);
 
                 } else {
@@ -170,7 +170,7 @@ const LandingPage = () => {
                     ctx.rotate(item.rotation);
 
                     if (item.scale > 1.1) {
-                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                        ctx.shadowColor = 'rgba(0,0,0,0.6)';
                         ctx.shadowBlur = 15;
                     }
                     ctx.fillText(item.emoji, 0, 0);
@@ -208,7 +208,7 @@ const LandingPage = () => {
             {/* FLOATING HEADER - Centered Pill */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
                 <div className="max-w-fit mx-auto pointer-events-auto">
-                    <div className="bg-black/40 backdrop-blur-2xl border border-white/20 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
+                    <div className="bg-black/80 backdrop-blur-2xl border border-white/10 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
                             <Rocket className="w-5 h-5 text-orange-500" />
                             <span className="font-black text-lg tracking-tight">FoodVerse</span>
@@ -217,8 +217,8 @@ const LandingPage = () => {
                             <button onClick={() => navigate('/login')} className="px-5 py-2 text-xs font-bold hover:text-orange-400 transition-colors">
                                 Login
                             </button>
-                            <button onClick={() => navigate('/signup')} className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-black rounded-full hover:scale-105 transition-transform shadow-lg">
-                                JOIN
+                            <button onClick={() => navigate('/signup')} className="px-6 py-2 bg-white text-black text-xs font-black rounded-full hover:scale-105 transition-transform shadow-lg">
+                                Get Started
                             </button>
                         </div>
                     </div>
@@ -227,58 +227,60 @@ const LandingPage = () => {
 
             <main className="relative z-10 flex flex-col w-full">
 
-                {/* HERO SECTION - Centered Text + Animation Background */}
-                <section className="min-h-screen flex flex-col justify-center items-center pt-24 pb-12 px-6 w-full pointer-events-none text-center">
+                {/* HERO SECTION - Unified Centered Layout */}
+                <section className="min-h-screen flex flex-col justify-start items-center pt-32 md:pt-40 px-6 w-full pointer-events-none text-center">
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="pointer-events-auto relative z-10 bg-black/20 backdrop-blur-[2px] p-8 rounded-[3rem] border border-white/5"
+                        className="pointer-events-auto relative z-10 max-w-2xl mx-auto flex flex-col items-center"
                     >
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-black uppercase tracking-widest mb-6 mx-auto">
-                            <Star className="w-3 h-3 fill-orange-400" /> Galactic Delivery
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-950/30 border border-orange-500/20 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-8 mx-auto shadow-lg shadow-orange-900/10">
+                            <Zap className="w-3 h-3 fill-orange-400" /> Galactic Delivery V2.0
                         </div>
-                        <h1 className="text-6xl sm:text-7xl md:text-8xl font-black leading-[0.9] tracking-tighter mb-6 drop-shadow-2xl">
-                            Taste<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
-                                The Infinite
+
+                        <h1 className="text-5xl sm:text-7xl md:text-8xl font-black leading-[1.0] tracking-tighter mb-6 drop-shadow-2xl">
+                            The Taste of<br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500">
+                                Infinity.
                             </span>
                         </h1>
-                        <p className="text-lg md:text-xl text-gray-300 max-w-lg mx-auto leading-relaxed mb-8 font-medium">
-                            Hyper-speed drone delivery. Any galaxy. Any time.
+
+                        <p className="text-sm md:text-lg text-gray-400/90 max-w-md mx-auto leading-relaxed mb-10 font-medium">
+                            Join the intergalactic food revolution. Order from the finest restaurants across the quadrant and receive your meal at warp speed.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button onClick={() => navigate('/login')} className="px-10 py-4 bg-white text-black font-black rounded-full hover:scale-105 transition-transform shadow-xl flex items-center justify-center gap-2">
-                                ORDER NOW <ChevronRight className="w-5 h-5" />
+
+                        {/* Buttons - Stacked & Full Width on Mobile style */}
+                        <div className="flex flex-col gap-4 w-full max-w-sm">
+                            <button onClick={() => navigate('/login')} className="w-full py-4 bg-gradient-to-r from-orange-600 to-rose-600 text-white font-bold rounded-2xl hover:brightness-110 transition-all shadow-lg shadow-orange-900/20 flex items-center justify-center gap-2">
+                                Launch App <ChevronRight className="w-4 h-4" />
                             </button>
-                            <button onClick={scrollToContent} className="px-10 py-4 bg-black/40 hover:bg-black/60 border border-white/20 text-white font-bold rounded-full backdrop-blur-md transition-colors flex items-center justify-center gap-2">
-                                MISSION BRIEF <ArrowDown className="w-4 h-4" />
+                            <button onClick={scrollToContent} className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl backdrop-blur-md transition-colors flex items-center justify-center gap-2">
+                                Explore Menu
                             </button>
                         </div>
                     </motion.div>
                 </section>
 
-                {/* SCROLLING INFO */}
-                <div id="about" className="relative w-full bg-gradient-to-b from-transparent to-black backdrop-blur-sm pt-20 pb-32">
+                {/* SCROLLING INFO - Content Below Fold */}
+                <div id="about" className="relative w-full bg-gradient-to-b from-transparent to-black backdrop-blur-sm pt-10 pb-32">
                     <section className="px-6 max-w-7xl mx-auto">
                         <ScrollReveal>
-                            <div className="text-center mb-20">
-                                <h2 className="text-4xl md:text-5xl font-black mb-4">Galactic Features</h2>
+                            <div className="text-center mb-20 pt-20">
+                                <h2 className="text-3xl md:text-5xl font-black mb-4">How It Works</h2>
+                                <p className="text-gray-500">Three simple steps to gastronomic nirvana.</p>
                             </div>
                         </ScrollReveal>
 
                         <div className="grid md:grid-cols-3 gap-6">
                             {[
-                                { title: "Hyper-Local", desc: "Precision landing at your pod.", icon: <MapPin className="w-8 h-8 text-rose-500" /> },
-                                { title: "Warp Speed", desc: "Hot food, defying physics.", icon: <Zap className="w-8 h-8 text-yellow-400" /> },
-                                { title: "Live Track", desc: "Real-time pilot telemetry.", icon: <Truck className="w-8 h-8 text-blue-400" /> },
-                                { title: "Quantum Pay", desc: "Encrypted transactions.", icon: <ShieldCheck className="w-8 h-8 text-green-400" /> },
-                                { title: "Cosmic Menu", desc: "Dishes from 500+ sectors.", icon: <Utensils className="w-8 h-8 text-purple-400" /> },
-                                { title: "Mobile Cmd", desc: "Full control via handheld.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
+                                { title: "1. Choose Sector", desc: "Select from 500+ galaxies.", icon: <MapPin className="w-8 h-8 text-rose-500" /> },
+                                { title: "2. Warp Delivery", desc: "Hot food in 12 parsecs.", icon: <Zap className="w-8 h-8 text-yellow-400" /> },
+                                { title: "3. Enjoy", desc: "Taste the future.", icon: <Utensils className="w-8 h-8 text-purple-400" /> }
                             ].map((item, i) => (
-                                <ScrollReveal key={i} delay={i * 0.05}>
-                                    <div className="group p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:border-orange-500/30 transition-all hover:-translate-y-2 hover:bg-white/10">
-                                        <div className="mb-4">{item.icon}</div>
+                                <ScrollReveal key={i} delay={i * 0.1}>
+                                    <div className="group p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:border-orange-500/30 transition-all hover:-translate-y-2 hover:bg-white/10 text-center">
+                                        <div className="mb-4 inline-block">{item.icon}</div>
                                         <h3 className="text-xl font-black mb-2">{item.title}</h3>
                                         <p className="text-gray-400 text-sm font-bold">{item.desc}</p>
                                     </div>
@@ -287,7 +289,6 @@ const LandingPage = () => {
                         </div>
                     </section>
                 </div>
-
             </main>
         </div>
     );
