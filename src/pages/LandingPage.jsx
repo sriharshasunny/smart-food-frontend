@@ -11,23 +11,22 @@ const LandingPage = () => {
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: false });
+        const ctx = canvas.getContext('2d', { alpha: false }); // FASTEST
         let animationFrameId;
 
         // --- ASSETS ---
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🍙', '🌯'];
+        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗'];
         const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Hot & Fresh! 🔥", "Order Now!", "Zoom Zoom ✨"];
 
-        // --- STATE ---
-        let width, height, centerX, centerY, scale;
-        let mouseX = 0, mouseY = 0;
-        let targetMouseX = 0, targetMouseY = 0;
+        // --- PHYSICS STATE ---
+        let width, height, centerX, centerY;
+        let scale = 1;
 
         // UFO STATE
         const ufo = {
             x: -100, y: 100, vx: 0, vy: 0,
-            targetX: 0, targetY: 0, lastTargetTime: 0,
+            targetX: 0, targetY: 0,
             state: 'IDLE',
             rotation: 0, opacity: 1, scale: 1,
             trail: [],
@@ -35,45 +34,31 @@ const LandingPage = () => {
             msgIndex: 0, msgTimer: 0, showMsg: true
         };
 
+        // --- INTERACTION ---
+        let mouseX = 0, mouseY = 0;
         const handleInteraction = (e) => {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            targetMouseX = clientX - rect.left;
-            targetMouseY = clientY - rect.top;
+            mouseX = clientX - rect.left;
+            mouseY = clientY - rect.top;
 
-            const logicMouseX = clientX - rect.left;
-            const logicMouseY = clientY - rect.top;
-
-            const distLogic = Math.hypot(logicMouseX - ufo.x, logicMouseY - ufo.y);
-
-            if (distLogic < 150 && ufo.state === 'IDLE') {
+            const dist = Math.hypot(mouseX - ufo.x, mouseY - ufo.y);
+            if (dist < 150 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
-                ufo.vx += (centerX - ufo.x) * 0.08; // HUGE BURST
-                ufo.vy += (centerY - ufo.y) * 0.08;
+                ufo.vx += (centerX - ufo.x) * 0.02;
+                ufo.vy += (centerY - ufo.y) * 0.02;
             }
-        };
-
-        const handleMove = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            targetMouseX = e.clientX - rect.left;
-            targetMouseY = e.clientY - rect.top;
         };
 
         window.addEventListener('mousedown', handleInteraction);
         window.addEventListener('touchstart', handleInteraction);
-        window.addEventListener('mousemove', handleMove);
 
         const resize = () => {
-            const dpr = window.devicePixelRatio || 1;
             width = window.innerWidth;
             height = window.innerHeight;
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            canvas.style.width = `${width}px`;
-            canvas.style.height = `${height}px`;
-            ctx.scale(dpr, dpr);
-
+            canvas.width = width;
+            canvas.height = height;
             if (width >= 768) {
                 centerX = width * 0.75;
                 centerY = height * 0.5;
@@ -88,81 +73,65 @@ const LandingPage = () => {
         window.addEventListener('resize', resize);
         resize();
 
-        // --- ORGANIZED PLANETS (2 RINGS) ---
-        // "Solar system organization... make it optimized and premium and not clumsy"
-        const planets = Array.from({ length: 14 }, (_, i) => {
-            const isInner = i % 2 === 0;
-            return {
-                emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-                angle: (i / 14) * Math.PI * 2, // Perfectly distributed
-                // TWO DISTINCT RINGS
-                distance: isInner ? 130 : 210,
-                // FAST SPEEDS
-                speed: isInner ? 0.01 : 0.007,
-                size: isInner ? 35 : 45,
-                // FLATTENED DISC (Less clumsy)
-                heightOffset: (Math.random() - 0.5) * 15,
-                rotation: Math.random() * Math.PI,
-                rotSpeed: 0.08 + Math.random() * 0.05 // Fast Spin
-            };
-        });
+        // --- PARTICLES ---
+        const planets = Array.from({ length: 12 }, (_, i) => ({
+            emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
+            angle: (i / 12) * Math.PI * 2,
+            distance: 180 + (i % 2) * 80,
+            speed: 0.003 + (i % 2) * 0.002,
+            size: 45,
+            heightOffset: (Math.random() - 0.5) * 50,
+            rotation: Math.random() * Math.PI
+        }));
 
-        const stars = Array.from({ length: 120 }, () => ({
+        const stars = Array.from({ length: 140 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 1.5,
             opacity: Math.random() * 0.8,
-            speed: 0.5 + Math.random() * 0.8 // Fast Stars
+            speed: 0.1 + Math.random() * 0.4
         }));
 
         let time = 0;
-        let coreIndex = 0, coreTimer = 0;
+        let coreIndex = 0;
+        let coreTimer = 0;
 
         // --- UPDATE ---
-        const updatePhysics = () => {
-            mouseX += (targetMouseX - mouseX) * 0.1;
-            mouseY += (targetMouseY - mouseY) * 0.1;
-
+        const updateUFO = () => {
             ufo.msgTimer++;
             if (ufo.msgTimer > 180) {
-                ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length; ufo.msgTimer = 0;
+                ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length;
+                ufo.msgTimer = 0;
+                ufo.showMsg = true;
             }
 
             if (ufo.state === 'IDLE') {
-                // HYPER-SPEED DARTING BEHAVIOR
-                // Change targets quickly and accelerate FAST
-                const now = Date.now();
-                if (now - ufo.lastTargetTime > 800) { // New target every 0.8s
-                    if (Math.random() < 0.7) {
-                        ufo.targetX = Math.random() * width;
-                        ufo.targetY = Math.random() * height * 0.8;
-                        ufo.lastTargetTime = now;
-                    }
+                if (Math.random() < 0.005) {
+                    ufo.targetX = Math.random() * width;
+                    ufo.targetY = Math.random() * (height * 0.6);
                 }
-
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
-
-                // VERY HIGH AGILITY
-                ufo.vx += dx * 0.003; // Was 0.0008 (4x faster acceleration)
-                ufo.vy += dy * 0.003;
-                ufo.vx *= 0.92; // More drag to stop quickly at targets (Snap feel)
-                ufo.vy *= 0.92;
-
-                ufo.rotation = ufo.vx * 0.05;
+                ufo.vx += dx * 0.0003;
+                ufo.vy += dy * 0.0003;
+                ufo.vx *= 0.98;
+                ufo.vy *= 0.98;
+                ufo.rotation = ufo.vx * 0.03;
                 ufo.scale = 1; ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
                 const dx = centerX - ufo.x;
                 const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
-                ufo.vx += dx * 0.015; ufo.vy += dy * 0.015;
-                ufo.vx *= 0.85; ufo.vy *= 0.85;
+                ufo.vx += dx * 0.003; ufo.vy += dy * 0.003;
+                ufo.vx *= 0.94; ufo.vy *= 0.94;
 
-                ufo.scale = Math.min(1, dist / 150);
-                ufo.rotation += 0.5;
-                if (dist < 10 || ufo.scale < 0.1) {
-                    ufo.state = 'RESPAWNING'; ufo.respawnTimer = 60; // 1s (Very fast respawn)
+                const targetScale = Math.min(1, dist / 250);
+                ufo.scale = targetScale;
+                ufo.rotation += 0.2;
+                if (dist < 15 || ufo.scale < 0.1) {
+                    ufo.state = 'RESPAWNING';
+                    ufo.respawnTimer = 120; // 2s
                     ufo.opacity = 0; ufo.x = -9999;
                 }
             } else if (ufo.state === 'RESPAWNING') {
@@ -170,66 +139,62 @@ const LandingPage = () => {
                 if (ufo.respawnTimer <= 0) {
                     ufo.state = 'IDLE';
                     ufo.x = -100; ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 15; // BURST ENTRY
-                    ufo.opacity = 1; ufo.scale = 1;
+                    ufo.vx = 6; ufo.opacity = 1; ufo.scale = 1;
                 }
             }
             ufo.x += ufo.vx; ufo.y += ufo.vy;
 
-            // Trail
-            if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 0.5)) {
-                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 5 + 2 });
+            if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 0.4)) {
+                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 3 + 2 });
             }
             for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                ufo.trail[i].life -= 0.1; // Short fast trail
+                ufo.trail[i].life -= 0.05;
                 if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
             }
         };
 
         // --- RENDER ---
         const render = () => {
-            updatePhysics();
-
             time++;
             coreTimer++;
-            if (coreTimer > 150) { coreIndex = (coreIndex + 1) % CORE_ITEMS.length; coreTimer = 0; } // Fast cycle
+            if (coreTimer > 180) {
+                coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
+                coreTimer = 0;
+            }
 
-            // 1. Background
+            // 1. Background (DEEP SPACE)
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#000000');
+            bg.addColorStop(0.6, '#020205');
             bg.addColorStop(1, '#050510');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
             // 2. Stars
-            const parallaxX = (mouseX - width / 2) * 0.03;
-            const parallaxY = (mouseY - height / 2) * 0.03;
-
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
-                const px = star.x + parallaxX * (star.size * 0.3);
-                const py = star.y + parallaxY * (star.size * 0.3);
-                ctx.globalAlpha = star.opacity;
-                ctx.beginPath(); ctx.arc(px, py, star.size, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = star.opacity * 0.8;
+                ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
             // 3. UFO
+            updateUFO();
             ufo.trail.forEach(p => {
                 ctx.globalAlpha = p.life * 0.6 * ufo.opacity;
                 ctx.fillStyle = '#00ffff';
-                ctx.beginPath(); ctx.arc(p.x + parallaxX, p.y + parallaxY, p.size * ufo.scale, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size * ufo.scale, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
             if (ufo.opacity > 0) {
                 ctx.save();
-                ctx.translate(ufo.x + parallaxX, ufo.y + parallaxY);
+                ctx.translate(ufo.x, ufo.y);
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
-                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25;
+                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 20;
                 ctx.font = "40px Arial";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
@@ -238,52 +203,50 @@ const LandingPage = () => {
                     ctx.shadowBlur = 0; ctx.rotate(-ufo.rotation);
                     const msg = UFO_MESSAGES[ufo.msgIndex];
                     ctx.font = "bold 12px sans-serif";
-                    const metrics = ctx.measureText(msg); const pad = 12;
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-                    ctx.beginPath(); ctx.roundRect(25, -28, metrics.width + pad * 2, 34, 8); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(25, -5); ctx.lineTo(18, 5); ctx.lineTo(35, -5); ctx.fill();
+                    const metrics = ctx.measureText(msg);
+                    const pad = 10;
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                    ctx.beginPath(); ctx.roundRect(25, -25, metrics.width + pad * 2, 30, 10); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(25, -10); ctx.lineTo(15, 0); ctx.lineTo(30, -5); ctx.fill();
                     ctx.fillStyle = "#000"; ctx.textAlign = "left";
-                    ctx.fillText(msg, 25 + pad, -28 + 17);
+                    ctx.fillText(msg, 25 + pad, -25 + 19);
                 }
                 ctx.restore();
             }
 
-            // 4. CORE SUN
-            const sunX = centerX + parallaxX * 0.6;
-            const sunY = centerY + parallaxY * 0.6;
+            // 4. CORE SUN 
             const sunSize = 90 * scale * 2.0;
-
-            const glow = ctx.createRadialGradient(sunX, sunY, sunSize * 0.1, sunX, sunY, sunSize * 2.8);
-            glow.addColorStop(0, 'rgba(255, 120, 0, 0.4)');
+            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 2.8);
+            glow.addColorStop(0, 'rgba(255, 140, 0, 0.3)');
+            glow.addColorStop(0.5, 'rgba(255, 60, 0, 0.05)');
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
-            ctx.beginPath(); ctx.arc(sunX, sunY, sunSize * 2.8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.8, 0, Math.PI * 2); ctx.fill();
 
-            const pulse = 1 + Math.sin(time * 0.08) * 0.03; // Fast Pulse
+            const pulse = 1 + Math.sin(time * 0.05) * 0.02;
             ctx.save();
-            ctx.translate(sunX, sunY);
+            ctx.translate(centerX, centerY);
             ctx.scale(pulse, pulse);
-            ctx.rotate(time * 0.02);
-            ctx.shadowColor = 'rgba(255, 100, 0, 0.5)'; ctx.shadowBlur = 30;
+            ctx.rotate(time * 0.015);
+            ctx.shadowColor = 'rgba(255, 100, 0, 0.4)'; ctx.shadowBlur = 25;
             ctx.font = `${sunSize}px Arial`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
             ctx.restore();
 
-            // 5. PLANETS (RINGS)
+            // 5. PLANETS
             const items = [];
             planets.forEach(p => {
                 p.angle += p.speed;
                 const radiusX = p.distance * scale * 2.6;
-                const radiusY = p.distance * scale * 0.7; // Tighter ellipse
+                const radiusY = p.distance * scale * 0.7;
                 const x = centerX + Math.cos(p.angle) * radiusX;
                 const zDepth = Math.sin(p.angle) * radiusY;
                 const y = centerY + zDepth * 0.5 + p.heightOffset;
                 const depthScale = 1 + (Math.sin(p.angle) * 0.3);
                 items.push({
-                    emoji: p.emoji, x: x + parallaxX * 0.9, y: y + parallaxY * 0.9,
-                    z: zDepth, scale: depthScale, size: p.size,
-                    rotation: time * p.rotSpeed + p.rotation,
+                    emoji: p.emoji, x, y, z: zDepth, scale: depthScale, size: p.size,
+                    rotation: time * 0.02 + p.rotation,
                     opacity: 0.3 + (depthScale * 0.7)
                 });
             });
@@ -302,16 +265,14 @@ const LandingPage = () => {
                 ctx.restore();
             });
 
-            requestAnimationFrame(render);
+            animationFrameId = requestAnimationFrame(render);
         };
-        render(); // Start Link
-
+        render();
         return () => {
             window.removeEventListener('resize', resize);
             window.removeEventListener('mousedown', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);
-            window.removeEventListener('mousemove', handleMove);
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            cancelAnimationFrame(animationFrameId);
         };
     }, []);
 
@@ -319,12 +280,13 @@ const LandingPage = () => {
         document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // FAST SCROLL - REPLACED COMPLEX ANIMATION WITH SIMPLE CSS/FAST FRAMER
     const FastFade = ({ children, delay = 0 }) => (
         <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "0px" }}
-            transition={{ duration: 0.2, delay: delay }}
+            transition={{ duration: 0.2, delay: delay }} // Almost instant
             className="w-full"
         >
             {children}
@@ -339,18 +301,19 @@ const LandingPage = () => {
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
                 <div className="max-w-fit mx-auto pointer-events-auto">
+                    {/* Removed backdrop-blur for perf if causing lag, but usually nav is okay. Keeping light blur. */}
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
                             <Rocket className="w-5 h-5 text-orange-500" />
                             <span className="font-black text-lg tracking-tight">FoodVerse</span>
-                        </motion.div>
+                        </div>
                         <div className="flex items-center gap-3">
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/login')} className="px-5 py-2 text-xs font-bold hover:text-white text-gray-300 transition-colors">
+                            <button onClick={() => navigate('/login')} className="px-5 py-2 text-xs font-bold hover:text-white text-gray-300 transition-colors">
                                 Login
-                            </motion.button>
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white text-xs font-black rounded-full shadow-lg">
+                            </button>
+                            <button onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white text-xs font-black rounded-full hover:scale-105 transition-transform shadow-lg">
                                 SIGN UP
-                            </motion.button>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -376,12 +339,12 @@ const LandingPage = () => {
                                     Hyper-speed drone delivery. The galaxy's finest kitchens, now at your command.
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center md:justify-start">
-                                    <motion.button whileHover={{ scale: 1.05, backgroundColor: "#fff" }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/login')} className="px-10 py-4 bg-white text-black font-black rounded-full shadow-xl flex items-center justify-center gap-2 min-w-[180px]">
+                                    <button onClick={() => navigate('/login')} className="px-10 py-4 bg-white text-black font-black rounded-full hover:scale-105 transition-transform shadow-xl flex items-center justify-center gap-2 min-w-[180px]">
                                         Order Now <ChevronRight className="w-5 h-5" />
-                                    </motion.button>
-                                    <motion.button whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.1)" }} whileTap={{ scale: 0.95 }} onClick={scrollToContent} className="px-10 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-full transition-colors flex items-center justify-center gap-2 min-w-[180px]">
+                                    </button>
+                                    <button onClick={scrollToContent} className="px-10 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-full transition-colors flex items-center justify-center gap-2 min-w-[180px]">
                                         Explore <ArrowDown className="w-4 h-4" />
-                                    </motion.button>
+                                    </button>
                                 </div>
                             </FastFade>
                         </div>
@@ -389,8 +352,10 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                {/* INFO */}
+                {/* INFO SECTION - OPTIMIZED FOR SCROLL */}
+                {/* Removed main backdrop-blur container. Using simple transparent bg or solid dark gradient Overlay */}
                 <div id="about" className="relative w-full pb-32 pointer-events-auto">
+                    {/* Add a simple gradient overlay for readability without blur lag */}
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-[-1]" />
 
                     <section className="px-6 max-w-7xl mx-auto space-y-32 pt-20">
@@ -461,6 +426,7 @@ const LandingPage = () => {
                             </FastFade>
                             <FastFade delay={0.1}>
                                 <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-white/10 bg-gradient-to-br from-orange-500/10 to-purple-600/10 flex items-center justify-center group">
+                                    {/* Static Image - Removed complex mix-blend animations for speed */}
                                     <div className="absolute inset-0 bg-black/40" />
                                     <div className="relative text-center p-8 bg-black/60 rounded-3xl border border-white/10 max-w-xs transition-transform transform group-hover:-translate-y-1">
                                         <Clock className="w-10 h-10 text-orange-400 mx-auto mb-4" />
@@ -470,6 +436,7 @@ const LandingPage = () => {
                                 </div>
                             </FastFade>
                         </div>
+
                     </section>
                 </div>
             </main>
