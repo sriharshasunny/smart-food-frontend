@@ -8,7 +8,7 @@ const LandingPage = () => {
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- FINAL OPTIMIZED ENGINE: DEEP SPACE & SMART UFO ---
+    // --- FINAL ENGINE: WARP SPEED SPACE & FAST UFO ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -17,7 +17,6 @@ const LandingPage = () => {
 
         // Assets
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        // Removed dynamic neon colors, using standard emoji only
         const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗'];
 
         // Physics State
@@ -90,13 +89,13 @@ const LandingPage = () => {
             rotation: Math.random() * Math.PI
         }));
 
-        // Stars
-        const stars = Array.from({ length: 100 }, () => ({
+        // Stars - "OLD" WARP EFFECT (Falling Stars)
+        const stars = Array.from({ length: 150 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
-            size: Math.random() * 1.5,
-            opacity: Math.random() * 0.8,
-            speed: 0.2 + Math.random() * 0.5
+            size: Math.random() * 2,
+            opacity: Math.random(),
+            speed: 2 + Math.random() * 8 // Faster "Warp" speed
         }));
 
         let time = 0;
@@ -106,7 +105,7 @@ const LandingPage = () => {
         const updateUFO = () => {
             // Message cycling
             ufo.msgTimer++;
-            if (ufo.msgTimer > 300) { // Change msg every 5s
+            if (ufo.msgTimer > 300) {
                 ufo.message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
                 ufo.msgTimer = 0;
             }
@@ -114,38 +113,31 @@ const LandingPage = () => {
             if (ufo.state === 'IDLE') {
                 // Smooth Wander
                 if (Math.random() < 0.01) {
-                    ufo.targetX = Math.random() * (width * 0.4); // Stay mostly left/center
+                    ufo.targetX = Math.random() * (width * 0.5);
                     ufo.targetY = Math.random() * (height * 0.7);
                 }
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
-                // Very smooth ease
                 ufo.x += dx * 0.02;
                 ufo.y += dy * 0.02;
-
-                // Tilt based on movement
                 ufo.rotation = dx * 0.002;
                 ufo.scale = 1;
                 ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
-                // High-Speed Smooth Warp
                 const dx = centerX - ufo.x;
                 const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
 
-                // Exponential ease in for "Suction" effect
                 ufo.x += dx * 0.08;
                 ufo.y += dy * 0.08;
-
-                // Shrink and Rotate
-                ufo.scale = dist / 500; // Smooth shrink based on distance
+                ufo.scale = dist / 500;
                 if (ufo.scale < 0) ufo.scale = 0;
-                ufo.rotation += 0.5; // Fast spin
+                ufo.rotation += 0.5;
 
                 if (dist < 10 || ufo.scale < 0.01) {
                     ufo.state = 'RESPAWNING';
-                    ufo.respawnTimer = 240; // 4s
+                    ufo.respawnTimer = 120; // 2 Seconds (Requested)
                     ufo.x = -500;
                 }
 
@@ -153,14 +145,14 @@ const LandingPage = () => {
                 ufo.respawnTimer--;
                 if (ufo.respawnTimer <= 0) {
                     ufo.state = 'IDLE';
-                    ufo.x = -100;
+                    ufo.x = -100; // Fly in
                     ufo.y = Math.random() * height * 0.5;
                     ufo.scale = 1;
                     ufo.targetX = width * 0.2;
                 }
             }
 
-            // Trail Logic
+            // Trail
             if (ufo.scale > 0.1 && (ufo.state === 'WARP_TO_SUN' || Math.abs(ufo.x - ufo.targetX) > 10)) {
                 ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 4 + 2 });
             }
@@ -178,21 +170,26 @@ const LandingPage = () => {
                 coreTimer = 0;
             }
 
-            // 1. Background - DEEP SPACE (No Pink/Green)
+            // 1. Background - DEEP SPACE
             const bg = ctx.createLinearGradient(0, 0, 0, height);
-            bg.addColorStop(0, '#020205'); // Absolute Black
-            bg.addColorStop(1, '#0b0b18'); // Hint of Navy
+            bg.addColorStop(0, '#000000');
+            bg.addColorStop(1, '#0a0a1a');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Stars
+            // 2. Stars - WARP SPEED EFFECT
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
-                if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
-                const twinkle = 0.7 + Math.sin(time * 0.1 + star.x) * 0.3;
-                ctx.globalAlpha = star.opacity * twinkle;
-                ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
+                if (star.y > height) {
+                    star.y = 0;
+                    star.x = Math.random() * width;
+                }
+                // Warp Trail effect
+                ctx.globalAlpha = star.opacity;
+                ctx.beginPath();
+                ctx.ellipse(star.x, star.y, star.size, star.size * 4, 0, 0, Math.PI * 2); // Elongated
+                ctx.fill();
             });
             ctx.globalAlpha = 1;
 
@@ -211,62 +208,46 @@ const LandingPage = () => {
                 ctx.translate(ufo.x, ufo.y);
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
-
                 ctx.font = "40px Arial";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
 
-                // Speech Bubble (Only when IDLE and visible)
                 if (ufo.state === 'IDLE') {
-                    ctx.rotate(-ufo.rotation); // Counter-rotate so text stays flat
-
+                    ctx.rotate(-ufo.rotation);
                     ctx.font = "bold 13px Inter, sans-serif";
                     const metrics = ctx.measureText(ufo.message);
                     const boxW = metrics.width + 20;
-                    const boxH = 26;
-
-                    // Bubble bg
-                    ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 5;
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
                     ctx.beginPath();
-                    ctx.roundRect(-boxW / 2, -50, boxW, boxH, 10);
+                    ctx.roundRect(-boxW / 2, -50, boxW, 26, 10);
                     ctx.fill();
-
-                    // Tail
-                    ctx.beginPath();
-                    ctx.moveTo(-5, -24); ctx.lineTo(5, -24); ctx.lineTo(0, -18);
-                    ctx.fill();
-
-                    // Text
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = "#000";
+                    ctx.beginPath(); ctx.moveTo(-5, -24); ctx.lineTo(5, -24); ctx.lineTo(0, -18); ctx.fill();
+                    ctx.shadowBlur = 0; ctx.fillStyle = "#000";
                     ctx.fillText(ufo.message, 0, -37);
                 }
                 ctx.restore();
             }
 
-            // 4. CORE SUN - CONSISTENT SPACE GOLD (No Pink/Green)
-            const sunSize = 90 * scale * 2.0;
+            // 4. CORE SUN - Stronger "Sun Effect"
+            const sunSize = 95 * scale * 2.0;
 
-            // Premium Gold/Orange Glow - Matches "Space" theme
-            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.2, centerX, centerY, sunSize * 2.8);
-            glow.addColorStop(0, 'rgba(255, 160, 40, 0.6)'); // Sun Core Color
-            glow.addColorStop(0.5, 'rgba(255, 80, 0, 0.2)'); // Outer Halo
+            // Enhanced Sun Glow
+            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.2, centerX, centerY, sunSize * 3.0);
+            glow.addColorStop(0, 'rgba(255, 140, 20, 0.7)'); // Intense Core
+            glow.addColorStop(0.3, 'rgba(255, 60, 0, 0.3)'); // Mid Fire
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
-            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 3.0, 0, Math.PI * 2); ctx.fill();
 
             // Core Emoji
-            const pulse = 1 + Math.sin(time * 0.04) * 0.02;
+            const pulse = 1 + Math.sin(time * 0.08) * 0.03; // Faster pulse
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.scale(pulse, pulse);
-            ctx.rotate(time * 0.01);
-
-            // Consistent Shadow
-            ctx.shadowColor = 'rgba(255, 100, 0, 0.6)';
-            ctx.shadowBlur = 30;
-
+            ctx.rotate(time * 0.015);
+            ctx.shadowColor = 'rgba(255, 100, 0, 0.8)'; // Strong shadow
+            ctx.shadowBlur = 50;
             ctx.font = `${sunSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -280,8 +261,7 @@ const LandingPage = () => {
                 const radiusX = p.distance * scale * 2.6;
                 const radiusY = p.distance * scale * 0.7;
                 items.push({
-                    emoji: p.emoji,
-                    x: centerX + Math.cos(p.angle) * radiusX,
+                    emoji: p.emoji, x: centerX + Math.cos(p.angle) * radiusX,
                     y: centerY + Math.sin(p.angle) * radiusY * 0.5 + p.heightOffset,
                     z: Math.sin(p.angle) * radiusY,
                     scale: 1 + Math.sin(p.angle) * 0.3,
@@ -294,10 +274,10 @@ const LandingPage = () => {
             items.forEach(item => {
                 ctx.save();
                 ctx.translate(item.x, item.y);
-                const fontSize = 45 * item.scale; // fixed base size
+                const fontSize = 45 * item.scale;
                 ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.globalAlpha = 0.3 + (item.scale * 0.7) * 0.7; // Smooth fade
+                ctx.globalAlpha = 0.3 + (item.scale * 0.7) * 0.7;
                 ctx.rotate(item.rotation);
                 ctx.fillText(item.emoji, 0, 0);
                 ctx.restore();
@@ -387,16 +367,17 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                {/* SCROLLING INFO SECTIONS */}
-                <div id="about" className="relative w-full bg-black/60 backdrop-blur-md pt-20 pb-32 border-t border-white/5 pointer-events-auto">
+                {/* SCROLLING INFO - TRANSPARENT BACKGROUND (SPACE VISIBLE) */}
+                {/* Changed from bg-black/60 to bg-transparent or very low opacity */}
+                <div id="about" className="relative w-full backdrop-blur-sm pt-20 pb-32 border-t border-white/5 pointer-events-auto">
                     <section className="px-6 max-w-7xl mx-auto space-y-32">
 
                         {/* FEATURES */}
                         <div>
                             <ScrollReveal>
                                 <div className="text-center mb-16">
-                                    <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">Galactic Capabilities</h2>
-                                    <p className="text-gray-400 max-w-2xl mx-auto">Engineered for the modern space traveler.</p>
+                                    <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight drop-shadow-lg">Galactic Capabilities</h2>
+                                    <p className="text-gray-300 max-w-2xl mx-auto">Engineered for the modern space traveler.</p>
                                 </div>
                             </ScrollReveal>
                             <div className="grid md:grid-cols-3 gap-6">
@@ -409,10 +390,10 @@ const LandingPage = () => {
                                     { title: "Command Center", desc: "Full control via app.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
                                 ].map((item, i) => (
                                     <ScrollReveal key={i} delay={i * 0.05}>
-                                        <div className="group p-8 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-orange-500/20 transition-all hover:-translate-y-2 hover:bg-white/5 text-center h-full">
+                                        <div className="group p-8 rounded-[2rem] bg-white/[0.05] border border-white/5 hover:border-orange-500/20 transition-all hover:-translate-y-2 hover:bg-white/10 text-center h-full backdrop-blur-md">
                                             <div className="mb-6 inline-block opacity-80 group-hover:opacity-100 transition-opacity p-3 bg-white/5 rounded-2xl">{item.icon}</div>
                                             <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                                            <p className="text-gray-500 text-sm font-medium">{item.desc}</p>
+                                            <p className="text-gray-400 text-sm font-medium">{item.desc}</p>
                                         </div>
                                     </ScrollReveal>
                                 ))}
