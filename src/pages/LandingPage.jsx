@@ -8,7 +8,7 @@ const LandingPage = () => {
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- "OLD" CENTER 3D ENGINE (Restored) ---
+    // --- "OLD" ANIMATION ENGINE (Restored) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -29,12 +29,19 @@ const LandingPage = () => {
             canvas.width = width;
             canvas.height = height;
 
-            // CENTERING FOR ALL DEVICES (Laptop & Mobile SAME)
-            centerX = width * 0.5;
-            centerY = height * 0.5;
-
-            // Adjust scale slightly for desktop vs mobile
-            scale = Math.min(width, height) * (width < 768 ? 0.001 : 0.0013);
+            // LAYOUT LOGIC:
+            if (width >= 768) {
+                // LAPTOP: Text Left, Animation Right
+                // Center the solar system in the RIGHT HALF of the screen
+                centerX = width * 0.75;
+                centerY = height * 0.5;
+                scale = Math.min(width, height) * 0.0013;
+            } else {
+                // MOBILE: Centered
+                centerX = width * 0.5;
+                centerY = height * 0.5;
+                scale = Math.min(width, height) * 0.001;
+            }
         };
         window.addEventListener('resize', resize);
         resize();
@@ -66,7 +73,7 @@ const LandingPage = () => {
         const render = () => {
             time++;
             coreTimer++;
-            // Switch core item every ~2 seconds (120 frames @ 60fps)
+            // Switch core item every ~2 seconds
             if (coreTimer > 120) {
                 coreIndex = (coreIndex + 1) % CORE_EMOJIS.length;
                 coreTimer = 0;
@@ -203,7 +210,7 @@ const LandingPage = () => {
 
             <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
 
-            {/* FLOATING HEADER - Centered Capsule */}
+            {/* FLOATING HEADER */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
                 <div className="max-w-fit mx-auto pointer-events-auto">
                     <div className="bg-black/40 backdrop-blur-2xl border border-white/20 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
@@ -225,38 +232,44 @@ const LandingPage = () => {
 
             <main className="relative z-10 flex flex-col w-full">
 
-                {/* HERO SECTION - Centered Text + Center Animation */}
-                <section className="min-h-screen flex flex-col justify-center items-center pt-24 px-6 w-full pointer-events-none text-center">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8 }}
-                        className="pointer-events-auto relative z-10 p-8 rounded-[3rem]" // Minimal container
-                    >
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-950/30 border border-orange-500/20 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-6 mx-auto shadow-lg shadow-orange-900/10 backdrop-blur-md">
-                            <Zap className="w-3 h-3 fill-orange-400" /> Galactic Delivery
+                {/* HERO SECTION - SPLIT LAYOUT FOR LAPTOP */}
+                <section className="min-h-screen flex flex-col justify-center px-6 max-w-7xl mx-auto w-full pointer-events-none">
+
+                    {/* Grid: 1 Col Mobile (Center), 2 Cols Desktop (Text Left, Empty Right for Canvas) */}
+                    <div className="grid md:grid-cols-2 gap-12 items-center pointer-events-auto">
+
+                        {/* LEFT TEXT (Center on Mobile, Left on Desktop) */}
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1">
+                            <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-950/30 border border-orange-500/20 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
+                                    <Zap className="w-3 h-3 fill-orange-400" /> Galactic Delivery
+                                </div>
+
+                                <h1 className="text-5xl sm:text-7xl md:text-8xl font-black leading-[0.95] tracking-tighter mb-8 drop-shadow-2xl">
+                                    Taste The<br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
+                                        Infinite.
+                                    </span>
+                                </h1>
+
+                                <p className="text-lg md:text-xl text-gray-300/90 max-w-lg mx-auto md:mx-0 leading-relaxed mb-10 font-medium">
+                                    Experience hyper-speed drone delivery from the universe's finest kitchens.
+                                </p>
+
+                                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center md:justify-start">
+                                    <button onClick={() => navigate('/login')} className="px-10 py-4 bg-white text-black font-black rounded-full hover:scale-105 transition-transform shadow-xl flex items-center justify-center gap-2 min-w-[200px]">
+                                        Launch App <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={scrollToContent} className="px-10 py-4 bg-black/40 hover:bg-black/60 border border-white/20 text-white font-bold rounded-full backdrop-blur-md transition-colors flex items-center justify-center gap-2 min-w-[200px]">
+                                        Explore <ArrowDown className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </motion.div>
                         </div>
 
-                        <h1 className="text-5xl sm:text-7xl md:text-8xl font-black leading-[0.95] tracking-tighter mb-8 drop-shadow-2xl">
-                            Taste The<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
-                                Infinite.
-                            </span>
-                        </h1>
-
-                        <p className="text-lg md:text-xl text-gray-300/90 max-w-lg mx-auto leading-relaxed mb-10 font-medium">
-                            Experience hyper-speed drone delivery from the universe's finest kitchens.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <button onClick={() => navigate('/login')} className="px-10 py-4 bg-white text-black font-black rounded-full hover:scale-105 transition-transform shadow-xl flex items-center justify-center gap-2 min-w-[200px]">
-                                Launch App <ChevronRight className="w-5 h-5" />
-                            </button>
-                            <button onClick={scrollToContent} className="px-10 py-4 bg-black/40 hover:bg-black/60 border border-white/20 text-white font-bold rounded-full backdrop-blur-md transition-colors flex items-center justify-center gap-2 min-w-[200px]">
-                                Explore <ArrowDown className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </motion.div>
+                        {/* RIGHT EMPTY (For 3D Animation to shine through) */}
+                        <div className="h-[40vh] md:h-auto w-full order-2 pointer-events-none" />
+                    </div>
                 </section>
 
                 {/* SCROLLING INFO */}
