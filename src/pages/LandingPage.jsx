@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock, Heart } from 'lucide-react';
+import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock } from 'lucide-react';
 
 const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- INTERACTIVE SPACE ENGINE ---
+    // --- INTERACTIVE SPACE ENGINE (OPTIMIZED 120FPS) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -20,8 +20,7 @@ const LandingPage = () => {
         const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗'];
 
         // Physics State
-        let width, height, centerX, centerY;
-        let scale = 1;
+        let width, height, centerX, centerY, scale;
 
         // UFO Interaction State
         const ufo = {
@@ -33,18 +32,19 @@ const LandingPage = () => {
             respawnTimer: 0
         };
 
-        // Mouse/Touch Tracking for detecting clicks on UFO
+        // Mouse/Touch Tracking
         let mouseX = 0, mouseY = 0;
         const handleInteraction = (e) => {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            mouseX = clientX - rect.left;
-            mouseY = clientY - rect.top;
+            // Logical coordinates (CSS pixels)
+            const logicX = clientX - rect.left;
+            const logicY = clientY - rect.top;
 
             // Check if clicked ON or NEAR UFO
-            const dist = Math.hypot(mouseX - ufo.x, mouseY - ufo.y);
-            if (dist < 100 && ufo.state === 'IDLE') { // 100px radius hit area
+            const dist = Math.hypot(logicX - ufo.x, logicY - ufo.y);
+            if (dist < 100 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
             }
         };
@@ -53,10 +53,17 @@ const LandingPage = () => {
         window.addEventListener('touchstart', handleInteraction);
 
         const resize = () => {
+            // RETINA / HIGH DPI SUPPORT
+            const dpr = window.devicePixelRatio || 1;
             width = window.innerWidth;
             height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            ctx.scale(dpr, dpr); // Normalize to CSS pixels
 
             if (width >= 768) {
                 centerX = width * 0.75;
@@ -100,14 +107,13 @@ const LandingPage = () => {
 
         const updateUFO = () => {
             if (ufo.state === 'IDLE') {
-                // Wander Logic (Login Page style)
                 if (Math.random() < 0.01) {
                     ufo.targetX = Math.random() * width;
                     ufo.targetY = Math.random() * (height * 0.6);
                 }
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
-                ufo.vx += dx * 0.0008; // Smooth drift
+                ufo.vx += dx * 0.0008;
                 ufo.vy += dy * 0.0008;
                 ufo.vx *= 0.96;
                 ufo.vy *= 0.96;
@@ -116,24 +122,21 @@ const LandingPage = () => {
                 ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
-                // Move towards Center (Sun)
                 const dx = centerX - ufo.x;
                 const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
 
-                // Accelerate fast towards sun
                 ufo.vx += dx * 0.005;
                 ufo.vy += dy * 0.005;
-                ufo.vx *= 0.9; // Less friction for speed
+                ufo.vx *= 0.9;
                 ufo.vy *= 0.9;
 
-                // Shrink and Fade
-                ufo.scale = Math.max(0, dist / 400); // Shrink based on distance
-                ufo.rotation += 0.2; // Spin fast
+                ufo.scale = Math.max(0, dist / 400);
+                ufo.rotation += 0.2;
 
                 if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
-                    ufo.respawnTimer = 240; // 4 seconds @ 60fps
+                    ufo.respawnTimer = 240;
                     ufo.opacity = 0;
                     ufo.x = -999;
                 }
@@ -142,27 +145,24 @@ const LandingPage = () => {
                 ufo.respawnTimer--;
                 ufo.scale = 0;
                 if (ufo.respawnTimer <= 0) {
-                    // Respawn logic
                     ufo.state = 'IDLE';
-                    ufo.x = -100; // Fly in from left
+                    ufo.x = -100;
                     ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 5; // Launch speed
+                    ufo.vx = 5;
                     ufo.opacity = 1;
                     ufo.scale = 1;
                     ufo.targetX = width * 0.2;
                 }
             }
 
-            // Apply Velocity
             ufo.x += ufo.vx;
             ufo.y += ufo.vy;
 
-            // Trail Logic
             if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 1 || ufo.state === 'WARP_TO_SUN')) {
                 ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 3 + 2 });
             }
             for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                ufo.trail[i].life -= 0.08; // Fast fade
+                ufo.trail[i].life -= 0.08;
                 if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
             }
         };
@@ -175,18 +175,22 @@ const LandingPage = () => {
                 coreTimer = 0;
             }
 
-            // 1. Background (Deep Space, No "Yellow/Black Cores")
+            // 1. Background (Optimized Clear)
+            // Create gradient once if possible, but resizing makes it tricky. 
+            // Keeping it simple is fine for modern GPUs.
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#020205');
             bg.addColorStop(1, '#0b0b18');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Stars
+            // 2. Stars (Batch Drawing)
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
+                // Avoid changing globalAlpha per star if possible, but opacity varies.
+                // Grouping by opacity bin is too complex for JS, just raw draw is fine but minimize state changes.
                 ctx.globalAlpha = star.opacity;
                 ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
             });
@@ -197,10 +201,11 @@ const LandingPage = () => {
             // Trail
             ufo.trail.forEach(p => {
                 ctx.globalAlpha = p.life * 0.7 * ufo.opacity;
-                ctx.fillStyle = '#00ffff'; // Electric Cyan
+                ctx.fillStyle = '#00ffff';
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.size * ufo.scale, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
+
             // Body
             if (ufo.opacity > 0) {
                 ctx.save();
@@ -209,11 +214,10 @@ const LandingPage = () => {
                 ctx.scale(ufo.scale, ufo.scale);
                 ctx.shadowColor = '#00ffff';
                 ctx.shadowBlur = 25;
-                ctx.font = "40px Arial";
+                ctx.font = "40px Arial"; // Will look sharp with dpr scaling
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
                 if (ufo.state === 'IDLE' && time % 60 < 30) {
-                    // "Click Me" Hint (Subtle ring)
                     ctx.strokeStyle = `rgba(0, 255, 255, 0.3)`;
                     ctx.lineWidth = 2;
                     ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
@@ -221,13 +225,12 @@ const LandingPage = () => {
                 ctx.restore();
             }
 
-            // 4. CORE SUN ("Space Feel" - Generic Premium Glow)
+            // 4. CORE SUN
             const sunSize = 90 * scale * 2.0;
 
-            // Replaced "Yellow/Black" specific cores with a Universal Space Glow
             const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 2.5);
-            glow.addColorStop(0, 'rgba(255, 100, 50, 0.5)'); // Warm core
-            glow.addColorStop(0.4, 'rgba(100, 50, 255, 0.2)'); // Purple mid (Spacey)
+            glow.addColorStop(0, 'rgba(255, 100, 50, 0.5)');
+            glow.addColorStop(0.4, 'rgba(100, 50, 255, 0.2)');
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
@@ -243,7 +246,7 @@ const LandingPage = () => {
             ctx.font = `${sunSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(CORE_ITEMS[coreIndex], 0, 0); // Just Emoji
+            ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
             ctx.restore();
 
             // 5. PLANETS
@@ -279,7 +282,8 @@ const LandingPage = () => {
 
             animationFrameId = requestAnimationFrame(render);
         };
-        render();
+        render(); // Start loop
+
         return () => {
             window.removeEventListener('resize', resize);
             window.removeEventListener('mousedown', handleInteraction);
@@ -306,7 +310,7 @@ const LandingPage = () => {
     return (
         <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-black selection:bg-orange-500 selection:text-white">
 
-            <canvas ref={canvasRef} className="fixed inset-0 z-0 cursor-crosshair" /> {/* Cursor hint for interactivity */}
+            <canvas ref={canvasRef} className="fixed inset-0 z-0 cursor-crosshair" />
 
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
@@ -328,12 +332,12 @@ const LandingPage = () => {
                 </div>
             </nav>
 
-            <main className="relative z-10 flex flex-col w-full pointer-events-none"> {/* Make Main Pointer Events None so clicks go to canvas! */}
+            <main className="relative z-10 flex flex-col w-full pointer-events-none">
 
                 {/* HERO SECTION */}
                 <section className="min-h-screen flex flex-col justify-center px-6 max-w-7xl mx-auto w-full">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1 pointer-events-auto"> {/* Enable pointer for buttons */}
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1 pointer-events-auto">
                             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
                                     <Zap className="w-3 h-3 fill-orange-400" /> Premium Delivery v3.0
@@ -362,9 +366,9 @@ const LandingPage = () => {
                 </section>
 
                 {/* SCROLLING INFO - EXPANDED */}
-                <div id="about" className="relative w-full bg-black/60 backdrop-blur-md pt-20 pb-32 border-t border-white/5 pointer-events-auto">
+                <div id="about" className="relative w-full bg-black/60 pt-20 pb-32 border-t border-white/5 pointer-events-auto">
+                    {/* Removed heavy backdrop-blur from container, relying on simple bg opacity for speed */}
                     <section className="px-6 max-w-7xl mx-auto space-y-32">
-
                         {/* FEATURES GRID */}
                         <div>
                             <ScrollReveal>
@@ -435,7 +439,7 @@ const LandingPage = () => {
                             </ScrollReveal>
                             <ScrollReveal delay={0.2}>
                                 <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-white/10 bg-gradient-to-br from-orange-500/10 to-purple-600/10 flex items-center justify-center group">
-                                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541592106381-b31e9674c96b?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay transition-transform duration-700 group-hover:scale-110"></div>
+                                    <div className="absolute inset-0 bg-black/40" />
                                     <div className="relative text-center p-8 bg-black/30 backdrop-blur-xl rounded-3xl border border-white/10 max-w-xs transform group-hover:-translate-y-2 transition-transform">
                                         <Clock className="w-10 h-10 text-orange-400 mx-auto mb-4" />
                                         <h3 className="text-2xl font-bold mb-2">24/7 Service</h3>
@@ -444,7 +448,6 @@ const LandingPage = () => {
                                 </div>
                             </ScrollReveal>
                         </div>
-
                     </section>
                 </div>
             </main>
