@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock } from 'lucide-react';
 
 const LandingPage = () => {
@@ -19,15 +19,11 @@ const LandingPage = () => {
         const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗'];
         const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Hot & Fresh! 🔥", "Order Now!", "Zoom Zoom ✨"];
 
-        // --- STATE & PHYSICS ---
-        let width, height, centerX, centerY;
-        let scale = 1;
-
-        // Mouse State for Parallax & Trail
+        // --- STATE ---
+        let width, height, centerX, centerY, scale;
+        // Mouse State for smooth Parallax only (No heavy trail)
         let mouseX = 0, mouseY = 0;
-        let targetMouseX = 0, targetMouseY = 0; // For smoothing
-
-        const mouseTrail = []; // {x, y, life}
+        let targetMouseX = 0, targetMouseY = 0;
 
         // UFO STATE
         const ufo = {
@@ -44,16 +40,21 @@ const LandingPage = () => {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            // Interaction target
             targetMouseX = clientX - rect.left;
             targetMouseY = clientY - rect.top;
 
             // Click Hit Test
-            const dist = Math.hypot(targetMouseX - ufo.x, targetMouseY - ufo.y);
-            if (dist < 150 && ufo.state === 'IDLE') {
+            const dist = Math.hypot(targetMouseX / window.devicePixelRatio - ufo.x, targetMouseY / window.devicePixelRatio - ufo.y); // Adjust for DPI if needed, but logic usually uses CSS pixels. Actually mouse events are CSS pixels.
+            // Wait, logic variables (x,y) are usually logical pixels. 
+            // We need to keep physics in logical pixels and only SCALE for drawing.
+
+            const logicMouseX = clientX - rect.left;
+            const logicMouseY = clientY - rect.top;
+
+            const distLogic = Math.hypot(logicMouseX - ufo.x, logicMouseY - ufo.y);
+
+            if (distLogic < 150 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
-                // Burst push
                 ufo.vx += (centerX - ufo.x) * 0.05;
                 ufo.vy += (centerY - ufo.y) * 0.05;
             }
@@ -61,10 +62,8 @@ const LandingPage = () => {
 
         const handleMove = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            targetMouseX = clientX - rect.left;
-            targetMouseY = clientY - rect.top;
+            targetMouseX = e.clientX - rect.left;
+            targetMouseY = e.clientY - rect.top;
         };
 
         window.addEventListener('mousedown', handleInteraction);
@@ -72,10 +71,18 @@ const LandingPage = () => {
         window.addEventListener('mousemove', handleMove);
 
         const resize = () => {
+            // HIGH DPI HANDLING (For "Premium/proffession alook")
+            const dpr = window.devicePixelRatio || 1;
             width = window.innerWidth;
             height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            ctx.scale(dpr, dpr); // Normalize coordinate system to use CSS pixels
+
             if (width >= 768) {
                 centerX = width * 0.75;
                 centerY = height * 0.5;
@@ -95,11 +102,11 @@ const LandingPage = () => {
             emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
             angle: (i / 12) * Math.PI * 2,
             distance: 155 + (i % 2) * 60,
-            speed: 0.005 + (i % 2) * 0.003, // FASTER SPEED (Requested)
+            speed: 0.005 + (i % 2) * 0.003,
             size: 45,
             heightOffset: (Math.random() - 0.5) * 40,
             rotation: Math.random() * Math.PI,
-            rotSpeed: 0.05 + Math.random() * 0.05 // FASTER SPIN
+            rotSpeed: 0.05 + Math.random() * 0.05
         }));
 
         const stars = Array.from({ length: 140 }, () => ({
@@ -107,28 +114,17 @@ const LandingPage = () => {
             y: Math.random() * height,
             size: Math.random() * 1.5,
             opacity: Math.random() * 0.8,
-            speed: 0.2 + Math.random() * 0.6 // Faster stars
+            speed: 0.2 + Math.random() * 0.6
         }));
 
         let time = 0;
-        let coreIndex = 0;
-        let coreTimer = 0;
+        let coreIndex = 0, coreTimer = 0;
 
         // --- UPDATE ---
         const updatePhysics = () => {
-            // Smooth Mouse Tracking
+            // Smooth Parallax Mouse Tracking
             mouseX += (targetMouseX - mouseX) * 0.1;
             mouseY += (targetMouseY - mouseY) * 0.1;
-
-            // Mouse Trail
-            if (Math.abs(targetMouseX - mouseX) > 1) {
-                mouseTrail.push({ x: mouseX, y: mouseY, life: 1.0, size: Math.random() * 4 });
-            }
-            for (let i = mouseTrail.length - 1; i >= 0; i--) {
-                mouseTrail[i].life -= 0.1; // Fast fade
-                mouseTrail[i].y += 1; // Fall slightly
-                if (mouseTrail[i].life <= 0) mouseTrail.splice(i, 1);
-            }
 
             // UFO Logic
             ufo.msgTimer++;
@@ -137,21 +133,17 @@ const LandingPage = () => {
             }
 
             if (ufo.state === 'IDLE') {
-                // ZIPPY MOVEMENT
-                if (Math.random() < 0.02) { // Change direction more often
+                if (Math.random() < 0.02) {
                     ufo.targetX = Math.random() * width;
                     ufo.targetY = Math.random() * (height * 0.6);
                 }
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
 
-                // High Acceleration / Low Friction for "Realistic Fast" feel
                 ufo.vx += dx * 0.0008;
                 ufo.vy += dy * 0.0008;
                 ufo.vx *= 0.96;
                 ufo.vy *= 0.96;
-
-                // Banking into turns
                 ufo.rotation = ufo.vx * 0.08;
                 ufo.scale = 1; ufo.opacity = 1;
 
@@ -159,13 +151,13 @@ const LandingPage = () => {
                 const dx = centerX - ufo.x;
                 const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
-                ufo.vx += dx * 0.008; ufo.vy += dy * 0.008; // Very strong pull
+                ufo.vx += dx * 0.008; ufo.vy += dy * 0.008;
                 ufo.vx *= 0.90; ufo.vy *= 0.90;
 
                 ufo.scale = Math.min(1, dist / 200);
-                ufo.rotation += 0.4; // Very fast spin
+                ufo.rotation += 0.4;
                 if (dist < 15 || ufo.scale < 0.1) {
-                    ufo.state = 'RESPAWNING'; ufo.respawnTimer = 120; // 2s
+                    ufo.state = 'RESPAWNING'; ufo.respawnTimer = 120;
                     ufo.opacity = 0; ufo.x = -9999;
                 }
             } else if (ufo.state === 'RESPAWNING') {
@@ -173,13 +165,13 @@ const LandingPage = () => {
                 if (ufo.respawnTimer <= 0) {
                     ufo.state = 'IDLE';
                     ufo.x = -100; ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 10; // HIGH SPEED ENTER
+                    ufo.vx = 10;
                     ufo.opacity = 1; ufo.scale = 1;
                 }
             }
             ufo.x += ufo.vx; ufo.y += ufo.vy;
 
-            // UFO Engine Trail
+            // UFO Trail (Keep this, it's cool and low cost compared to mouse sparkles)
             if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 0.5)) {
                 ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 4 + 2 });
             }
@@ -197,7 +189,7 @@ const LandingPage = () => {
             coreTimer++;
             if (coreTimer > 180) { coreIndex = (coreIndex + 1) % CORE_ITEMS.length; coreTimer = 0; }
 
-            // 1. Background
+            // 1. Background (CLEAN DEEP SPACE)
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#000000');
             bg.addColorStop(0.7, '#020205');
@@ -205,8 +197,7 @@ const LandingPage = () => {
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Stars (with Parallax)
-            // Parallax offset: Moves opposite to mouse
+            // 2. Stars (Subtle Parallax)
             const parallaxX = (mouseX - width / 2) * 0.02;
             const parallaxY = (mouseY - height / 2) * 0.02;
 
@@ -214,10 +205,8 @@ const LandingPage = () => {
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
-
-                const px = star.x + parallaxX * (star.size * 0.5); // Depth parallax
+                const px = star.x + parallaxX * (star.size * 0.5);
                 const py = star.y + parallaxY * (star.size * 0.5);
-
                 ctx.globalAlpha = star.opacity * 0.8;
                 ctx.beginPath(); ctx.arc(px, py, star.size, 0, Math.PI * 2); ctx.fill();
             });
@@ -236,8 +225,8 @@ const LandingPage = () => {
                 ctx.translate(ufo.x + parallaxX, ufo.y + parallaxY);
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
-                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25; // More glow
-                ctx.font = "40px Arial";
+                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25;
+                ctx.font = "40px Arial"; // Will look sharper now due to ctx.scale(dpr, dpr)
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
 
@@ -256,7 +245,6 @@ const LandingPage = () => {
             }
 
             // 4. CORE SUN
-            // Parallax on Sun too!
             const sunX = centerX + parallaxX * 0.5;
             const sunY = centerY + parallaxY * 0.5;
 
@@ -289,9 +277,9 @@ const LandingPage = () => {
                 const y = centerY + zDepth * 0.5 + p.heightOffset;
                 const depthScale = 1 + (Math.sin(p.angle) * 0.3);
                 items.push({
-                    emoji: p.emoji, x: x + parallaxX * 0.8, y: y + parallaxY * 0.8, // More parallax for planets
+                    emoji: p.emoji, x: x + parallaxX * 0.8, y: y + parallaxY * 0.8,
                     z: zDepth, scale: depthScale, size: p.size,
-                    rotation: time * p.rotSpeed + p.rotation, // FAST ROTATION
+                    rotation: time * p.rotSpeed + p.rotation,
                     opacity: 0.3 + (depthScale * 0.7)
                 });
             });
@@ -310,12 +298,7 @@ const LandingPage = () => {
                 ctx.restore();
             });
 
-            // 6. MOUSE TRAIL
-            mouseTrail.forEach(p => {
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = '#ffaa00'; // Gold sparkles
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
-            });
+            // REMOVED Sparkle Mouse Trail (Requested: "remove heavy cursor animation")
 
             animationFrameId = requestAnimationFrame(render);
         };
@@ -348,7 +331,7 @@ const LandingPage = () => {
     return (
         <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-black selection:bg-orange-500 selection:text-white">
 
-            <canvas ref={canvasRef} className="fixed inset-0 z-0 cursor-none" /> {/* Hidden default cursor for custom feel? No, standard cursor + trail is safer */}
+            <canvas ref={canvasRef} className="fixed inset-0 z-0 cursor-crosshair" />
 
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
