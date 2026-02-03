@@ -1,23 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { API_URL } from '../config';
-import { User, Mail, Phone, MapPin, Save, LogOut, ChevronLeft, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, LogOut, ChevronLeft, Camera, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-    const { user, logout, loading } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    // Initialize form with Context Data or Defaults
+    // Initialize form
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        address: user?.address || 'Detecting location...' // Default to detecting or empty
+        address: user?.address || 'Detecting location...'
     });
 
-    // 1. Fetch latest DB data if logged in
+    const [loadingLocation, setLoadingLocation] = useState(false);
+
+    // CSS Stars Generation (Memorized for performance)
+    const stars = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        size: Math.random() * 2 + 1,
+        delay: Math.random() * 3
+    })), []);
+
+    // 1. Fetch latest DB data
     useEffect(() => {
         if (user?._id) {
             fetch(`${API_URL}/api/user/${user._id}`)
@@ -29,7 +40,6 @@ const Profile = () => {
                             name: data.user.name || prev.name,
                             email: data.user.email || prev.email,
                             phone: data.user.phone || prev.phone,
-                            // If DB has address, use it, otherwise keep current (which might be GPS)
                             address: data.user.addresses?.find(a => a.isDefault)?.street || data.user.addresses?.[0]?.street || prev.address
                         }));
                     }
@@ -38,7 +48,7 @@ const Profile = () => {
         }
     }, [user]);
 
-    // 2. Dynamic Address: Auto-fetch location on mount if address is empty
+    // 2. Auto-fetch location if empty
     useEffect(() => {
         if (!formData.address || formData.address === 'Detecting location...') {
             handleGetLocation();
@@ -47,17 +57,12 @@ const Profile = () => {
 
     const handleGetLocation = () => {
         if (!navigator.geolocation) {
-            if (formData.address === 'Detecting location...') {
-                setFormData(prev => ({ ...prev, address: '' }));
-            }
+            if (formData.address === 'Detecting location...') setFormData(prev => ({ ...prev, address: '' }));
             return;
         }
 
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        };
+        setLoadingLocation(true);
+        const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
@@ -67,55 +72,31 @@ const Profile = () => {
                 });
                 const data = await response.json();
                 if (data.address) {
-                    // Manually construct a more specific address
-                    // Expanding keys to capture "Mangalpally" (likely hamlet/locality)
                     const addr = data.address;
                     const parts = [];
+                    // Build logical address string
+                    const keys = ['amenity', 'house_number', 'building', 'road', 'hamlet', 'locality', 'village', 'suburb', 'neighbourhood', 'city_district', 'city', 'town', 'state', 'postcode'];
+                    keys.forEach(k => { if (addr[k]) parts.push(addr[k]); });
 
-                    // Specific places
-                    if (addr.amenity) parts.push(addr.amenity);
-                    if (addr.house_number) parts.push(addr.house_number);
-                    if (addr.building) parts.push(addr.building);
-                    if (addr.road) parts.push(addr.road);
-
-                    // Small localities - THIS IS KEY for Mangalpally
-                    if (addr.hamlet) parts.push(addr.hamlet);
-                    if (addr.locality) parts.push(addr.locality);
-                    if (addr.village) parts.push(addr.village);
-                    if (addr.suburb) parts.push(addr.suburb);
-                    if (addr.neighbourhood) parts.push(addr.neighbourhood);
-
-                    // Administrative areas
-                    if (addr.city_district) parts.push(addr.city_district);
-                    if (addr.city || addr.town || addr.county) parts.push(addr.city || addr.town || addr.county);
-
-                    if (addr.state) parts.push(addr.state);
-                    if (addr.postcode) parts.push(addr.postcode);
-
-                    // Filter unique parts and join
                     const uniqueParts = [...new Set(parts)];
                     const locationString = uniqueParts.length > 0 ? uniqueParts.join(', ') : data.display_name;
-
                     setFormData(prev => ({ ...prev, address: locationString }));
                 } else if (data.display_name) {
                     setFormData(prev => ({ ...prev, address: data.display_name }));
                 }
             } catch (error) {
                 console.error('Geocoding error:', error);
-                alert('Failed to get address from coordinates');
+            } finally {
+                setLoadingLocation(false);
             }
         }, (error) => {
             console.error('Geolocation error:', error);
-            alert('Unable to retrieve your location');
-            if (formData.address === 'Detecting location...') {
-                setFormData(prev => ({ ...prev, address: '' }));
-            }
+            setLoadingLocation(false);
+            if (formData.address === 'Detecting location...') setFormData(prev => ({ ...prev, address: '' }));
         }, options);
     };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -142,23 +123,15 @@ const Profile = () => {
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
-            // We DO send address to update it in DB as "current location"
             address: formData.address
         };
 
         try {
-            // Priority: Try updating by ID if available
             let url = `${API_URL}/api/user/profile/${currentUser._id}`;
             let method = 'PUT';
 
-            // Fallback/User Request: If for some reason we want to force update by email (or if ID is missing but we have email)
-            // But here we just use the ID route if we have ID.
-            // If the user specifically wants "update based on mail", we can use the new endpoint.
-            // Let's use the new endpoint if we have email, as requested.
-
             if (payload.email) {
                 url = `${API_URL}/api/user/profile-by-email`;
-                // Payload already has email
             }
 
             const res = await fetch(url, {
@@ -169,7 +142,6 @@ const Profile = () => {
             const data = await res.json();
 
             if (res.ok) {
-                // Update local context
                 const updatedUser = { ...currentUser, ...data.user };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 window.location.reload();
@@ -179,182 +151,160 @@ const Profile = () => {
             }
         } catch (error) {
             console.error("Profile update error:", error);
-            alert('Error updating profile: ' + (error.message || 'Unknown network error'));
+            alert('Error updating profile');
         }
     };
 
-    // Unconditional Render - No Loading Spinner Blocking, No Redirects
-    const displayUser = user || { name: 'Guest', email: 'guest@example.com' };
-
     return (
-        <div className="h-screen w-screen bg-gray-50/50 relative overflow-hidden flex items-center justify-center">
-            {/* Ambient Background */}
-            <div className="absolute inset-0 pointer-events-none z-0">
-                <motion.div
-                    animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-0 left-0 w-[500px] h-[500px] bg-orange-200/30 rounded-full blur-[100px]"
-                />
-                <motion.div
-                    animate={{ x: [0, -100, 0], y: [0, 50, 0], scale: [1, 1.3, 1] }}
-                    transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute top-0 right-0 w-[600px] h-[600px] bg-rose-200/30 rounded-full blur-[100px]"
-                />
+        <div className="min-h-screen w-full bg-black text-white font-sans relative overflow-x-hidden flex items-center justify-center p-4">
+
+            {/* 1. Fast CSS Background (No Canvas, No heavy blobs) */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black z-0" />
+
+            {/* 2. Static CSS Stars (Twinkling) - Zero JS Overhead */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                {stars.map((star) => (
+                    <div
+                        key={star.id}
+                        className="absolute bg-white rounded-full animate-pulse"
+                        style={{
+                            top: star.top,
+                            left: star.left,
+                            width: star.size,
+                            height: star.size,
+                            opacity: Math.random() * 0.7 + 0.3,
+                            animationDuration: `${star.delay + 2}s`
+                        }}
+                    />
+                ))}
             </div>
 
-            <div className="relative z-10 w-full max-w-5xl h-full p-6 flex flex-col justify-center">
-                <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-orange-500/10 border border-white/60 overflow-hidden flex flex-col md:flex-row h-auto max-h-[90vh]"
-                >
-                    {/* Left Panel: Avatar & Info */}
-                    <div className="md:w-1/3 bg-gradient-to-br from-orange-50 to-rose-50 p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+            {/* Main Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="relative z-10 w-full max-w-5xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
+            >
+                {/* Left Panel: Avatar & Info */}
+                <div className="md:w-1/3 bg-gradient-to-br from-gray-900 to-black p-8 flex flex-col items-center justify-center text-center relative border-r border-white/5">
+                    <button onClick={() => navigate(-1)} className="absolute top-6 left-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-gray-300 hover:text-white">
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
 
-                        <button onClick={() => navigate(-1)} className="absolute top-6 left-6 p-2 bg-white/50 hover:bg-white rounded-full transition-all text-gray-600">
-                            <ChevronLeft className="w-5 h-5" />
-                        </button>
-
-                        <div className="relative mb-6">
-                            <div className="w-32 h-32 rounded-full bg-white p-1.5 shadow-xl">
-                                <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center text-5xl font-black text-white">
-                                    {formData.name?.[0] || 'U'}
-                                </div>
-                            </div>
-                            <div className="absolute bottom-1 right-1 bg-gray-900 text-white p-2 rounded-full border-4 border-white shadow-lg">
-                                <Camera className="w-4 h-4" />
+                    <div className="relative mb-6">
+                        <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-orange-500 to-rose-600 shadow-lg shadow-orange-500/20">
+                            <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-5xl font-black text-white">
+                                {formData.name?.[0]?.toUpperCase() || 'U'}
                             </div>
                         </div>
-                        <h2 className="text-2xl font-black text-gray-900 mb-1">{formData.name || 'User'}</h2>
-                        <p className="text-gray-500 font-medium text-sm mb-6">{formData.email}</p>
-
-                        <div className="w-full space-y-3">
-                            <button
-                                type="button"
-                                onClick={logout}
-                                className="w-full py-3 bg-white border border-red-100 text-red-500 font-bold rounded-xl hover:bg-red-50 hover:shadow-md transition-all flex items-center justify-center gap-2"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                Sign Out
-                            </button>
+                        <div className="absolute bottom-1 right-1 bg-white text-black p-2 rounded-full border-4 border-black shadow-lg">
+                            <Camera className="w-4 h-4" />
                         </div>
                     </div>
 
-                    {/* Right Panel: Compact Form */}
-                    <div className="md:w-2/3 p-8 md:p-10 flex flex-col justify-center bg-white">
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-black text-gray-900">Edit Profile</h1>
-                            <p className="text-gray-400 text-sm">Update your personal details below.</p>
+                    <h2 className="text-2xl font-bold text-white mb-1">{formData.name || 'User'}</h2>
+                    <p className="text-gray-400 text-sm mb-8 break-all">{formData.email}</p>
+
+                    <button
+                        onClick={logout}
+                        className="w-full py-3 bg-red-500/10 border border-red-500/50 text-red-400 font-bold rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                    </button>
+                </div>
+
+                {/* Right Panel: Form */}
+                <div className="md:w-2/3 p-8 md:p-10 bg-black/20">
+                    <div className="mb-6 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-orange-400" />
+                        <h1 className="text-2xl font-bold">Edit Profile</h1>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Full Name</label>
+                                <div className="relative">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl font-medium text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all text-sm"
+                                        placeholder="Your Name"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Email</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        readOnly
+                                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/5 rounded-xl font-medium text-gray-500 cursor-not-allowed text-sm"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-3">Full Name</label>
-                                    <div className="relative">
-                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all text-sm"
-                                            placeholder="Your Name"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-3">Email Address</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={formData.email}
-                                            readOnly
-                                            className="w-full pl-10 pr-4 py-3 bg-gray-100 border-none rounded-xl font-bold text-gray-500 cursor-not-allowed focus:ring-0 focus:bg-gray-100 transition-all text-sm"
-                                            placeholder="john@example.com"
-                                        />
-                                    </div>
-                                </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Phone</label>
+                            <div className="relative">
+                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl font-medium text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all text-sm"
+                                    placeholder="+1 234 567 890"
+                                />
                             </div>
+                        </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-3">Phone Number</label>
-                                <div className="relative">
-                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all text-sm"
-                                        placeholder="+1 234 567 890"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-3">Delivery Address</label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
-                                    <textarea
-                                        name="address"
-                                        value={formData.address}
-                                        onChange={handleChange}
-                                        rows="3"
-                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all resize-none text-sm leading-relaxed"
-                                        placeholder="Enter your full address..."
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (!navigator.geolocation) {
-                                                alert('Geolocation is not supported by your browser');
-                                                return;
-                                            }
-                                            navigator.geolocation.getCurrentPosition(async (position) => {
-                                                const { latitude, longitude } = position.coords;
-                                                try {
-                                                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`, {
-                                                        headers: { 'User-Agent': 'SmartFoodDeliveryApp/1.0' }
-                                                    });
-                                                    const data = await response.json();
-                                                    if (data.display_name) {
-                                                        setFormData(prev => ({ ...prev, address: data.display_name }));
-                                                    }
-                                                } catch (error) {
-                                                    console.error('Geocoding error:', error);
-                                                    alert('Failed to get address from coordinates');
-                                                }
-                                            }, (error) => {
-                                                console.error('Geolocation error:', error);
-                                                alert('Unable to retrieve your location');
-                                            });
-                                        }}
-                                        className="absolute right-2 bottom-2 bg-white shadow-sm text-gray-600 text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1 border border-gray-100"
-                                    >
-                                        <MapPin className="w-3 h-3 text-orange-500" />
-                                        Locate
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="pt-2">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Delivery Address</label>
+                            <div className="relative">
+                                <MapPin className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
+                                <textarea
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    rows="3"
+                                    className="w-full pl-10 pr-32 py-3 bg-white/5 border border-white/10 rounded-xl font-medium text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all resize-none text-sm leading-relaxed"
+                                    placeholder="Enter your address..."
+                                />
                                 <button
-                                    type="submit"
-                                    className="w-full py-3.5 bg-black text-white font-bold rounded-xl hover:bg-gray-800 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                                    type="button"
+                                    onClick={handleGetLocation}
+                                    disabled={loadingLocation}
+                                    className="absolute right-2 bottom-2 bg-gradient-to-r from-orange-500 to-rose-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 hover:opacity-90 transition-opacity disabled:opacity-50"
                                 >
-                                    <Save className="w-4 h-4" />
-                                    Save Profile
+                                    <MapPin className="w-3 h-3" />
+                                    {loadingLocation ? 'Locating...' : 'Locate Me'}
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </motion.div>
-            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                className="w-full py-3.5 bg-white text-black font-extrabold rounded-xl hover:bg-gray-200 shadow-lg shadow-white/5 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Save className="w-4 h-4" />
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </motion.div>
         </div>
     );
 };
