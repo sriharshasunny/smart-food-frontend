@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock } from 'lucide-react';
+import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock, Heart } from 'lucide-react';
 
 const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- FINAL ENGINE: WARP SPEED SPACE & FAST UFO ---
+    // --- INTERACTIVE SPACE ENGINE ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -30,14 +30,10 @@ const LandingPage = () => {
             state: 'IDLE', // IDLE, WARP_TO_SUN, RESPAWNING
             rotation: 0, opacity: 1, scale: 1,
             trail: [],
-            respawnTimer: 0,
-            message: "Hungry? 😋",
-            msgTimer: 0
+            respawnTimer: 0
         };
 
-        const MESSAGES = ["Fast Delivery 🚀", "Order Now 🍕", "Galactic Taste ✨", "Hungry? 😋", "Zoom Zoom! 🛸"];
-
-        // Mouse/Touch Tracking
+        // Mouse/Touch Tracking for detecting clicks on UFO
         let mouseX = 0, mouseY = 0;
         const handleInteraction = (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -46,9 +42,9 @@ const LandingPage = () => {
             mouseX = clientX - rect.left;
             mouseY = clientY - rect.top;
 
-            // Hit detection (120px radius)
+            // Check if clicked ON or NEAR UFO
             const dist = Math.hypot(mouseX - ufo.x, mouseY - ufo.y);
-            if (dist < 120 && ufo.state === 'IDLE') {
+            if (dist < 100 && ufo.state === 'IDLE') { // 100px radius hit area
                 ufo.state = 'WARP_TO_SUN';
             }
         };
@@ -89,13 +85,13 @@ const LandingPage = () => {
             rotation: Math.random() * Math.PI
         }));
 
-        // Stars - "OLD" WARP EFFECT (Falling Stars)
-        const stars = Array.from({ length: 150 }, () => ({
+        // Stars
+        const stars = Array.from({ length: 120 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
-            size: Math.random() * 2,
-            opacity: Math.random(),
-            speed: 2 + Math.random() * 8 // Faster "Warp" speed
+            size: Math.random() * 1.5,
+            opacity: Math.random() * 0.8,
+            speed: 0.2 + Math.random() * 0.5
         }));
 
         let time = 0;
@@ -103,61 +99,70 @@ const LandingPage = () => {
         let coreTimer = 0;
 
         const updateUFO = () => {
-            // Message cycling
-            ufo.msgTimer++;
-            if (ufo.msgTimer > 300) {
-                ufo.message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-                ufo.msgTimer = 0;
-            }
-
             if (ufo.state === 'IDLE') {
-                // Smooth Wander
+                // Wander Logic (Login Page style)
                 if (Math.random() < 0.01) {
-                    ufo.targetX = Math.random() * (width * 0.5);
-                    ufo.targetY = Math.random() * (height * 0.7);
+                    ufo.targetX = Math.random() * width;
+                    ufo.targetY = Math.random() * (height * 0.6);
                 }
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
-                ufo.x += dx * 0.02;
-                ufo.y += dy * 0.02;
-                ufo.rotation = dx * 0.002;
+                ufo.vx += dx * 0.0008; // Smooth drift
+                ufo.vy += dy * 0.0008;
+                ufo.vx *= 0.96;
+                ufo.vy *= 0.96;
+                ufo.rotation = ufo.vx * 0.1;
                 ufo.scale = 1;
                 ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
+                // Move towards Center (Sun)
                 const dx = centerX - ufo.x;
                 const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
 
-                ufo.x += dx * 0.08;
-                ufo.y += dy * 0.08;
-                ufo.scale = dist / 500;
-                if (ufo.scale < 0) ufo.scale = 0;
-                ufo.rotation += 0.5;
+                // Accelerate fast towards sun
+                ufo.vx += dx * 0.005;
+                ufo.vy += dy * 0.005;
+                ufo.vx *= 0.9; // Less friction for speed
+                ufo.vy *= 0.9;
 
-                if (dist < 10 || ufo.scale < 0.01) {
+                // Shrink and Fade
+                ufo.scale = Math.max(0, dist / 400); // Shrink based on distance
+                ufo.rotation += 0.2; // Spin fast
+
+                if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
-                    ufo.respawnTimer = 120; // 2 Seconds (Requested)
-                    ufo.x = -500;
+                    ufo.respawnTimer = 240; // 4 seconds @ 60fps
+                    ufo.opacity = 0;
+                    ufo.x = -999;
                 }
 
             } else if (ufo.state === 'RESPAWNING') {
                 ufo.respawnTimer--;
+                ufo.scale = 0;
                 if (ufo.respawnTimer <= 0) {
+                    // Respawn logic
                     ufo.state = 'IDLE';
-                    ufo.x = -100; // Fly in
+                    ufo.x = -100; // Fly in from left
                     ufo.y = Math.random() * height * 0.5;
+                    ufo.vx = 5; // Launch speed
+                    ufo.opacity = 1;
                     ufo.scale = 1;
                     ufo.targetX = width * 0.2;
                 }
             }
 
-            // Trail
-            if (ufo.scale > 0.1 && (ufo.state === 'WARP_TO_SUN' || Math.abs(ufo.x - ufo.targetX) > 10)) {
-                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 4 + 2 });
+            // Apply Velocity
+            ufo.x += ufo.vx;
+            ufo.y += ufo.vy;
+
+            // Trail Logic
+            if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 1 || ufo.state === 'WARP_TO_SUN')) {
+                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 3 + 2 });
             }
             for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                ufo.trail[i].life -= 0.1;
+                ufo.trail[i].life -= 0.08; // Fast fade
                 if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
             }
         };
@@ -170,26 +175,20 @@ const LandingPage = () => {
                 coreTimer = 0;
             }
 
-            // 1. Background - DEEP SPACE
+            // 1. Background (Deep Space, No "Yellow/Black Cores")
             const bg = ctx.createLinearGradient(0, 0, 0, height);
-            bg.addColorStop(0, '#000000');
-            bg.addColorStop(1, '#0a0a1a');
+            bg.addColorStop(0, '#020205');
+            bg.addColorStop(1, '#0b0b18');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Stars - WARP SPEED EFFECT
+            // 2. Stars
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
-                if (star.y > height) {
-                    star.y = 0;
-                    star.x = Math.random() * width;
-                }
-                // Warp Trail effect
+                if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
                 ctx.globalAlpha = star.opacity;
-                ctx.beginPath();
-                ctx.ellipse(star.x, star.y, star.size, star.size * 4, 0, 0, Math.PI * 2); // Elongated
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
@@ -197,61 +196,54 @@ const LandingPage = () => {
             updateUFO();
             // Trail
             ufo.trail.forEach(p => {
-                ctx.globalAlpha = p.life * 0.6;
-                ctx.fillStyle = '#00ffff';
+                ctx.globalAlpha = p.life * 0.7 * ufo.opacity;
+                ctx.fillStyle = '#00ffff'; // Electric Cyan
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.size * ufo.scale, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
             // Body
-            if (ufo.scale > 0.01) {
+            if (ufo.opacity > 0) {
                 ctx.save();
                 ctx.translate(ufo.x, ufo.y);
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 25;
                 ctx.font = "40px Arial";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
-
-                if (ufo.state === 'IDLE') {
-                    ctx.rotate(-ufo.rotation);
-                    ctx.font = "bold 13px Inter, sans-serif";
-                    const metrics = ctx.measureText(ufo.message);
-                    const boxW = metrics.width + 20;
-                    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-                    ctx.beginPath();
-                    ctx.roundRect(-boxW / 2, -50, boxW, 26, 10);
-                    ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(-5, -24); ctx.lineTo(5, -24); ctx.lineTo(0, -18); ctx.fill();
-                    ctx.shadowBlur = 0; ctx.fillStyle = "#000";
-                    ctx.fillText(ufo.message, 0, -37);
+                if (ufo.state === 'IDLE' && time % 60 < 30) {
+                    // "Click Me" Hint (Subtle ring)
+                    ctx.strokeStyle = `rgba(0, 255, 255, 0.3)`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
                 }
                 ctx.restore();
             }
 
-            // 4. CORE SUN - Stronger "Sun Effect"
-            const sunSize = 95 * scale * 2.0;
+            // 4. CORE SUN ("Space Feel" - Generic Premium Glow)
+            const sunSize = 90 * scale * 2.0;
 
-            // Enhanced Sun Glow
-            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.2, centerX, centerY, sunSize * 3.0);
-            glow.addColorStop(0, 'rgba(255, 140, 20, 0.7)'); // Intense Core
-            glow.addColorStop(0.3, 'rgba(255, 60, 0, 0.3)'); // Mid Fire
+            // Replaced "Yellow/Black" specific cores with a Universal Space Glow
+            const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 2.5);
+            glow.addColorStop(0, 'rgba(255, 100, 50, 0.5)'); // Warm core
+            glow.addColorStop(0.4, 'rgba(100, 50, 255, 0.2)'); // Purple mid (Spacey)
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
-            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 3.0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
 
             // Core Emoji
-            const pulse = 1 + Math.sin(time * 0.08) * 0.03; // Faster pulse
+            const pulse = 1 + Math.sin(time * 0.05) * 0.02;
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.scale(pulse, pulse);
             ctx.rotate(time * 0.015);
-            ctx.shadowColor = 'rgba(255, 100, 0, 0.8)'; // Strong shadow
-            ctx.shadowBlur = 50;
+            ctx.shadowColor = 'rgba(255, 150, 0, 0.5)';
+            ctx.shadowBlur = 40;
             ctx.font = `${sunSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
+            ctx.fillText(CORE_ITEMS[coreIndex], 0, 0); // Just Emoji
             ctx.restore();
 
             // 5. PLANETS
@@ -260,12 +252,14 @@ const LandingPage = () => {
                 p.angle += p.speed;
                 const radiusX = p.distance * scale * 2.6;
                 const radiusY = p.distance * scale * 0.7;
+                const x = centerX + Math.cos(p.angle) * radiusX;
+                const zDepth = Math.sin(p.angle) * radiusY;
+                const y = centerY + zDepth * 0.5 + p.heightOffset;
+                const depthScale = 1 + (Math.sin(p.angle) * 0.3);
                 items.push({
-                    emoji: p.emoji, x: centerX + Math.cos(p.angle) * radiusX,
-                    y: centerY + Math.sin(p.angle) * radiusY * 0.5 + p.heightOffset,
-                    z: Math.sin(p.angle) * radiusY,
-                    scale: 1 + Math.sin(p.angle) * 0.3,
-                    rotation: time * 0.02 + p.rotation
+                    emoji: p.emoji, x, y, z: zDepth, scale: depthScale, size: p.size,
+                    rotation: time * 0.02 + p.rotation,
+                    opacity: 0.3 + (depthScale * 0.7)
                 });
             });
 
@@ -274,10 +268,10 @@ const LandingPage = () => {
             items.forEach(item => {
                 ctx.save();
                 ctx.translate(item.x, item.y);
-                const fontSize = 45 * item.scale;
+                const fontSize = item.size * item.scale;
                 ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.globalAlpha = 0.3 + (item.scale * 0.7) * 0.7;
+                ctx.globalAlpha = item.opacity;
                 ctx.rotate(item.rotation);
                 ctx.fillText(item.emoji, 0, 0);
                 ctx.restore();
@@ -312,7 +306,7 @@ const LandingPage = () => {
     return (
         <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-black selection:bg-orange-500 selection:text-white">
 
-            <canvas ref={canvasRef} className="fixed inset-0 z-0 cursor-crosshair" />
+            <canvas ref={canvasRef} className="fixed inset-0 z-0 cursor-crosshair" /> {/* Cursor hint for interactivity */}
 
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
@@ -334,12 +328,12 @@ const LandingPage = () => {
                 </div>
             </nav>
 
-            <main className="relative z-10 flex flex-col w-full pointer-events-none">
+            <main className="relative z-10 flex flex-col w-full pointer-events-none"> {/* Make Main Pointer Events None so clicks go to canvas! */}
 
                 {/* HERO SECTION */}
                 <section className="min-h-screen flex flex-col justify-center px-6 max-w-7xl mx-auto w-full">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1 pointer-events-auto">
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1 pointer-events-auto"> {/* Enable pointer for buttons */}
                             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
                                     <Zap className="w-3 h-3 fill-orange-400" /> Premium Delivery v3.0
@@ -367,17 +361,16 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                {/* SCROLLING INFO - TRANSPARENT BACKGROUND (SPACE VISIBLE) */}
-                {/* Changed from bg-black/60 to bg-transparent or very low opacity */}
-                <div id="about" className="relative w-full backdrop-blur-sm pt-20 pb-32 border-t border-white/5 pointer-events-auto">
+                {/* SCROLLING INFO - EXPANDED */}
+                <div id="about" className="relative w-full bg-black/60 backdrop-blur-md pt-20 pb-32 border-t border-white/5 pointer-events-auto">
                     <section className="px-6 max-w-7xl mx-auto space-y-32">
 
-                        {/* FEATURES */}
+                        {/* FEATURES GRID */}
                         <div>
                             <ScrollReveal>
                                 <div className="text-center mb-16">
-                                    <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight drop-shadow-lg">Galactic Capabilities</h2>
-                                    <p className="text-gray-300 max-w-2xl mx-auto">Engineered for the modern space traveler.</p>
+                                    <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">Galactic Capabilities</h2>
+                                    <p className="text-gray-400 max-w-2xl mx-auto">Engineered for the modern space traveler.</p>
                                 </div>
                             </ScrollReveal>
                             <div className="grid md:grid-cols-3 gap-6">
@@ -390,14 +383,66 @@ const LandingPage = () => {
                                     { title: "Command Center", desc: "Full control via app.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
                                 ].map((item, i) => (
                                     <ScrollReveal key={i} delay={i * 0.05}>
-                                        <div className="group p-8 rounded-[2rem] bg-white/[0.05] border border-white/5 hover:border-orange-500/20 transition-all hover:-translate-y-2 hover:bg-white/10 text-center h-full backdrop-blur-md">
+                                        <div className="group p-8 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-orange-500/20 transition-all hover:-translate-y-2 hover:bg-white/5 text-center h-full">
                                             <div className="mb-6 inline-block opacity-80 group-hover:opacity-100 transition-opacity p-3 bg-white/5 rounded-2xl">{item.icon}</div>
                                             <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                                            <p className="text-gray-400 text-sm font-medium">{item.desc}</p>
+                                            <p className="text-gray-500 text-sm font-medium">{item.desc}</p>
                                         </div>
                                     </ScrollReveal>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* STATS */}
+                        <ScrollReveal>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-white/5 bg-white/[0.02] rounded-[3rem]">
+                                {[
+                                    { label: "Active Pilots", val: "12,000+" },
+                                    { label: "Sectors Served", val: "540" },
+                                    { label: "Avg Delivery", val: "12 min" },
+                                    { label: "Happy Aliens", val: "2.5 M+" }
+                                ].map((stat, i) => (
+                                    <div key={i} className="text-center">
+                                        <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.val}</div>
+                                        <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">{stat.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollReveal>
+
+                        {/* NEW SECTION: WHY US */}
+                        <div className="grid md:grid-cols-2 gap-16 items-center">
+                            <ScrollReveal>
+                                <div className="space-y-6">
+                                    <div className="inline-block px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">Our Mission</div>
+                                    <h2 className="text-4xl md:text-5xl font-black leading-tight">Food that travels<br />across dimensions.</h2>
+                                    <p className="text-gray-400 text-lg leading-relaxed">
+                                        We don't just deliver food; we bridge culinary worlds. From the spicy nebulas of Sector 7 to the comfort synthesisers of Earth, we bring it all to your doorstep.
+                                    </p>
+                                    <ul className="space-y-4 pt-4">
+                                        {[
+                                            "Freshness locked in stasis fields",
+                                            "Zero-G prepared delicacies",
+                                            "Drone pilots with elite certification"
+                                        ].map((pt, i) => (
+                                            <li key={i} className="flex items-center gap-3 text-gray-300 font-medium">
+                                                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center"><Star className="w-3 h-3 text-green-400" /></div>
+                                                {pt}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </ScrollReveal>
+                            <ScrollReveal delay={0.2}>
+                                <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-white/10 bg-gradient-to-br from-orange-500/10 to-purple-600/10 flex items-center justify-center group">
+                                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541592106381-b31e9674c96b?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay transition-transform duration-700 group-hover:scale-110"></div>
+                                    <div className="relative text-center p-8 bg-black/30 backdrop-blur-xl rounded-3xl border border-white/10 max-w-xs transform group-hover:-translate-y-2 transition-transform">
+                                        <Clock className="w-10 h-10 text-orange-400 mx-auto mb-4" />
+                                        <h3 className="text-2xl font-bold mb-2">24/7 Service</h3>
+                                        <p className="text-sm text-gray-300">Our drones never sleep. Late night cravings or early morning fuel, we are online.</p>
+                                    </div>
+                                </div>
+                            </ScrollReveal>
                         </div>
 
                     </section>
