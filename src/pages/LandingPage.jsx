@@ -8,32 +8,40 @@ const LandingPage = () => {
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- ULTRA-OPTIMIZED SPACE ENGINE ---
+    // --- NEW DELTA-TIME PHYSICS ENGINE (v2.0) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d', { alpha: true }); // Alpha true for CSS background
+        const ctx = canvas.getContext('2d', { alpha: true });
         let animationFrameId;
 
         // Assets
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗'];
+        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '⚡', '🚀'];
+        const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Order Now!", "Zoom! ✨"];
 
-        // Physics State
+        // State Targets
         let width, height, centerX, centerY, scale;
 
-        // UFO State
+        // Entity: UFO
         const ufo = {
-            x: -100, y: 100, vx: 0, vy: 0,
-            targetX: 0, targetY: 0,
-            state: 'IDLE',
-            rotation: 0, opacity: 1, scale: 1,
+            pos: { x: -100, y: 100 },
+            vel: { x: 0, y: 0 },
+            target: { x: 0, y: 0 },
+            state: 'IDLE', // IDLE, WARP_TO_SUN, RESPAWNING
+            rotation: 0,
+            opacity: 1,
+            scale: 1,
             trail: [],
-            respawnTimer: 0
+            msgIndex: 0,
+            msgTimer: 0,
+            showMsg: true,
+            idleTimer: 0
         };
 
-        // Mouse Tracker
-        let mouseX = 0, mouseY = 0;
+        // Inputs
+        let mouse = { x: 0, y: 0 };
+
         const handleInteraction = (e) => {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -41,25 +49,22 @@ const LandingPage = () => {
             const logicX = clientX - rect.left;
             const logicY = clientY - rect.top;
 
-            const dist = Math.hypot(logicX - ufo.x, logicY - ufo.y);
+            const dist = Math.hypot(logicX - ufo.pos.x, logicY - ufo.pos.y);
+            // Hitbox 100px
             if (dist < 100 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
             }
         };
 
         const resize = () => {
-            // CRITICAL OPTIMIZATION: Cap Pixel Ratio at 1.5
-            // Native retina (3x) kills performance on full-screen canvas. 1.5 is sharp enough but 4x faster.
+            // Optimization: Cap DPR at 1.5 for performance while maintaining good quality
             const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-
             width = window.innerWidth;
             height = window.innerHeight;
-
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
-
             ctx.scale(dpr, dpr);
 
             if (width >= 768) {
@@ -72,164 +77,225 @@ const LandingPage = () => {
                 scale = Math.min(width, height) * 0.001;
             }
             if (ufo.state === 'IDLE') {
-                ufo.targetX = width * 0.2;
+                ufo.target.x = width * 0.2; // Default resting spot
             }
         };
 
-        // Debounce resize to prevent thrashing
-        let resizeTimeout;
-        const debouncedResize = () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(resize, 100);
-        };
-
-        window.addEventListener('mousedown', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
-        window.addEventListener('resize', debouncedResize);
-        resize();
-
-        // Cached Particles
+        // Entities: Planets
         const planets = Array.from({ length: 12 }, (_, i) => ({
             emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
             angle: (i / 12) * Math.PI * 2,
             distance: 180 + (i % 2) * 80,
-            speed: 0.003 + (i % 2) * 0.002,
+            orbitSpeed: 0.15 + (i % 2) * 0.1, // Radians per second
             size: 45,
             heightOffset: (Math.random() - 0.5) * 50,
-            rotation: Math.random() * Math.PI
+            rotation: Math.random() * Math.PI,
+            rotSpeed: 1.0 // Rotation per second
         }));
 
-        const stars = Array.from({ length: 100 }, () => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            size: Math.random() * 2 + 0.5, // slightly bigger for rect
+        // Entities: Stars
+        const stars = Array.from({ length: 90 }, () => ({
+            x: Math.random() * 2000,
+            y: Math.random() * 1000,
+            size: Math.random() * 2 + 0.5,
             opacity: Math.random() * 0.8,
-            speed: 0.2 + Math.random() * 0.5
+            speed: 20 + Math.random() * 30 // Pixels per second
         }));
 
-        let time = 0;
+        // Timing
+        let lastTime = 0;
         let coreIndex = 0;
         let coreTimer = 0;
 
-        const updatePhysics = () => {
-            // UFO Update (Inlined for speed)
+        // --- GAME LOOP ---
+        const loop = (timestamp) => {
+            if (!lastTime) lastTime = timestamp;
+            // Delta Time in Seconds (cap at 0.1 to prevent huge jumps on lag spikes)
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+            lastTime = timestamp;
+
+            // 1. UPDATE PHYSICS
+
+            // Core Logic
+            coreTimer += dt;
+            if (coreTimer > 2.5) { // Change every 2.5s
+                coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
+                coreTimer = 0;
+            }
+
+            // UFO Logic
             if (ufo.state === 'IDLE') {
-                if (Math.random() < 0.01) {
-                    ufo.targetX = Math.random() * width;
-                    ufo.targetY = Math.random() * (height * 0.6);
+                ufo.idleTimer += dt;
+
+                // Change Message every 3s
+                ufo.msgTimer += dt;
+                if (ufo.msgTimer > 3) {
+                    ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length;
+                    ufo.msgTimer = 0;
+                    ufo.showMsg = true;
                 }
-                const dx = ufo.targetX - ufo.x;
-                const dy = ufo.targetY - ufo.y;
-                ufo.vx += dx * 0.0008; ufo.vy += dy * 0.0008;
-                ufo.vx *= 0.96; ufo.vy *= 0.96;
-                ufo.rotation = ufo.vx * 0.1;
+
+                // Wander AI: Change target occasionally
+                if (Math.random() < 1.0 * dt) { // approx once per second probability
+                    ufo.target.x = Math.random() * width;
+                    ufo.target.y = Math.random() * (height * 0.6);
+                }
+
+                // Spring/Ease Movement
+                const dx = ufo.target.x - ufo.pos.x;
+                const dy = ufo.target.y - ufo.pos.y;
+
+                // Acceleration = Force / Mass
+                // Simplification for smooth UI: Velocity += (Dist * SpeedFactor) * dt
+                ufo.vel.x += dx * 1.5 * dt;
+                ufo.vel.y += dy * 1.5 * dt;
+
+                // Friction
+                const friction = Math.pow(0.5, dt); // Decay 50% per second
+                ufo.vel.x *= friction;
+                ufo.vel.y *= friction;
+
+                ufo.rotation = ufo.vel.x * 0.05;
+                ufo.scale = 1;
+                ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
-                const dx = centerX - ufo.x;
-                const dy = centerY - ufo.y;
+                const dx = centerX - ufo.pos.x;
+                const dy = centerY - ufo.pos.y;
                 const dist = Math.hypot(dx, dy);
-                ufo.vx += dx * 0.005; ufo.vy += dy * 0.005;
-                ufo.vx *= 0.9; ufo.vy *= 0.9;
+
+                // Strong pull to center
+                ufo.vel.x += dx * 8.0 * dt;
+                ufo.vel.y += dy * 8.0 * dt;
+
+                // Less friction for "slingshot" feel
+                const warpFriction = Math.pow(0.1, dt);
+                ufo.vel.x *= warpFriction;
+                ufo.vel.y *= warpFriction;
+
                 ufo.scale = Math.max(0, dist / 400);
-                ufo.rotation += 0.2;
+                ufo.rotation += 10 * dt; // Fast spin
+
                 if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
-                    ufo.respawnTimer = 240;
+                    ufo.idleTimer = 4; // Use as countdown
                     ufo.opacity = 0;
-                    ufo.x = -999;
+                    ufo.pos.x = -1000;
                 }
             } else if (ufo.state === 'RESPAWNING') {
-                ufo.respawnTimer--;
-                if (ufo.respawnTimer <= 0) {
-                    ufo.state = 'IDLE'; ufo.x = -100; ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 5; ufo.opacity = 1; ufo.scale = 1; ufo.targetX = width * 0.2;
+                ufo.idleTimer -= dt;
+                if (ufo.idleTimer <= 0) {
+                    ufo.state = 'IDLE';
+                    ufo.pos.x = -100;
+                    ufo.pos.y = Math.random() * height * 0.5;
+                    ufo.vel.x = 200; // Burst in pixels/sec
+                    ufo.opacity = 1;
+                    ufo.target.x = width * 0.2;
                 }
             }
-            ufo.x += ufo.vx; ufo.y += ufo.vy;
 
-            if (ufo.opacity > 0.1 && (Math.abs(ufo.vx) > 0.5 || Math.abs(ufo.vy) > 0.5 || ufo.state === 'WARP_TO_SUN')) {
-                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 3 + 2 });
+            // Apply Velocity
+            ufo.pos.x += ufo.vel.x * dt * 20; // Scale factor for pixel movement
+            ufo.pos.y += ufo.vel.y * dt * 20;
+
+            // Update Trail
+            if (ufo.opacity > 0.1 && (Math.abs(ufo.vel.x) > 0.5 || ufo.state === 'WARP_TO_SUN')) {
+                // Add trail particle
+                ufo.trail.push({ x: ufo.pos.x, y: ufo.pos.y, life: 1.0, size: Math.random() * 3 + 2 });
             }
-        };
+            // Update Trail Life
+            for (let i = ufo.trail.length - 1; i >= 0; i--) {
+                ufo.trail[i].life -= 2.0 * dt; // Fade out in 0.5s
+                if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
+            }
 
-        const render = () => {
-            time++;
-            coreTimer++;
-            if (coreTimer > 200) { coreIndex = (coreIndex + 1) % CORE_ITEMS.length; coreTimer = 0; }
-            updatePhysics();
 
-            // 1. CLEAR (Transparent - Background handled by CSS)
-            ctx.clearRect(0, 0, width, height);
+            // 2. DRAW
+            ctx.clearRect(0, 0, width, height); // Clear (CSS does background)
 
-            // 2. FAST STARS (FillRect is 10x faster than Arc)
+            // Draw Stars
             ctx.fillStyle = "white";
-            for (let i = 0; i < stars.length; i++) {
-                const s = stars[i];
-                s.y += s.speed;
-                if (s.y > height) { s.y = 0; s.x = Math.random() * width; }
-                // Avoid globalAlpha change per star
-                if (s.opacity > 0.5) ctx.fillRect(s.x, s.y, s.size, s.size);
-            }
+            stars.forEach(s => {
+                s.y += s.speed * dt;
+                if (s.y > height) { s.y = -10; s.x = Math.random() * width; }
+                if (s.opacity > 0.3) {
+                    ctx.globalAlpha = s.opacity;
+                    ctx.fillRect(s.x, s.y, s.size, s.size);
+                }
+            });
+            ctx.globalAlpha = 1;
 
-            // 3. UFO Trail (Batch)
+            // Draw UFO Trail
             ctx.fillStyle = '#00ffff';
             ctx.beginPath();
-            for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                const t = ufo.trail[i];
-                t.life -= 0.08;
-                if (t.life <= 0) { ufo.trail.splice(i, 1); continue; }
-                // Only draw significant trails
+            ufo.trail.forEach(t => {
                 ctx.rect(t.x, t.y, t.size * ufo.scale, t.size * ufo.scale);
-            }
+            });
             ctx.fill();
 
-            // 4. UFO BODY
+            // Draw UFO
             if (ufo.opacity > 0) {
                 ctx.save();
-                ctx.translate(ufo.x, ufo.y);
+                ctx.translate(ufo.pos.x, ufo.pos.y);
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
-                // Shadow blur is expensive, reduce it or remove for huge speedup? 
-                // Maintaining premium look with reduced blur radius.
-                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 15;
                 ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
+
+                // Message Bubble
+                if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) {
+                    ctx.shadowBlur = 0;
+                    ctx.rotate(-ufo.rotation); // Keep text level
+                    const msg = UFO_MESSAGES[ufo.msgIndex];
+                    ctx.font = "bold 12px sans-serif";
+                    const metrics = ctx.measureText(msg);
+                    const pad = 12;
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                    // Bubble body
+                    ctx.beginPath();
+                    ctx.roundRect(25, -30, metrics.width + pad * 2, 34, 8);
+                    ctx.fill();
+                    // Bubble tail
+                    ctx.beginPath(); ctx.moveTo(25, -10); ctx.lineTo(18, 0); ctx.lineTo(35, -5); ctx.fill();
+                    ctx.fillStyle = "#000";
+                    ctx.fillText(msg, 25 + pad, -30 + 17);
+                }
                 ctx.restore();
             }
 
-            // 5. CORE SUN (Cached Gradient Check)
+            // Draw Sun
             const sunSize = 90 * scale * 2.0;
-            // Use simpler solid color with alpha for speed if needed, but gradient is okay if not full screen
             const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 2.5);
-            glow.addColorStop(0, 'rgba(255, 100, 50, 0.5)');
+            glow.addColorStop(0, 'rgba(255, 120, 50, 0.6)');
+            glow.addColorStop(0.5, 'rgba(100, 50, 255, 0.2)');
             glow.addColorStop(1, 'transparent');
-            ctx.fillStyle = glow;
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
 
-            // Core Item
-            const pulse = 1 + Math.sin(time * 0.05) * 0.02;
+            // Core Emoji
+            const pulse = 1 + Math.sin(timestamp * 0.003) * 0.03;
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.scale(pulse, pulse);
+            ctx.shadowColor = 'rgba(255, 140, 0, 0.6)'; ctx.shadowBlur = 40;
             ctx.font = `${sunSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
             ctx.restore();
 
-            // 6. PLANETS
-            for (let i = 0; i < planets.length; i++) {
-                const p = planets[i];
-                p.angle += p.speed;
+            // Draw Planets
+            planets.forEach(p => {
+                p.angle += p.orbitSpeed * dt;
+
                 const radiusX = p.distance * scale * 2.6;
                 const radiusY = p.distance * scale * 0.7;
+
                 const x = centerX + Math.cos(p.angle) * radiusX;
                 const zDepth = Math.sin(p.angle) * radiusY;
                 const y = centerY + zDepth * 0.5 + p.heightOffset;
-                const depthScale = 1 + (Math.sin(p.angle) * 0.3);
 
-                // Manual z-sort is expensive.
-                // Just drawing them is fine for "laggy" page fix. Z-sort only if necessary.
-                // Let's keep loop order for raw speed.
+                const depthScale = 1 + (Math.sin(p.angle) * 0.3);
 
                 ctx.save();
                 ctx.translate(x, y);
@@ -237,14 +303,23 @@ const LandingPage = () => {
                 ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.globalAlpha = 0.3 + (depthScale * 0.7);
-                ctx.rotate(time * 0.02 + p.rotation);
+                ctx.rotate(p.rotation + (timestamp * 0.001 * p.rotSpeed));
                 ctx.fillText(p.emoji, 0, 0);
                 ctx.restore();
-            }
+            });
 
-            animationFrameId = requestAnimationFrame(render);
+            animationFrameId = requestAnimationFrame(loop);
         };
-        render();
+
+        let resizeTimeout;
+        const debouncedResize = () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(resize, 100); };
+        window.addEventListener('resize', debouncedResize);
+        window.addEventListener('mousedown', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
+
+        // Init
+        resize();
+        animationFrameId = requestAnimationFrame(loop);
 
         return () => {
             window.removeEventListener('resize', debouncedResize);
@@ -270,7 +345,6 @@ const LandingPage = () => {
     );
 
     return (
-        // CSS GRADIENT BACKGROUND: Faster than Canvas Clear+Fill
         <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-[#020205] to-black selection:bg-orange-500 selection:text-white">
 
             <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
