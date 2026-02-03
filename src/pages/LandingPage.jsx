@@ -7,12 +7,38 @@ const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
 
-    // --- 3D SOLAR SYSTEM ENGINE ---
+    // --- 3D SOLAR SYSTEM ENGINE (OPTIMIZED) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d', { alpha: false });
         let animationFrameId;
+
+        // Optimization: Helper to pre-render emojis with effects to an offscreen canvas
+        const prerenderEmoji = (emoji, size, color = 'white', glowColor = null, glowBlur = 0) => {
+            const sizePx = Math.round(size);
+            const padding = glowBlur * 2 + 10; // Extra space for glow
+            const cWidth = sizePx + padding * 2;
+            const cHeight = sizePx + padding * 2;
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = cWidth;
+            offCanvas.height = cHeight;
+            const offCtx = offCanvas.getContext('2d', { alpha: true });
+
+            offCtx.font = `${sizePx}px Arial`;
+            offCtx.textAlign = 'center';
+            offCtx.textBaseline = 'middle';
+
+            if (glowColor && glowBlur > 0) {
+                offCtx.shadowColor = glowColor;
+                offCtx.shadowBlur = glowBlur;
+            }
+
+            offCtx.translate(cWidth / 2, cHeight / 2);
+            offCtx.fillText(emoji, 0, 0);
+            return { canvas: offCanvas, width: cWidth, height: cHeight };
+        };
 
         let width, height, centerX, centerY;
         let scale = 1;
@@ -43,7 +69,21 @@ const LandingPage = () => {
         const foodEmojis = ['🍔', '🍩', '🌮', '🥗', '🍱', '🍜', '🍤', '🥓', '🍗', '🍟', '🧀', '🥒', '🥨'];
         const sunEmojis = ['🍕', '🍔', '🥟', '🥪', '🍱']; // Rotating sun items
 
-        // 1. Planets (Food Items)
+        // PRE-RENDER ASSETS (Bake heavy effects once)
+        // 1. Planets
+        const planetAssets = {};
+        foodEmojis.forEach(emoji => {
+            // Shadow purely for aesthetics (whiteish rim)
+            planetAssets[emoji] = prerenderEmoji(emoji, 60, 'white', 'rgba(255,255,255,0.5)', 10);
+        });
+
+        // 2. Suns (Strong Orange Glow)
+        const sunAssets = {};
+        sunEmojis.forEach(emoji => {
+            sunAssets[emoji] = prerenderEmoji(emoji, 120, 'white', '#ffaa00', 40);
+        });
+
+        // Initialize Planets
         const planets = foodEmojis.map((emoji, i) => ({
             type: 'planet',
             emoji,
@@ -54,8 +94,7 @@ const LandingPage = () => {
             heightOffset: (Math.random() - 0.5) * 40
         }));
 
-        // 2. Stars
-        // Reduce star count on mobile for higher FPS
+        // Stars
         const stars = Array.from({ length: isMobile ? 80 : 200 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
@@ -70,15 +109,15 @@ const LandingPage = () => {
 
         const render = () => {
             time++;
-
-            // Cycle Sun Emoji every ~2 seconds (120 frames)
             sunTimer++;
             if (sunTimer > 120) {
                 sunIndex = (sunIndex + 1) % sunEmojis.length;
                 sunTimer = 0;
             }
 
-            // 1. Background (Deep Space)
+            // 1. Clear & Background (Fast gradient)
+            // Re-using same gradient object if dimensions haven't changed would be even faster, 
+            // but creating one gradient per frame is acceptable for 120fps on modern devices.
             const bg = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));
             bg.addColorStop(0, '#0a0a1a');
             bg.addColorStop(0.5, '#050508');
@@ -96,10 +135,10 @@ const LandingPage = () => {
                 ctx.fill();
             });
 
-            // 3. Prepare 3D Scene Items
+            // 3. Prepare Items
             const items = [];
 
-            // Add Sun
+            // Sun Wrapper
             items.push({
                 type: 'sun',
                 z: 0,
@@ -108,7 +147,7 @@ const LandingPage = () => {
                 emoji: sunEmojis[sunIndex]
             });
 
-            // Add Planets
+            // Planets
             planets.forEach(p => {
                 p.angle += p.speed;
                 const radiusX = p.distance * scale * 3;
@@ -130,45 +169,49 @@ const LandingPage = () => {
                 });
             });
 
-            // 4. Sort by Depth
             items.sort((a, b) => a.z - b.z);
 
-            // 5. Draw All
+            // 4. Draw All (Using pre-rendered images)
             items.forEach(item => {
                 if (item.type === 'sun') {
+                    // Draw Sun Glow Gradient (Large soft glow)
+                    // We can also bake this, but a single gradient is fine. 
+                    // Let's optimize: Bake the core emoji, draw gradient dynamically or also bake it.
+                    // For "Real World" speed, let's keep the dynamic gradient for the "pulse" feel but make it simple.
                     const sunBaseSize = 100 * scale * 2.5;
                     const glow = ctx.createRadialGradient(centerX, centerY, sunBaseSize * 0.5, centerX, centerY, sunBaseSize * 3);
                     glow.addColorStop(0, 'rgba(255, 100, 0, 0.8)');
-                    glow.addColorStop(0.4, 'rgba(255, 50, 0, 0.2)');
                     glow.addColorStop(1, 'transparent');
                     ctx.fillStyle = glow;
                     ctx.beginPath(); ctx.arc(centerX, centerY, sunBaseSize * 3, 0, Math.PI * 2); ctx.fill();
 
-                    // Core
-                    ctx.save();
-                    ctx.translate(centerX, centerY);
-                    const rotateSpeed = time * 0.005;
-                    // Add a little bounce on change?
-                    const scaleEffect = sunTimer < 10 ? 1.1 : 1.0;
-                    ctx.scale(scaleEffect, scaleEffect);
-                    ctx.rotate(rotateSpeed);
+                    // Draw Baked Sun Emoji
+                    const asset = sunAssets[item.emoji];
+                    if (asset) {
+                        ctx.save();
+                        ctx.translate(centerX, centerY);
+                        const rotateSpeed = time * 0.005;
+                        const scaleEffect = (sunTimer < 10 ? 1.1 : 1.0) * (sunBaseSize / 120); // Scale to match base size
+                        ctx.scale(scaleEffect, scaleEffect);
+                        ctx.rotate(rotateSpeed);
+                        // Draw image centered
+                        ctx.drawImage(asset.canvas, -asset.width / 2, -asset.height / 2);
+                        ctx.restore();
+                    }
 
-                    ctx.font = `${sunBaseSize}px Arial`;
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.shadowColor = "#ffaa00"; ctx.shadowBlur = 40;
-                    ctx.fillText(item.emoji, 0, 0);
-                    ctx.restore();
                 } else {
-                    ctx.save();
-                    ctx.translate(item.x, item.y);
-                    ctx.scale(item.scale, item.scale);
-                    ctx.font = `${item.size}px Arial`;
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.globalAlpha = item.opacity;
-                    ctx.shadowColor = item.scale > 1.1 ? "rgba(255,255,255,0.5)" : "transparent";
-                    ctx.shadowBlur = 10;
-                    ctx.fillText(item.emoji, 0, 0);
-                    ctx.restore();
+                    // Draw Baked Planet
+                    const asset = planetAssets[item.emoji];
+                    if (asset) {
+                        ctx.save();
+                        ctx.translate(item.x, item.y);
+                        // Adjust scale based on item.size vs asset size (60px)
+                        const sizeScale = (item.size / 60) * item.scale;
+                        ctx.scale(sizeScale, sizeScale);
+                        ctx.globalAlpha = item.opacity;
+                        ctx.drawImage(asset.canvas, -asset.width / 2, -asset.height / 2);
+                        ctx.restore();
+                    }
                 }
             });
 
