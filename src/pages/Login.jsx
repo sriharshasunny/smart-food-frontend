@@ -19,7 +19,7 @@ const Auth = () => {
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
 
-    // --- UNIFIED CANVAS ENGINE (UFO, STARS, FOOD) ---
+    // --- UNIFIED CANVAS ENGINE (UFO, STARS, FOOD, ASTEROIDS) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -33,242 +33,179 @@ const Auth = () => {
         window.addEventListener('resize', resize);
         resize();
 
-        // 1. STARS - MINIMAL & DEEP
-        // Reduced count and opacity for a cleaner professional look
-        const stars = Array.from({ length: 80 }).map(() => ({
+        // 1. STARS - MINIMAL & BLINKING
+        const stars = Array.from({ length: 80 }).map((_, i) => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             size: Math.random() * 1.5,
-            speed: Math.random() * 0.1 + 0.02, // Slower, more distant feel
-            opacity: Math.random() * 0.6 + 0.1 // Fainter
+            speed: Math.random() * 0.1 + 0.02,
+            opacity: Math.random() * 0.6 + 0.1,
+            blink: i < 5,
+            blinkSpeed: 0.02 + Math.random() * 0.03,
+            blinkDir: 1
         }));
 
-        // 2. FOOD - MINIMAL FLOATING
-        // reduced from 12 to 5, slower speed
+        // 2. FOOD - VISIBLE BUT BALANCED
         const foodEmojis = ['🍔', '🍕', '🍩', '🌮', '🥗'];
         const foods = Array.from({ length: 5 }).map(() => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
-            size: 20 + Math.random() * 20, // Slightly smaller range
-            dx: (Math.random() - 0.5) * 0.5, // Very slow drift
+            size: 20 + Math.random() * 20,
+            dx: (Math.random() - 0.5) * 0.5,
             dy: (Math.random() - 0.5) * 0.5,
             rotation: Math.random() * Math.PI * 2,
-            dr: (Math.random() - 0.5) * 0.005 // Very slow spin
+            dr: (Math.random() - 0.5) * 0.005
         }));
 
-        // 3. UFO ENTITY - REALISTIC PHYSICS
+        // 3. FOOD ASTEROIDS (FALLING WITH TRAIL)
+        const asteroids = [];
+        const spawnAsteroid = () => {
+            if (asteroids.length < 2 && Math.random() < 0.005) { // Rare spawn
+                asteroids.push({
+                    x: Math.random() * canvas.width,
+                    y: -50,
+                    emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
+                    size: 30 + Math.random() * 20,
+                    speed: 2 + Math.random() * 2,
+                    angle: Math.PI / 4 + (Math.random() - 0.5) * 0.2, // Diagonal down-right
+                    rotation: 0,
+                    rotSpeed: (Math.random() - 0.5) * 0.1,
+                    trail: []
+                });
+            }
+        };
+
+        // 4. UFO ENTITY
         const ufo = {
             x: canvas.width * 0.8,
             y: canvas.height * 0.2,
-            vx: 0,
-            vy: 0,
-            rotation: 0,
-            // Physics params
-            maxSpeed: 4,
-            acceleration: 0.1,
-            friction: 0.98,
-            // Target params
-            targetX: canvas.width * 0.5,
-            targetY: canvas.height * 0.5,
-            // State
-            opacity: 1,
-            state: 'IDLE', // IDLE, ACCELERATING, DECELERATING, WARPING_OUT, WARPING_IN
-            warpTimer: 0,
-            message: "Welcome! 👋",
-            messageTimer: 0,
-            showMessage: true
+            vx: 0, vy: 0, rotation: 0,
+            maxSpeed: 4, acceleration: 0.12, friction: 0.98,
+            targetX: canvas.width * 0.5, targetY: canvas.height * 0.5,
+            opacity: 1, state: 'IDLE', warpTimer: 0,
+            message: "Welcome! 👋", messageTimer: 0, showMessage: true,
+            trail: []
         };
 
+        // ... UFO Logic (Same as before, collapsed for brevity in this update) ...
         const updateUFO = () => {
-            // Random Message Logic
             ufo.messageTimer++;
-            if (ufo.messageTimer > 250) { // ~4 seconds
-                const msgs = [
-                    "Welcome! 👋",
-                    "Exploring flavors... 🍕",
-                    "So many choices! 🍩",
-                    "Hungry? 🍔",
-                    "Warp speed delivery! 🚀",
-                    "Did someone say Tacos? 🌮"
-                ];
-                // Only change message occasionally (~20% chance every cycle)
-                if (Math.random() < 0.3) {
-                    ufo.message = msgs[Math.floor(Math.random() * msgs.length)];
-                    ufo.showMessage = true;
-                }
+            if (ufo.messageTimer > 250) {
+                const msgs = ["Welcome! 👋", "Fast Delivery 🚀", "So Tasty 😋", "Order Now 🍔", "Zoom Zoom! ✨", "Pizza Time? 🍕"];
+                if (Math.random() < 0.3) { ufo.message = msgs[Math.floor(Math.random() * msgs.length)]; ufo.showMessage = true; }
                 ufo.messageTimer = 0;
             }
-
-            // AI Behavior
             if (ufo.state === 'IDLE') {
-                // Determine next move
-                const distToTarget = Math.hypot(ufo.targetX - ufo.x, ufo.targetY - ufo.y);
-
-                if (distToTarget < 50) {
-                    // Pick new target
-                    if (Math.random() < 0.02) {
-                        ufo.targetX = Math.random() * (canvas.width - 100) + 50;
-                        ufo.targetY = Math.random() * (canvas.height - 100) + 50;
-                    }
-                    // Rare warp chance
-                    else if (Math.random() < 0.005) {
-                        ufo.state = 'WARPING_OUT';
-                    }
-                } else {
-                    ufo.state = 'ACCELERATING';
-                }
-            }
-            else if (ufo.state === 'ACCELERATING' || ufo.state === 'DECELERATING') {
-                // Physics Steering
-                const dx = ufo.targetX - ufo.x;
-                const dy = ufo.targetY - ufo.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
+                const dist = Math.hypot(ufo.targetX - ufo.x, ufo.targetY - ufo.y);
                 if (dist < 50) {
-                    ufo.state = 'IDLE';
-                } else {
-                    const ax = (dx / dist) * ufo.acceleration;
-                    const ay = (dy / dist) * ufo.acceleration;
-
-                    ufo.vx += ax;
-                    ufo.vy += ay;
-                }
+                    if (Math.random() < 0.02) { ufo.targetX = Math.random() * (canvas.width - 100) + 50; ufo.targetY = Math.random() * (canvas.height - 100) + 50; }
+                    else if (Math.random() < 0.005) ufo.state = 'WARPING_OUT';
+                } else ufo.state = 'ACCELERATING';
+            } else if (ufo.state === 'ACCELERATING' || ufo.state === 'DECELERATING') {
+                const dx = ufo.targetX - ufo.x, dy = ufo.targetY - ufo.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 50) ufo.state = 'IDLE';
+                else { ufo.vx += (dx / dist) * ufo.acceleration; ufo.vy += (dy / dist) * ufo.acceleration; }
+            } else if (ufo.state === 'WARPING_OUT') {
+                ufo.opacity -= 0.08; ufo.rotation += 0.2;
+                if (ufo.opacity <= 0) { ufo.opacity = 0; ufo.state = 'WARPING_IN'; ufo.x = Math.random() * (canvas.width - 100) + 50; ufo.y = Math.random() * (canvas.height - 100) + 50; ufo.vx = 0; ufo.vy = 0; ufo.targetX = ufo.x; ufo.targetY = ufo.y; ufo.trail = []; }
+            } else if (ufo.state === 'WARPING_IN') {
+                ufo.opacity += 0.08; ufo.rotation -= 0.2;
+                if (ufo.opacity >= 1) { ufo.opacity = 1; ufo.rotation = 0; ufo.state = 'IDLE'; }
             }
-            else if (ufo.state === 'WARPING_OUT') {
-                ufo.opacity -= 0.08;
-                ufo.rotation += 0.2; // Spin fast when warping
-                if (ufo.opacity <= 0) {
-                    ufo.opacity = 0;
-                    ufo.state = 'WARPING_IN';
-                    ufo.x = Math.random() * (canvas.width - 100) + 50;
-                    ufo.y = Math.random() * (canvas.height - 100) + 50;
-                    ufo.vx = 0;
-                    ufo.vy = 0;
-                    ufo.targetX = ufo.x; // Stay put for a moment
-                    ufo.targetY = ufo.y;
-                }
-            }
-            else if (ufo.state === 'WARPING_IN') {
-                ufo.opacity += 0.08;
-                ufo.rotation -= 0.2;
-                if (ufo.opacity >= 1) {
-                    ufo.opacity = 1;
-                    ufo.rotation = 0;
-                    ufo.state = 'IDLE';
-                }
-            }
-
-            // Apply Physics (Friction)
             if (ufo.state !== 'WARPING_OUT' && ufo.state !== 'WARPING_IN') {
-                ufo.vx *= ufo.friction;
-                ufo.vy *= ufo.friction;
-
-                ufo.x += ufo.vx;
-                ufo.y += ufo.vy;
-
-                // Banking effect: Rotate towards velocity vector slightly
-                // Target rotation based on x velocity (lean into turns)
-                const targetRotation = ufo.vx * 0.1;
-                ufo.rotation += (targetRotation - ufo.rotation) * 0.1;
+                ufo.vx *= ufo.friction; ufo.vy *= ufo.friction;
+                ufo.x += ufo.vx; ufo.y += ufo.vy;
+                ufo.rotation += (ufo.vx * 0.1 - ufo.rotation) * 0.1;
+                const speed = Math.hypot(ufo.vx, ufo.vy);
+                if (speed > 0.5) ufo.trail.push({ x: ufo.x, y: ufo.y, size: Math.random() * 4 + 2, opacity: 0.8, life: 1.0 });
             }
-
-            // Screen Bounds (Bounce)
+            for (let i = ufo.trail.length - 1; i >= 0; i--) {
+                ufo.trail[i].life -= 0.08; ufo.trail[i].size *= 0.9;
+                if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
+            }
             if (ufo.x < 0 || ufo.x > canvas.width) { ufo.vx *= -0.8; ufo.x = Math.max(0, Math.min(canvas.width, ufo.x)); }
             if (ufo.y < 0 || ufo.y > canvas.height) { ufo.vy *= -0.8; ufo.y = Math.max(0, Math.min(canvas.height, ufo.y)); }
-
-            // Hover Bobbing (always added visually)
-            const bob = Math.sin(Date.now() / 600) * 8; // Slower, deeper bob
-
-            return { x: ufo.x, y: ufo.y + bob, rotation: ufo.rotation, opacity: ufo.opacity };
+            return { x: ufo.x, y: ufo.y + Math.sin(Date.now() / 600) * 8, rotation: ufo.rotation, opacity: ufo.opacity, trail: ufo.trail };
         };
 
         const render = () => {
-            // Clear & Background (Dark deep space)
-            ctx.fillStyle = '#020205'; // Almost black
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#020205'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Stars
+            // Stars
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
+                if (star.blink) {
+                    star.opacity += star.blinkSpeed * star.blinkDir;
+                    if (star.opacity > 1) { star.opacity = 1; star.blinkDir = -1; }
+                    if (star.opacity < 0.2) { star.opacity = 0.2; star.blinkDir = 1; }
+                }
                 ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
                 ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
             });
 
-            // Draw Food
+            // Food Background
             foods.forEach(food => {
                 food.x += food.dx; food.y += food.dy; food.rotation += food.dr;
                 if (food.x < -50) food.x = canvas.width + 50; if (food.x > canvas.width + 50) food.x = -50;
                 if (food.y < -50) food.y = canvas.height + 50; if (food.y > canvas.height + 50) food.y = -50;
-
-                ctx.save();
-                ctx.translate(food.x, food.y);
-                ctx.rotate(food.rotation);
-                ctx.font = `${food.size}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                // Very subtle opacity for minimal look
-                ctx.globalAlpha = 0.3;
-                ctx.fillText(food.emoji, 0, 0);
-                ctx.restore();
+                ctx.save(); ctx.translate(food.x, food.y); ctx.rotate(food.rotation);
+                ctx.font = `${food.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.globalAlpha = 0.5; ctx.fillText(food.emoji, 0, 0); ctx.restore();
             });
 
-            // Draw UFO
+            // Asteroids
+            spawnAsteroid();
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                const a = asteroids[i];
+                a.x += Math.cos(a.angle) * a.speed;
+                a.y += Math.sin(a.angle) * a.speed;
+                a.rotation += a.rotSpeed;
+
+                // Trail
+                a.trail.push({ x: a.x, y: a.y, size: a.size * 0.4, opacity: 0.6 });
+                if (a.trail.length > 10) a.trail.shift();
+
+                // Draw Trail
+                a.trail.forEach((p, idx) => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * (idx / 10), 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 100, 50, ${p.opacity * (idx / 10)})`; // Fiery trail
+                    ctx.fill();
+                });
+
+                // Draw Asteroid
+                ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.rotation);
+                ctx.font = `${a.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                // Fire glow
+                ctx.shadowColor = "rgba(255, 100, 0, 0.5)"; ctx.shadowBlur = 20;
+                ctx.fillText(a.emoji, 0, 0); ctx.restore();
+
+                if (a.y > canvas.height + 50) asteroids.splice(i, 1);
+            }
+
+            // UFO
             const ufoPos = updateUFO();
             if (ufoPos.opacity > 0) {
-                ctx.save();
-                ctx.globalAlpha = ufoPos.opacity;
-                ctx.translate(ufoPos.x, ufoPos.y);
-                ctx.rotate(ufoPos.rotation);
+                ufoPos.trail.forEach(p => {
+                    ctx.beginPath(); ctx.arc(p.x, p.y + ufoPos.y - ufo.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 255, 200, ${p.opacity * ufoPos.opacity})`; ctx.fill();
+                });
+                ctx.save(); ctx.globalAlpha = ufoPos.opacity; ctx.translate(ufoPos.x, ufoPos.y); ctx.rotate(ufoPos.rotation);
+                ctx.shadowColor = "rgba(0, 255, 100, 0.8)"; ctx.shadowBlur = 40;
+                ctx.font = "60px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🛸", 0, 0); ctx.restore();
 
-                // Draw UFO Emoji
-                ctx.font = "60px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.shadowColor = "rgba(0, 255, 200, 0.4)"; // Cyan/Teal glow
-                ctx.shadowBlur = 25;
-                ctx.fillText("🛸", 0, 0);
-
-                ctx.restore();
-
-                // Draw Message Bubble (No rotation on text)
                 if (ufo.showMessage && ufoPos.opacity > 0.8) {
-                    ctx.save();
-                    ctx.translate(ufoPos.x, ufoPos.y - 50); // Position above UFO
-
+                    ctx.save(); ctx.translate(ufoPos.x, ufoPos.y - 50);
                     ctx.font = "bold 14px Segoe UI, sans-serif";
-                    const textMetrics = ctx.measureText(ufo.message);
-                    const textWidth = textMetrics.width;
-                    const padding = 12;
-                    const boxWidth = textWidth + padding * 2;
-                    const boxHeight = 28;
-
-                    // Bubble Background (Glassmorphism)
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = "rgba(0,0,0,0.3)";
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-
-                    // Rounded Rect for Bubble
-                    ctx.beginPath();
-                    ctx.roundRect(-boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight, 14);
-                    ctx.fill();
-
-                    // Tiny triangle pointer
-                    ctx.beginPath();
-                    ctx.moveTo(-6, boxHeight / 2 - 2);
-                    ctx.lineTo(6, boxHeight / 2 - 2);
-                    ctx.lineTo(0, boxHeight / 2 + 6);
-                    ctx.fill();
-
-                    // Text
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = "#000"; // Dark text
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(ufo.message, 0, 1);
-
-                    ctx.restore();
+                    const metrics = ctx.measureText(ufo.message);
+                    const boxW = metrics.width + 24; const boxH = 28;
+                    ctx.shadowBlur = 10; ctx.shadowColor = "rgba(0,0,0,0.3)"; ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+                    ctx.beginPath(); ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 14); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(-6, boxH / 2 - 2); ctx.lineTo(6, boxH / 2 - 2); ctx.lineTo(0, boxH / 2 + 6); ctx.fill();
+                    ctx.shadowBlur = 0; ctx.fillStyle = "#000"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ufo.message, 0, 1); ctx.restore();
                 }
             }
 
