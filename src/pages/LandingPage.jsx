@@ -57,8 +57,8 @@ const LandingPage = () => {
                 scale = Math.min(width, height) * 0.0008;
             } else { // Mobile
                 centerX = width * 0.5;
-                // Pushed way down to avoid overlapping buttons/text
-                centerY = height * 0.85;
+                // Position in the bottom half of the FIRST screen (the gap)
+                centerY = height * 0.75;
                 // Smaller scale to keep it contained at the bottom
                 scale = Math.min(width, height) * 0.0005;
             }
@@ -231,8 +231,8 @@ const LandingPage = () => {
     return (
         <div className="min-h-screen text-white font-sans overflow-x-hidden relative bg-black">
 
-            {/* CANVAS BACKGROUND (Fixed) */}
-            <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
+            {/* CANVAS BACKGROUND (Absolute = Scripts away with content) */}
+            <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none h-[110vh]" />
 
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-0 left-0 border-b border-white/5 bg-black/50 backdrop-blur-xl">
