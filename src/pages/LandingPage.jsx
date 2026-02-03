@@ -16,19 +16,18 @@ const LandingPage = () => {
 
         // --- ASSETS ---
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗'];
+        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🍙', '🌯'];
         const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Hot & Fresh! 🔥", "Order Now!", "Zoom Zoom ✨"];
 
         // --- STATE ---
         let width, height, centerX, centerY, scale;
-        // Mouse State for smooth Parallax only (No heavy trail)
         let mouseX = 0, mouseY = 0;
         let targetMouseX = 0, targetMouseY = 0;
 
         // UFO STATE
         const ufo = {
             x: -100, y: 100, vx: 0, vy: 0,
-            targetX: 0, targetY: 0,
+            targetX: 0, targetY: 0, lastTargetTime: 0,
             state: 'IDLE',
             rotation: 0, opacity: 1, scale: 1,
             trail: [],
@@ -43,11 +42,6 @@ const LandingPage = () => {
             targetMouseX = clientX - rect.left;
             targetMouseY = clientY - rect.top;
 
-            // Click Hit Test
-            const dist = Math.hypot(targetMouseX / window.devicePixelRatio - ufo.x, targetMouseY / window.devicePixelRatio - ufo.y); // Adjust for DPI if needed, but logic usually uses CSS pixels. Actually mouse events are CSS pixels.
-            // Wait, logic variables (x,y) are usually logical pixels. 
-            // We need to keep physics in logical pixels and only SCALE for drawing.
-
             const logicMouseX = clientX - rect.left;
             const logicMouseY = clientY - rect.top;
 
@@ -55,8 +49,8 @@ const LandingPage = () => {
 
             if (distLogic < 150 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
-                ufo.vx += (centerX - ufo.x) * 0.05;
-                ufo.vy += (centerY - ufo.y) * 0.05;
+                ufo.vx += (centerX - ufo.x) * 0.08; // HUGE BURST
+                ufo.vy += (centerY - ufo.y) * 0.08;
             }
         };
 
@@ -71,17 +65,14 @@ const LandingPage = () => {
         window.addEventListener('mousemove', handleMove);
 
         const resize = () => {
-            // HIGH DPI HANDLING (For "Premium/proffession alook")
             const dpr = window.devicePixelRatio || 1;
             width = window.innerWidth;
             height = window.innerHeight;
-
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
-
-            ctx.scale(dpr, dpr); // Normalize coordinate system to use CSS pixels
+            ctx.scale(dpr, dpr);
 
             if (width >= 768) {
                 centerX = width * 0.75;
@@ -97,24 +88,31 @@ const LandingPage = () => {
         window.addEventListener('resize', resize);
         resize();
 
-        // --- PARTICLES ---
-        const planets = Array.from({ length: 12 }, (_, i) => ({
-            emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-            angle: (i / 12) * Math.PI * 2,
-            distance: 155 + (i % 2) * 60,
-            speed: 0.005 + (i % 2) * 0.003,
-            size: 45,
-            heightOffset: (Math.random() - 0.5) * 40,
-            rotation: Math.random() * Math.PI,
-            rotSpeed: 0.05 + Math.random() * 0.05
-        }));
+        // --- ORGANIZED PLANETS (2 RINGS) ---
+        // "Solar system organization... make it optimized and premium and not clumsy"
+        const planets = Array.from({ length: 14 }, (_, i) => {
+            const isInner = i % 2 === 0;
+            return {
+                emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
+                angle: (i / 14) * Math.PI * 2, // Perfectly distributed
+                // TWO DISTINCT RINGS
+                distance: isInner ? 130 : 210,
+                // FAST SPEEDS
+                speed: isInner ? 0.01 : 0.007,
+                size: isInner ? 35 : 45,
+                // FLATTENED DISC (Less clumsy)
+                heightOffset: (Math.random() - 0.5) * 15,
+                rotation: Math.random() * Math.PI,
+                rotSpeed: 0.08 + Math.random() * 0.05 // Fast Spin
+            };
+        });
 
-        const stars = Array.from({ length: 140 }, () => ({
+        const stars = Array.from({ length: 120 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 1.5,
             opacity: Math.random() * 0.8,
-            speed: 0.2 + Math.random() * 0.6
+            speed: 0.5 + Math.random() * 0.8 // Fast Stars
         }));
 
         let time = 0;
@@ -122,42 +120,49 @@ const LandingPage = () => {
 
         // --- UPDATE ---
         const updatePhysics = () => {
-            // Smooth Parallax Mouse Tracking
             mouseX += (targetMouseX - mouseX) * 0.1;
             mouseY += (targetMouseY - mouseY) * 0.1;
 
-            // UFO Logic
             ufo.msgTimer++;
             if (ufo.msgTimer > 180) {
                 ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length; ufo.msgTimer = 0;
             }
 
             if (ufo.state === 'IDLE') {
-                if (Math.random() < 0.02) {
-                    ufo.targetX = Math.random() * width;
-                    ufo.targetY = Math.random() * (height * 0.6);
+                // HYPER-SPEED DARTING BEHAVIOR
+                // Change targets quickly and accelerate FAST
+                const now = Date.now();
+                if (now - ufo.lastTargetTime > 800) { // New target every 0.8s
+                    if (Math.random() < 0.7) {
+                        ufo.targetX = Math.random() * width;
+                        ufo.targetY = Math.random() * height * 0.8;
+                        ufo.lastTargetTime = now;
+                    }
                 }
+
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
 
-                ufo.vx += dx * 0.0008;
-                ufo.vy += dy * 0.0008;
-                ufo.vx *= 0.96;
-                ufo.vy *= 0.96;
-                ufo.rotation = ufo.vx * 0.08;
+                // VERY HIGH AGILITY
+                ufo.vx += dx * 0.003; // Was 0.0008 (4x faster acceleration)
+                ufo.vy += dy * 0.003;
+                ufo.vx *= 0.92; // More drag to stop quickly at targets (Snap feel)
+                ufo.vy *= 0.92;
+
+                ufo.rotation = ufo.vx * 0.05;
                 ufo.scale = 1; ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
                 const dx = centerX - ufo.x;
                 const dy = centerY - ufo.y;
                 const dist = Math.hypot(dx, dy);
-                ufo.vx += dx * 0.008; ufo.vy += dy * 0.008;
-                ufo.vx *= 0.90; ufo.vy *= 0.90;
+                ufo.vx += dx * 0.015; ufo.vy += dy * 0.015;
+                ufo.vx *= 0.85; ufo.vy *= 0.85;
 
-                ufo.scale = Math.min(1, dist / 200);
-                ufo.rotation += 0.4;
-                if (dist < 15 || ufo.scale < 0.1) {
-                    ufo.state = 'RESPAWNING'; ufo.respawnTimer = 120;
+                ufo.scale = Math.min(1, dist / 150);
+                ufo.rotation += 0.5;
+                if (dist < 10 || ufo.scale < 0.1) {
+                    ufo.state = 'RESPAWNING'; ufo.respawnTimer = 60; // 1s (Very fast respawn)
                     ufo.opacity = 0; ufo.x = -9999;
                 }
             } else if (ufo.state === 'RESPAWNING') {
@@ -165,18 +170,18 @@ const LandingPage = () => {
                 if (ufo.respawnTimer <= 0) {
                     ufo.state = 'IDLE';
                     ufo.x = -100; ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 10;
+                    ufo.vx = 15; // BURST ENTRY
                     ufo.opacity = 1; ufo.scale = 1;
                 }
             }
             ufo.x += ufo.vx; ufo.y += ufo.vy;
 
-            // UFO Trail (Keep this, it's cool and low cost compared to mouse sparkles)
+            // Trail
             if (ufo.opacity > 0.1 && (Math.hypot(ufo.vx, ufo.vy) > 0.5)) {
-                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 4 + 2 });
+                ufo.trail.push({ x: ufo.x, y: ufo.y, life: 1.0, size: Math.random() * 5 + 2 });
             }
             for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                ufo.trail[i].life -= 0.08;
+                ufo.trail[i].life -= 0.1; // Short fast trail
                 if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
             }
         };
@@ -187,34 +192,33 @@ const LandingPage = () => {
 
             time++;
             coreTimer++;
-            if (coreTimer > 180) { coreIndex = (coreIndex + 1) % CORE_ITEMS.length; coreTimer = 0; }
+            if (coreTimer > 150) { coreIndex = (coreIndex + 1) % CORE_ITEMS.length; coreTimer = 0; } // Fast cycle
 
-            // 1. Background (CLEAN DEEP SPACE)
+            // 1. Background
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#000000');
-            bg.addColorStop(0.7, '#020205');
-            bg.addColorStop(1, '#080815');
+            bg.addColorStop(1, '#050510');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Stars (Subtle Parallax)
-            const parallaxX = (mouseX - width / 2) * 0.02;
-            const parallaxY = (mouseY - height / 2) * 0.02;
+            // 2. Stars
+            const parallaxX = (mouseX - width / 2) * 0.03;
+            const parallaxY = (mouseY - height / 2) * 0.03;
 
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
-                const px = star.x + parallaxX * (star.size * 0.5);
-                const py = star.y + parallaxY * (star.size * 0.5);
-                ctx.globalAlpha = star.opacity * 0.8;
+                const px = star.x + parallaxX * (star.size * 0.3);
+                const py = star.y + parallaxY * (star.size * 0.3);
+                ctx.globalAlpha = star.opacity;
                 ctx.beginPath(); ctx.arc(px, py, star.size, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
             // 3. UFO
             ufo.trail.forEach(p => {
-                ctx.globalAlpha = p.life * 0.7 * ufo.opacity;
+                ctx.globalAlpha = p.life * 0.6 * ufo.opacity;
                 ctx.fillStyle = '#00ffff';
                 ctx.beginPath(); ctx.arc(p.x + parallaxX, p.y + parallaxY, p.size * ufo.scale, 0, Math.PI * 2); ctx.fill();
             });
@@ -226,7 +230,7 @@ const LandingPage = () => {
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
                 ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25;
-                ctx.font = "40px Arial"; // Will look sharper now due to ctx.scale(dpr, dpr)
+                ctx.font = "40px Arial";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
 
@@ -234,50 +238,50 @@ const LandingPage = () => {
                     ctx.shadowBlur = 0; ctx.rotate(-ufo.rotation);
                     const msg = UFO_MESSAGES[ufo.msgIndex];
                     ctx.font = "bold 12px sans-serif";
-                    const metrics = ctx.measureText(msg); const pad = 10;
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.beginPath(); ctx.roundRect(25, -25, metrics.width + pad * 2, 30, 10); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(25, -10); ctx.lineTo(15, 0); ctx.lineTo(30, -5); ctx.fill();
+                    const metrics = ctx.measureText(msg); const pad = 12;
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+                    ctx.beginPath(); ctx.roundRect(25, -28, metrics.width + pad * 2, 34, 8); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(25, -5); ctx.lineTo(18, 5); ctx.lineTo(35, -5); ctx.fill();
                     ctx.fillStyle = "#000"; ctx.textAlign = "left";
-                    ctx.fillText(msg, 25 + pad, -25 + 19);
+                    ctx.fillText(msg, 25 + pad, -28 + 17);
                 }
                 ctx.restore();
             }
 
             // 4. CORE SUN
-            const sunX = centerX + parallaxX * 0.5;
-            const sunY = centerY + parallaxY * 0.5;
-
+            const sunX = centerX + parallaxX * 0.6;
+            const sunY = centerY + parallaxY * 0.6;
             const sunSize = 90 * scale * 2.0;
+
             const glow = ctx.createRadialGradient(sunX, sunY, sunSize * 0.1, sunX, sunY, sunSize * 2.8);
-            glow.addColorStop(0, 'rgba(255, 140, 0, 0.3)');
+            glow.addColorStop(0, 'rgba(255, 120, 0, 0.4)');
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(sunX, sunY, sunSize * 2.8, 0, Math.PI * 2); ctx.fill();
 
-            const pulse = 1 + Math.sin(time * 0.05) * 0.02;
+            const pulse = 1 + Math.sin(time * 0.08) * 0.03; // Fast Pulse
             ctx.save();
             ctx.translate(sunX, sunY);
             ctx.scale(pulse, pulse);
-            ctx.rotate(time * 0.015);
-            ctx.shadowColor = 'rgba(255, 100, 0, 0.4)'; ctx.shadowBlur = 25;
+            ctx.rotate(time * 0.02);
+            ctx.shadowColor = 'rgba(255, 100, 0, 0.5)'; ctx.shadowBlur = 30;
             ctx.font = `${sunSize}px Arial`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
             ctx.restore();
 
-            // 5. PLANETS
+            // 5. PLANETS (RINGS)
             const items = [];
             planets.forEach(p => {
                 p.angle += p.speed;
                 const radiusX = p.distance * scale * 2.6;
-                const radiusY = p.distance * scale * 0.7;
+                const radiusY = p.distance * scale * 0.7; // Tighter ellipse
                 const x = centerX + Math.cos(p.angle) * radiusX;
                 const zDepth = Math.sin(p.angle) * radiusY;
                 const y = centerY + zDepth * 0.5 + p.heightOffset;
                 const depthScale = 1 + (Math.sin(p.angle) * 0.3);
                 items.push({
-                    emoji: p.emoji, x: x + parallaxX * 0.8, y: y + parallaxY * 0.8,
+                    emoji: p.emoji, x: x + parallaxX * 0.9, y: y + parallaxY * 0.9,
                     z: zDepth, scale: depthScale, size: p.size,
                     rotation: time * p.rotSpeed + p.rotation,
                     opacity: 0.3 + (depthScale * 0.7)
@@ -298,17 +302,16 @@ const LandingPage = () => {
                 ctx.restore();
             });
 
-            // REMOVED Sparkle Mouse Trail (Requested: "remove heavy cursor animation")
-
-            animationFrameId = requestAnimationFrame(render);
+            requestAnimationFrame(render);
         };
-        render();
+        render(); // Start Link
+
         return () => {
             window.removeEventListener('resize', resize);
             window.removeEventListener('mousedown', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);
             window.removeEventListener('mousemove', handleMove);
-            cancelAnimationFrame(animationFrameId);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, []);
 
