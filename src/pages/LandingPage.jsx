@@ -57,9 +57,10 @@ const LandingPage = () => {
                 scale = Math.min(width, height) * 0.0008;
             } else { // Mobile
                 centerX = width * 0.5;
-                // Move it down so it doesn't overlap header text too much
-                centerY = height * 0.65;
-                scale = Math.min(width, height) * 0.00055;
+                // Pushed way down to avoid overlapping buttons/text
+                centerY = height * 0.85;
+                // Smaller scale to keep it contained at the bottom
+                scale = Math.min(width, height) * 0.0005;
             }
         };
         window.addEventListener('resize', resize);
@@ -95,7 +96,8 @@ const LandingPage = () => {
         }));
 
         // Stars
-        const stars = Array.from({ length: isMobile ? 80 : 200 }, () => ({
+        // Extremely low count on mobile for max FPS
+        const stars = Array.from({ length: isMobile ? 40 : 200 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 2,
@@ -150,6 +152,7 @@ const LandingPage = () => {
             // Planets
             planets.forEach(p => {
                 p.angle += p.speed;
+                // Slightly tighter orbits on mobile implicitly handled by the smaller 'scale' variable
                 const radiusX = p.distance * scale * 3;
                 const radiusY = p.distance * scale * 1.2;
                 const x = centerX + Math.cos(p.angle) * radiusX;
