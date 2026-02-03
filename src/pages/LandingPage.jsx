@@ -43,9 +43,9 @@ const LandingPage = () => {
             mouseX = clientX - rect.left;
             mouseY = clientY - rect.top;
 
-            // Click Hit Test (100px radius)
+            // Click Hit Test (Generous 150px radius)
             const dist = Math.hypot(mouseX - ufo.x, mouseY - ufo.y);
-            if (dist < 120 && ufo.state === 'IDLE') {
+            if (dist < 150 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
             }
         };
@@ -85,7 +85,7 @@ const LandingPage = () => {
             rotation: Math.random() * Math.PI
         }));
 
-        const stars = Array.from({ length: 100 }, () => ({
+        const stars = Array.from({ length: 120 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             size: Math.random() * 1.5,
@@ -104,7 +104,7 @@ const LandingPage = () => {
             if (ufo.msgTimer > 180) { // Change every 3s
                 ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length;
                 ufo.msgTimer = 0;
-                ufo.showMsg = true; // Could toggle blink
+                ufo.showMsg = true;
             }
 
             if (ufo.state === 'IDLE') {
@@ -113,48 +113,51 @@ const LandingPage = () => {
                     ufo.targetX = Math.random() * width;
                     ufo.targetY = Math.random() * (height * 0.6);
                 }
-                // Gentle spring physics
                 const dx = ufo.targetX - ufo.x;
                 const dy = ufo.targetY - ufo.y;
                 ufo.vx += dx * 0.0005;
                 ufo.vy += dy * 0.0005;
-                ufo.vx *= 0.97; // Smooth damping
+                ufo.vx *= 0.97;
                 ufo.vy *= 0.97;
 
-                ufo.rotation = ufo.vx * 0.05; // Banking
+                ufo.rotation = ufo.vx * 0.05;
                 ufo.scale = 1;
                 ufo.opacity = 1;
 
             } else if (ufo.state === 'WARP_TO_SUN') {
-                // High FPS "Zoom" to Center
-                const dx = centerX - ufo.x;
-                const dy = centerY - ufo.y;
+                // FALL INTO SUN MIDDLE
+                const dx = centerX - ufo.x; // Target CenterX
+                const dy = centerY - ufo.y; // Target CenterY
                 const dist = Math.hypot(dx, dy);
 
-                // Exponential acceleration
-                ufo.vx += dx * 0.008;
-                ufo.vy += dy * 0.008;
-                ufo.vx *= 0.92;
-                ufo.vy *= 0.92;
+                // Attraction Physics
+                ufo.vx += dx * 0.002;
+                ufo.vy += dy * 0.002;
+                ufo.vx *= 0.95;
+                ufo.vy *= 0.95;
 
-                // Smooth Tweening
-                const progress = Math.min(1, 400 / (dist + 1)); // 0 to 1 as gets closer
-                ufo.scale = 1 - progress; // Shrine
-                ufo.rotation += 0.3; // Spin
+                // GRADUAL SHRINK: Scale based on distance to center
+                // 300px away = scale 1, 0px away = scale 0
+                const targetScale = Math.min(1, dist / 300);
+                ufo.scale = targetScale;
 
-                if (dist < 30 || ufo.scale < 0.05) {
+                ufo.rotation += 0.3; // Spin fast as it falls
+
+                // Disappear threshold
+                if (dist < 20 || ufo.scale < 0.1) {
                     ufo.state = 'RESPAWNING';
-                    ufo.respawnTimer = 240; // 4s wait
+                    ufo.respawnTimer = 120; // 2 SECONDS (Requested)
                     ufo.opacity = 0;
                     ufo.x = -9999;
                 }
             } else if (ufo.state === 'RESPAWNING') {
                 ufo.respawnTimer--;
                 if (ufo.respawnTimer <= 0) {
+                    // Respawn
                     ufo.state = 'IDLE';
-                    ufo.x = -100; // Fly in
+                    ufo.x = -100; // Fly in from left
                     ufo.y = Math.random() * height * 0.5;
-                    ufo.vx = 8; // Burst in
+                    ufo.vx = 8; // Burst speed
                     ufo.opacity = 1;
                     ufo.scale = 1;
                 }
@@ -182,19 +185,30 @@ const LandingPage = () => {
                 coreTimer = 0;
             }
 
-            // 1. Background (DEEP SPACE - NO PINK/GREEN)
+            // 1. Background (ENHANCED SPACE LOOK)
             const bg = ctx.createLinearGradient(0, 0, 0, height);
             bg.addColorStop(0, '#000000');
-            bg.addColorStop(1, '#080812'); // Very deep blue-black
+            bg.addColorStop(0.5, '#050510');
+            bg.addColorStop(1, '#0a0a20'); // Deep nebula blue at bottom
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, width, height);
+
+            // Subtle Nebula/Fog effect (Static for perf)
+            // No, dynamic is better for "Space Look". 
+            // Draw a very faint giant purple orb in corner
+            const nebula = ctx.createRadialGradient(width * 0.9, height * 0.9, 0, width * 0.9, height * 0.9, 600);
+            nebula.addColorStop(0, 'rgba(80, 0, 100, 0.1)');
+            nebula.addColorStop(1, 'transparent');
+            ctx.fillStyle = nebula;
+            ctx.fillRect(0, 0, width, height);
+
 
             // 2. Stars
             ctx.fillStyle = "white";
             stars.forEach(star => {
                 star.y += star.speed;
                 if (star.y > height) { star.y = 0; star.x = Math.random() * width; }
-                ctx.globalAlpha = star.opacity;
+                ctx.globalAlpha = star.opacity * (0.7 + Math.sin(time * 0.05 + star.x) * 0.3); // Twinkle
                 ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
             });
             ctx.globalAlpha = 1;
@@ -219,33 +233,30 @@ const LandingPage = () => {
                 ctx.shadowColor = '#00ffff';
                 ctx.shadowBlur = 20;
 
-                // UFO Body (Emoji for perf/style consistency)
+                // UFO Body
                 ctx.font = "40px Arial";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
 
-                // Message Bubble (Only when IDLE and visible)
-                if (ufo.state === 'IDLE' && ufo.showMsg) {
-                    ctx.shadowBlur = 0; // Clear shadow for text
-                    ctx.rotate(-ufo.rotation); // Keep text straight(ish)
+                // Message Bubble
+                if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) { // Only show scale > 0.8 (not while shrinking)
+                    ctx.shadowBlur = 0;
+                    ctx.rotate(-ufo.rotation);
 
                     const msg = UFO_MESSAGES[ufo.msgIndex];
                     ctx.font = "bold 12px sans-serif";
                     const metrics = ctx.measureText(msg);
                     const pad = 10;
 
-                    // Bubble Background
                     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
                     ctx.beginPath();
                     ctx.roundRect(25, -25, metrics.width + pad * 2, 30, 10);
                     ctx.fill();
 
-                    // Bubble Tail
                     ctx.beginPath();
                     ctx.moveTo(25, -10); ctx.lineTo(15, 0); ctx.lineTo(30, -5);
                     ctx.fill();
 
-                    // Text
                     ctx.fillStyle = "#000";
                     ctx.textAlign = "left";
                     ctx.fillText(msg, 25 + pad, -25 + 19);
@@ -253,13 +264,12 @@ const LandingPage = () => {
                 ctx.restore();
             }
 
-            // 4. CORE SUN (GOLDEN GLOW - CONSISTENT)
+            // 4. CORE SUN (Warm Space Glow)
             const sunSize = 90 * scale * 2.0;
 
-            // Premium Warm Golden Glow (Not Green/Pink)
             const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 3.0);
-            glow.addColorStop(0, 'rgba(255, 140, 0, 0.5)'); // Warm Orange Core
-            glow.addColorStop(0.5, 'rgba(255, 80, 0, 0.1)'); // Fading Red
+            glow.addColorStop(0, 'rgba(255, 140, 0, 0.5)');
+            glow.addColorStop(0.5, 'rgba(255, 50, 0, 0.1)');
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 3.0, 0, Math.PI * 2); ctx.fill();
