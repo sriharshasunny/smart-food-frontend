@@ -164,17 +164,17 @@ const LandingPage = () => {
                 const dy = centerY - ufo.pos.y;
                 const dist = Math.hypot(dx, dy);
 
-                // Strong pull to center
-                ufo.vel.x += dx * 20.0 * dt;
-                ufo.vel.y += dy * 20.0 * dt;
+                // Gentle pull to center (The "Falling" effect)
+                ufo.vel.x += dx * 2.5 * dt;
+                ufo.vel.y += dy * 2.5 * dt;
 
-                // Less friction for "slingshot" feel
-                const warpFriction = Math.pow(0.1, dt);
+                // Gliding friction
+                const warpFriction = Math.pow(0.5, dt);
                 ufo.vel.x *= warpFriction;
                 ufo.vel.y *= warpFriction;
 
                 ufo.scale = Math.max(0, dist / 400);
-                ufo.rotation += 10 * dt; // Fast spin
+                ufo.rotation += 3 * dt; // Slow majestic spin
 
                 if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
@@ -188,7 +188,7 @@ const LandingPage = () => {
                     ufo.state = 'IDLE';
                     ufo.pos.x = -100;
                     ufo.pos.y = Math.random() * height * 0.5;
-                    ufo.vel.x = 200; // Burst in pixels/sec
+                    ufo.vel.x = 60; // Slow entry
                     ufo.opacity = 1;
                     ufo.target.x = width * 0.2;
                 }
