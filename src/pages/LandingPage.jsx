@@ -259,7 +259,8 @@ const LandingPage = () => {
 
                 // Update Food Meteorites
                 meteoriteTimer += dt;
-                if (meteoriteTimer > 6.0 + Math.random() * 3.0) { // 6-9 seconds
+                // Realistic Timing: Occasional (every 10-15s)
+                if (meteoriteTimer > 10.0 + Math.random() * 5.0) {
                     spawnMeteorite();
                     meteoriteTimer = 0;
                 }
@@ -619,21 +620,34 @@ const LandingPage = () => {
                 });
 
                 // Draw Food Meteorites
+                // Draw Food Meteorites (Realistic Burn Effect)
                 foodMeteorites.forEach(m => {
-                    // Trail
-                    ctx.beginPath();
+                    // Trail - Tapered and Fading
+                    ctx.save();
+                    ctx.lineCap = 'round';
                     m.trail.forEach((t, i) => {
+                        const progress = i / m.trail.length;
+                        ctx.beginPath();
                         if (i === 0) ctx.moveTo(t.x, t.y);
                         else ctx.lineTo(t.x, t.y);
+                        // Hot Orange/Red Trail
+                        ctx.strokeStyle = `rgba(255, ${Math.floor(100 + progress * 155)}, 50, ${t.life * 0.5})`;
+                        ctx.lineWidth = m.size * (0.2 + progress * 0.6); // Tapering
+                        ctx.stroke();
                     });
-                    ctx.strokeStyle = `rgba(255, 100, 50, 0.3)`;
-                    ctx.lineWidth = m.size * 0.5;
-                    ctx.stroke();
+                    ctx.restore();
 
-                    // Meteor
+                    // Meteor Head with Glow
                     ctx.save();
                     ctx.translate(m.x, m.y);
                     ctx.rotate(m.rot);
+
+                    // Atmospheric Burn Glow (Optimized: Scale based on mobile)
+                    if (!isMobile) {
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = 'rgba(255, 100, 0, 0.6)';
+                    }
+
                     ctx.font = `${m.size}px Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
