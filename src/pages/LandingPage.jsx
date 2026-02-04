@@ -614,8 +614,8 @@ const LandingPage = () => {
             {/* CANVASES */}
             <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
 
-            {/* Desktop Only 3D Cubes */}
-            {!isMobileView && <InteractiveCubes />}
+            {/* Desktop Only 3D Cubes - REMOVED for Speed */}
+            {/* Extended empty space for future effects if needed */}
 
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
