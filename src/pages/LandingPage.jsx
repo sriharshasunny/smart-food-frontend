@@ -27,6 +27,7 @@ const LandingPage = () => {
         // State Targets
         let width = window.innerWidth;
         let height = window.innerHeight;
+        let isMobile = width < 768; // New Flag
         let centerX = width * 0.75;
         let centerY = height * 0.5;
         let scale = Math.min(width, height) * 0.0013;
@@ -85,16 +86,18 @@ const LandingPage = () => {
             ctx.scale(dpr, dpr);
 
             if (width >= 768) {
+                isMobile = false;
                 centerX = width * 0.75;
                 centerY = height * 0.5;
                 scale = Math.min(width, height) * 0.0013;
             } else {
+                isMobile = true;
                 centerX = width * 0.5;
-                centerY = height * 0.5;
+                centerY = height * 0.50; // Centered for mobile
                 scale = Math.min(width, height) * 0.001;
             }
             if (ufo.state === 'IDLE') {
-                ufo.target.x = width * 0.2;
+                ufo.target.x = width * (isMobile ? 0.5 : 0.2); // Center target on mobile
             }
         };
 
@@ -111,9 +114,11 @@ const LandingPage = () => {
         }));
 
         // Entities: Stars (Optimized Count)
+        // Entities: Stars (Optimized Count)
         const stars = Array.from({ length: 50 }, () => ({
-            x: Math.random() * 2000,
-            y: Math.random() * 1000,
+            x: Math.random() * width, // Use dynamic width
+            y: Math.random() * height,
+            z: Math.random() * 2 + 0.1, // Depth for 3D effect
             size: Math.random() * 2 + 1, // Increased size
             baseOpacity: Math.random() * 0.7 + 0.3, // Increased min opacity
             phase: Math.random() * Math.PI * 2,
@@ -179,7 +184,8 @@ const LandingPage = () => {
 
                 // 1. UPDATE PHYSICS (Safeguarded)
                 coreTimer += dt;
-                if (coreTimer > 2.5) {
+                // Update central food every 2.0s
+                if (coreTimer > 2.0) {
                     coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
                     coreTimer = 0;
                 }
@@ -195,9 +201,14 @@ const LandingPage = () => {
                         ufo.showMsg = true;
                     }
 
-                    if (Math.random() < 1.0 * dt) {
-                        ufo.target.x = Math.random() * width;
-                        ufo.target.y = Math.random() * (height * 0.6);
+                    // Mobile: Less warping, more roaming
+                    const warpChance = isMobile ? 0.1 : 1.0;
+                    if (Math.random() < warpChance * dt) {
+                        // Only warp occasionally on mobile
+                        if (!isMobile || Math.random() < 0.2) {
+                            ufo.target.x = Math.random() * width;
+                            ufo.target.y = Math.random() * (height * (isMobile ? 0.8 : 0.6));
+                        }
                     }
 
                     const dx = ufo.target.x - ufo.pos.x;
@@ -305,10 +316,32 @@ const LandingPage = () => {
                 });
 
                 // Stars
+                // Mobile: 3D Radial Warp | Desktop: Vertical Scroll
                 ctx.fillStyle = "white";
                 stars.forEach(s => {
-                    s.y += s.speed * dt;
-                    if (s.y > height) { s.y = -10; s.x = Math.random() * width; }
+                    if (isMobile) {
+                        // 3D Radial Move
+                        const dx = s.x - centerX;
+                        const dy = s.y - centerY;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx);
+                        const speed = s.speed * (dist / 100) * dt * 2.5; // Faster near edges
+
+                        s.x += Math.cos(angle) * speed;
+                        s.y += Math.sin(angle) * speed;
+
+                        // Reset if out of bounds
+                        if (s.x < 0 || s.x > width || s.y < 0 || s.y > height) {
+                            s.x = Math.random() * width;
+                            s.y = Math.random() * height;
+                            // Avoid center spawn to prevent "pop-in"
+                            if (Math.hypot(s.x - centerX, s.y - centerY) < 50) s.x += 100;
+                        }
+                    } else {
+                        // Vertical Scroll (Desktop)
+                        s.y += s.speed * dt;
+                        if (s.y > height) { s.y = -10; s.x = Math.random() * width; }
+                    }
 
                     const opacity = s.baseOpacity + Math.sin(timestamp * 0.005 + s.phase) * 0.2;
                     if (opacity > 0.05) {
@@ -405,33 +438,38 @@ const LandingPage = () => {
 
                 // Core Emoji
                 const pulse = 1 + Math.sin(timestamp * 0.003) * 0.03;
-                ctx.save(); ctx.translate(centerX, centerY); ctx.scale(pulse, pulse);
+                // Mobile: Huge Pulse, Desktop: Normal
+                const finalScale = isMobile ? pulse * 1.5 : pulse;
+
+                ctx.save(); ctx.translate(centerX, centerY); ctx.scale(finalScale, finalScale);
                 ctx.font = `${sunSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 if (CORE_ITEMS[coreIndex]) {
                     ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
                 }
                 ctx.restore();
 
-                // Planets
-                planets.forEach(p => {
-                    p.angle += p.orbitSpeed * dt;
-                    const safeMaxRadius = width * 0.22;
-                    const intendedRadius = p.distance * scale * 2.6;
-                    const radiusX = Math.min(intendedRadius, safeMaxRadius);
-                    const radiusY = p.distance * scale * 0.7;
-                    const x = centerX + Math.cos(p.angle) * radiusX;
-                    const zDepth = Math.sin(p.angle) * radiusY;
-                    const y = centerY + zDepth * 0.5 + p.heightOffset;
-                    const depthScale = 1 + (Math.sin(p.angle) * 0.3);
+                // Planets (Hide on Mobile)
+                if (!isMobile) {
+                    planets.forEach(p => {
+                        p.angle += p.orbitSpeed * dt;
+                        const safeMaxRadius = width * 0.22;
+                        const intendedRadius = p.distance * scale * 2.6;
+                        const radiusX = Math.min(intendedRadius, safeMaxRadius);
+                        const radiusY = p.distance * scale * 0.7;
+                        const x = centerX + Math.cos(p.angle) * radiusX;
+                        const zDepth = Math.sin(p.angle) * radiusY;
+                        const y = centerY + zDepth * 0.5 + p.heightOffset;
+                        const depthScale = 1 + (Math.sin(p.angle) * 0.3);
 
-                    ctx.save(); ctx.translate(x, y);
-                    const fontSize = p.size * depthScale;
-                    ctx.font = `${fontSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.globalAlpha = 0.7 + (depthScale * 0.3);
-                    ctx.rotate(p.rotation + (timestamp * 0.001 * p.rotSpeed));
-                    ctx.fillText(p.emoji, 0, 0);
-                    ctx.restore();
-                });
+                        ctx.save(); ctx.translate(x, y);
+                        const fontSize = p.size * depthScale;
+                        ctx.font = `${fontSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.globalAlpha = 0.7 + (depthScale * 0.3);
+                        ctx.rotate(p.rotation + (timestamp * 0.001 * p.rotSpeed));
+                        ctx.fillText(p.emoji, 0, 0);
+                        ctx.restore();
+                    });
+                }
 
             } catch (err) {
                 console.error("Animation Loop Error", err);
