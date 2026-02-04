@@ -20,8 +20,9 @@ const LandingPage = () => {
         let animationFrameId;
 
         // Assets
-        const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱'];
+        // Assets - Curated High-Quality Food Emojis
+        const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥩', '🥑', '🥞', '🥨', '🍗', '🌭', '🥪'];
+        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱', '🍜', '🍤'];
         const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Order Now!", "Zoom! ✨"];
 
         // State Targets
@@ -152,6 +153,44 @@ const LandingPage = () => {
             depth: Math.random() * 2 + 1
         }));
 
+        // Entities: Orbiting Food (Satellites)
+        // 3 items orbiting tightly
+        const orbitingFood = Array.from({ length: 3 }, (_, i) => ({
+            emoji: FOOD_EMOJIS[i % 5],
+            angle: (i / 3) * Math.PI * 2,
+            radius: 80 + (i % 2) * 20,
+            speed: 0.5 + (i % 2) * 0.2,
+            size: 30
+        }));
+
+        // Entities: Food Meteorites
+        let foodMeteorites = [];
+        let meteoriteTimer = 0;
+        const spawnMeteorite = () => {
+            // Spawn 1-2 items every 5-8s
+            const count = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < count; i++) {
+                const side = Math.random() < 0.5 ? -50 : width + 50;
+                const targetX = width - side; // Move to opposite side
+                const randomY = Math.random() * height;
+
+                const angle = Math.atan2(randomY - (Math.random() * height), targetX - side);
+                const speed = 150 + Math.random() * 100;
+
+                foodMeteorites.push({
+                    x: side,
+                    y: Math.random() * height,
+                    vx: Math.cos(angle) * speed * (side < 0 ? 1 : -1),
+                    vy: Math.sin(angle) * speed,
+                    emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
+                    rot: 0,
+                    rotSpeed: (Math.random() - 0.5) * 5,
+                    size: 40 + Math.random() * 20,
+                    trail: []
+                });
+            }
+        };
+
         // Entities: Emitted Food (Mobile & Laptop)
         let emittedFoods = [];
         const spawnFoodBurst = () => {
@@ -211,6 +250,35 @@ const LandingPage = () => {
                     coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
                     coreTimer = 0;
                     spawnFoodBurst(); // Trigger burst on change (Both views)
+                }
+
+                // Update Orbiting Food
+                orbitingFood.forEach(o => {
+                    o.angle += o.speed * dt;
+                });
+
+                // Update Food Meteorites
+                meteoriteTimer += dt;
+                if (meteoriteTimer > 6.0 + Math.random() * 3.0) { // 6-9 seconds
+                    spawnMeteorite();
+                    meteoriteTimer = 0;
+                }
+                for (let i = foodMeteorites.length - 1; i >= 0; i--) {
+                    const m = foodMeteorites[i];
+                    m.x += m.vx * dt;
+                    m.y += m.vy * dt;
+                    m.rot += m.rotSpeed * dt;
+
+                    // Trail
+                    m.trail.push({ x: m.x, y: m.y, life: 0.5 });
+                    for (let j = m.trail.length - 1; j >= 0; j--) {
+                        m.trail[j].life -= dt;
+                        if (m.trail[j].life <= 0) m.trail.splice(j, 1);
+                    }
+
+                    if (m.x < -100 || m.x > width + 100 || m.y < -100 || m.y > height + 100) {
+                        foodMeteorites.splice(i, 1);
+                    }
                 }
 
                 // Update Emitted Food
@@ -533,6 +601,45 @@ const LandingPage = () => {
                     ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
                 }
                 ctx.restore();
+
+                // Draw Orbiting Food (Satellites)
+                orbitingFood.forEach(o => {
+                    // Mobile: Hide orbits if needed for performance, but user requested them.
+                    // keeping them usually fine as they are just 3 items.
+                    const ox = centerX + Math.cos(o.angle) * (o.radius * (isMobile ? 0.8 : 1.2));
+                    const oy = centerY + Math.sin(o.angle) * (o.radius * (isMobile ? 0.8 : 1.2));
+
+                    ctx.save();
+                    ctx.translate(ox, oy);
+                    ctx.rotate(o.angle * 2);
+                    ctx.font = `${o.size}px Arial`;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(o.emoji, 0, 0);
+                    ctx.restore();
+                });
+
+                // Draw Food Meteorites
+                foodMeteorites.forEach(m => {
+                    // Trail
+                    ctx.beginPath();
+                    m.trail.forEach((t, i) => {
+                        if (i === 0) ctx.moveTo(t.x, t.y);
+                        else ctx.lineTo(t.x, t.y);
+                    });
+                    ctx.strokeStyle = `rgba(255, 100, 50, 0.3)`;
+                    ctx.lineWidth = m.size * 0.5;
+                    ctx.stroke();
+
+                    // Meteor
+                    ctx.save();
+                    ctx.translate(m.x, m.y);
+                    ctx.rotate(m.rot);
+                    ctx.font = `${m.size}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(m.emoji, 0, 0);
+                    ctx.restore();
+                });
             } catch (err) {
                 console.error("Animation Loop Error", err);
             }
