@@ -147,11 +147,11 @@ const LandingPage = () => {
 
                 // Acceleration = Force / Mass
                 // Simplification for smooth UI: Velocity += (Dist * SpeedFactor) * dt
-                ufo.vel.x += dx * 1.5 * dt;
-                ufo.vel.y += dy * 1.5 * dt;
+                ufo.vel.x += dx * 0.5 * dt;
+                ufo.vel.y += dy * 0.5 * dt;
 
                 // Friction
-                const friction = Math.pow(0.5, dt); // Decay 50% per second
+                const friction = Math.pow(0.05, dt); // Higher friction for stability
                 ufo.vel.x *= friction;
                 ufo.vel.y *= friction;
 
@@ -165,8 +165,8 @@ const LandingPage = () => {
                 const dist = Math.hypot(dx, dy);
 
                 // Strong pull to center
-                ufo.vel.x += dx * 8.0 * dt;
-                ufo.vel.y += dy * 8.0 * dt;
+                ufo.vel.x += dx * 20.0 * dt;
+                ufo.vel.y += dy * 20.0 * dt;
 
                 // Less friction for "slingshot" feel
                 const warpFriction = Math.pow(0.1, dt);
@@ -195,8 +195,8 @@ const LandingPage = () => {
             }
 
             // Apply Velocity
-            ufo.pos.x += ufo.vel.x * dt * 20; // Scale factor for pixel movement
-            ufo.pos.y += ufo.vel.y * dt * 20;
+            ufo.pos.x += ufo.vel.x * dt * 8; // Scale factor for pixel movement
+            ufo.pos.y += ufo.vel.y * dt * 8;
 
             // Update Trail
             if (ufo.opacity > 0.1 && (Math.abs(ufo.vel.x) > 0.5 || ufo.state === 'WARP_TO_SUN')) {
