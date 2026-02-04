@@ -234,7 +234,7 @@ const Auth = () => {
                     <h1 className="text-4xl font-extrabold mb-2 tracking-tight drop-shadow-lg">{mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Join the Feast' : 'Reset Password'}</h1>
                 </div>
 
-                <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+                <motion.div layout transition={{ duration: 0.3, ease: "easeInOut" }} className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden min-h-[480px] flex flex-col justify-center">
                     {mode !== 'forgot' && (<div className="flex bg-black/40 rounded-full p-1 mb-8 border border-white/5 relative"><motion.div className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-orange-600 rounded-full shadow-lg" animate={{ left: mode === 'register' ? 'calc(50% + 2px)' : '2px' }} transition={{ type: "spring", stiffness: 300, damping: 25 }} /><button onClick={() => switchMode('login')} className={`flex-1 py-3 text-sm font-bold z-10 relative text-white rounded-full`}>Login</button><button onClick={() => switchMode('register')} className={`flex-1 py-3 text-sm font-bold z-10 relative text-white rounded-full`}>Sign Up</button></div>)}
 
                     <AnimatePresence>
@@ -261,7 +261,7 @@ const Auth = () => {
                         )}
                         {mode === 'forgot' && (<motion.form key="forgot" className="space-y-5" onSubmit={step === 1 ? handleSendResetOtp : handleResetPassword}><button type="button" onClick={() => switchMode('login')} className="text-xs font-bold text-gray-400 hover:text-white mb-4 flex items-center uppercase tracking-wider"><ChevronRight className="w-4 h-4 rotate-180 mr-1" /> Return</button>{step === 1 ? (<><div className="relative"><Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="pilot@foodverse.com" required /></div><button type="submit" className="w-full py-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold">Send Recovery Code</button></>) : (<><input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="OTP Code" /><input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-orange-500" placeholder="New Password" /><button type="submit" className="w-full py-4 bg-green-600 text-white rounded-xl font-bold">Reset Password</button></>)}</motion.form>)}
                     </AnimatePresence>
-                </div>
+                </motion.div>
             </motion.div>
         </div>
     );

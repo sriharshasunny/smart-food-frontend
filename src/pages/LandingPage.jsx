@@ -359,12 +359,36 @@ const LandingPage = () => {
                         ctx.rotate(-ufo.rotation);
                         const msg = UFO_MESSAGES[ufo.msgIndex];
                         ctx.font = "bold 12px sans-serif";
+
                         const metrics = ctx.measureText(msg);
                         const pad = 12;
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-                        ctx.beginPath(); ctx.roundRect(25, -30, metrics.width + pad * 2, 34, 8); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(25, -10); ctx.lineTo(18, 0); ctx.lineTo(35, -5); ctx.fill();
-                        ctx.fillStyle = "#000"; ctx.fillText(msg, 25 + pad, -30 + 17);
+                        const boxW = metrics.width + pad * 2;
+
+                        // Sci-Fi HUD Bubble
+                        ctx.fillStyle = "rgba(0, 15, 30, 0.85)"; // Dark transparent background
+                        ctx.strokeStyle = "rgba(0, 255, 255, 0.6)"; // Cyan border
+                        ctx.lineWidth = 1.5;
+
+                        ctx.beginPath();
+                        ctx.roundRect(25, -30, boxW, 34, 4); // Sharper corners for sci-fi look
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Connector Line
+                        ctx.beginPath();
+                        ctx.moveTo(25, -10);
+                        ctx.lineTo(15, 0);
+                        ctx.lineTo(35, -5);
+                        ctx.fillStyle = "rgba(0, 255, 255, 0.6)";
+                        ctx.fill();
+
+                        // Glow Text
+                        ctx.shadowColor = "rgba(0, 255, 255, 0.8)";
+                        ctx.shadowBlur = 4;
+                        ctx.fillStyle = "#0ff"; // Cyan text
+                        ctx.font = "bold 13px 'Courier New', monospace";
+                        ctx.fillText(msg, 25 + pad, -30 + 17);
+                        ctx.shadowBlur = 0; // Reset shadow
                     }
                     ctx.restore();
                 }
@@ -465,7 +489,7 @@ const LandingPage = () => {
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
                 <div className="max-w-fit mx-auto pointer-events-auto">
-                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
+                    <motion.div layout transition={{ duration: 0.3, ease: "easeInOut" }} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
                             <Rocket className="w-5 h-5 text-orange-500" />
                             <span className="font-black text-lg tracking-tight">FoodVerse</span>
@@ -478,9 +502,9 @@ const LandingPage = () => {
                                 SIGN UP
                             </button>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
-            </nav>
+            </nav >
 
             <main className="relative z-10 flex flex-col w-full pointer-events-none">
 
@@ -600,7 +624,7 @@ const LandingPage = () => {
                     </section>
                 </div>
             </main>
-        </div>
+        </div >
     );
 };
 
