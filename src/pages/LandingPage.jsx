@@ -93,11 +93,11 @@ const LandingPage = () => {
             } else {
                 isMobile = true;
                 centerX = width * 0.5;
-                centerY = height * 0.50; // Centered for mobile
+                centerY = height * 0.75; // Lower 3/4th of screen for mobile
                 scale = Math.min(width, height) * 0.001;
             }
             if (ufo.state === 'IDLE') {
-                ufo.target.x = width * (isMobile ? 0.5 : 0.2); // Center target on mobile
+                ufo.target.x = width * (isMobile ? 0.5 : 0.2);
             }
         };
 
@@ -201,13 +201,18 @@ const LandingPage = () => {
                         ufo.showMsg = true;
                     }
 
-                    // Mobile: Less warping, more roaming
-                    const warpChance = isMobile ? 0.1 : 1.0;
+                    // Mobile: Less warping, more roaming + Restricted Zone
+                    const warpChance = isMobile ? 0.05 : 1.0;
                     if (Math.random() < warpChance * dt) {
                         // Only warp occasionally on mobile
                         if (!isMobile || Math.random() < 0.2) {
                             ufo.target.x = Math.random() * width;
-                            ufo.target.y = Math.random() * (height * (isMobile ? 0.8 : 0.6));
+                            if (isMobile) {
+                                // Keep in bottom 30% (below buttons)
+                                ufo.target.y = height * 0.6 + Math.random() * (height * 0.25);
+                            } else {
+                                ufo.target.y = Math.random() * (height * 0.6);
+                            }
                         }
                     }
 
