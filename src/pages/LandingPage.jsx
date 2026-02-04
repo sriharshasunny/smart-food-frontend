@@ -164,27 +164,34 @@ const LandingPage = () => {
         }));
 
         // Entities: Food Meteorites
+        // Desktop Only: Top-to-Bottom Fall
         let foodMeteorites = [];
         let meteoriteTimer = 0;
         const spawnMeteorite = () => {
-            // Spawn 1-2 items every 5-8s
-            const count = 1 + Math.floor(Math.random() * 2);
-            for (let i = 0; i < count; i++) {
-                const side = Math.random() < 0.5 ? -50 : width + 50;
-                const targetX = width - side; // Move to opposite side
-                const randomY = Math.random() * height;
+            if (isMobile) return; // Disable on Mobile
 
-                const angle = Math.atan2(randomY - (Math.random() * height), targetX - side);
-                const speed = 150 + Math.random() * 100;
+            // Spawn 1 item at a time
+            const count = 1;
+            for (let i = 0; i < count; i++) {
+                // Start at Top
+                const startX = Math.random() * width;
+                const startY = -60;
+
+                // End at Bottom (with some variance)
+                const endX = startX + (Math.random() - 0.5) * 400; // Slight angle
+                const endY = height + 60;
+
+                const angle = Math.atan2(endY - startY, endX - startX);
+                const speed = 200 + Math.random() * 100; // Fast fall
 
                 foodMeteorites.push({
-                    x: side,
-                    y: Math.random() * height,
-                    vx: Math.cos(angle) * speed * (side < 0 ? 1 : -1),
+                    x: startX,
+                    y: startY,
+                    vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
                     rot: 0,
-                    rotSpeed: (Math.random() - 0.5) * 5,
+                    rotSpeed: (Math.random() - 0.5) * 3,
                     size: 40 + Math.random() * 20,
                     trail: []
                 });
@@ -252,10 +259,12 @@ const LandingPage = () => {
                     spawnFoodBurst(); // Trigger burst on change (Both views)
                 }
 
-                // Update Orbiting Food
-                orbitingFood.forEach(o => {
-                    o.angle += o.speed * dt;
-                });
+                // Update Orbiting Food (Desktop Only)
+                if (!isMobile) {
+                    orbitingFood.forEach(o => {
+                        o.angle += o.speed * dt;
+                    });
+                }
 
                 // Update Food Meteorites
                 meteoriteTimer += dt;
@@ -603,21 +612,21 @@ const LandingPage = () => {
                 }
                 ctx.restore();
 
-                // Draw Orbiting Food (Satellites)
-                orbitingFood.forEach(o => {
-                    // Mobile: Hide orbits if needed for performance, but user requested them.
-                    // keeping them usually fine as they are just 3 items.
-                    const ox = centerX + Math.cos(o.angle) * (o.radius * (isMobile ? 0.8 : 1.2));
-                    const oy = centerY + Math.sin(o.angle) * (o.radius * (isMobile ? 0.8 : 1.2));
+                // Draw Orbiting Food (Satellites) - Desktop Only
+                if (!isMobile) {
+                    orbitingFood.forEach(o => {
+                        const ox = centerX + Math.cos(o.angle) * (o.radius * 1.2);
+                        const oy = centerY + Math.sin(o.angle) * (o.radius * 1.2);
 
-                    ctx.save();
-                    ctx.translate(ox, oy);
-                    ctx.rotate(o.angle * 2);
-                    ctx.font = `${o.size}px Arial`;
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(o.emoji, 0, 0);
-                    ctx.restore();
-                });
+                        ctx.save();
+                        ctx.translate(ox, oy);
+                        ctx.rotate(o.angle * 2);
+                        ctx.font = `${o.size}px Arial`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText(o.emoji, 0, 0);
+                        ctx.restore();
+                    });
+                }
 
                 // Draw Food Meteorites
                 // Draw Food Meteorites (Realistic Burn Effect)
