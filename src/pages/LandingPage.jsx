@@ -17,7 +17,7 @@ const LandingPage = () => {
 
         // Assets
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥓', '🥨', '🍟', '🍖', '🌶️', '🥑', '🥥'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '⚡', '🚀'];
+        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱']; // Only food
         const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Order Now!", "Zoom! ✨"];
 
         // State Targets
@@ -164,17 +164,17 @@ const LandingPage = () => {
                 const dy = centerY - ufo.pos.y;
                 const dist = Math.hypot(dx, dy);
 
-                // Gentle pull to center (The "Falling" effect)
-                ufo.vel.x += dx * 2.5 * dt;
-                ufo.vel.y += dy * 2.5 * dt;
+                // Gentle pull to center (The "Falling" effect) - Direct path
+                ufo.vel.x += dx * 2.0 * dt;
+                ufo.vel.y += dy * 2.0 * dt;
 
-                // Gliding friction
-                const warpFriction = Math.pow(0.5, dt);
+                // Heavy friction to kill orbit/sideways momentum => "Falls simply"
+                const warpFriction = Math.pow(0.01, dt);
                 ufo.vel.x *= warpFriction;
                 ufo.vel.y *= warpFriction;
 
                 ufo.scale = Math.max(0, dist / 400);
-                ufo.rotation += 3 * dt; // Slow majestic spin
+                // ufo.rotation += 0; // No spin while falling
 
                 if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
@@ -239,6 +239,14 @@ const LandingPage = () => {
                 ctx.translate(ufo.pos.x, ufo.pos.y);
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
+
+                // Cyan Halo Circle
+                ctx.beginPath();
+                ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
+                ctx.lineWidth = 3;
+                ctx.arc(0, 0, 28, 0, Math.PI * 2);
+                ctx.stroke();
+
                 ctx.shadowColor = '#00ffff';
                 ctx.shadowBlur = 15;
                 ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
