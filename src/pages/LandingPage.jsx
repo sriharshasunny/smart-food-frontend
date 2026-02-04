@@ -165,22 +165,24 @@ const LandingPage = () => {
                 const dist = Math.hypot(dx, dy);
 
                 // Gentle pull to center (The "Falling" effect) - Direct path
-                ufo.vel.x += dx * 2.0 * dt;
-                ufo.vel.y += dy * 2.0 * dt;
+                ufo.vel.x += dx * 2.5 * dt;
+                ufo.vel.y += dy * 2.5 * dt;
 
                 // Heavy friction to kill orbit/sideways momentum => "Falls simply"
                 const warpFriction = Math.pow(0.01, dt);
                 ufo.vel.x *= warpFriction;
                 ufo.vel.y *= warpFriction;
 
-                ufo.scale = Math.max(0, dist / 400);
-                // ufo.rotation += 0; // No spin while falling
+                // Improved "Smalling": Non-linear scale + Spin
+                ufo.scale = Math.pow(Math.max(0, dist / 500), 1.5);
+                ufo.rotation += 15 * dt; // Spin while falling
 
                 if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
                     ufo.idleTimer = 4; // Use as countdown
                     ufo.opacity = 0;
                     ufo.pos.x = -1000;
+                    ufo.scale = 0;
                 }
             } else if (ufo.state === 'RESPAWNING') {
                 ufo.idleTimer -= dt;
@@ -190,6 +192,8 @@ const LandingPage = () => {
                     ufo.pos.y = Math.random() * height * 0.5;
                     ufo.vel.x = 60; // Slow entry
                     ufo.opacity = 1;
+                    ufo.scale = 1;
+                    ufo.rotation = 0;
                     ufo.target.x = width * 0.2;
                 }
             }
@@ -261,21 +265,25 @@ const LandingPage = () => {
                 ctx.rotate(ufo.rotation);
                 ctx.scale(ufo.scale, ufo.scale);
 
-                // Cyan Halo Circle
+                // Cyan Halo Circle - optimized (no shadow)
                 ctx.beginPath();
-                ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
+                ctx.strokeStyle = "rgba(0, 255, 255, 0.4)"; // Lower opacity instead of shadow
                 ctx.lineWidth = 3;
                 ctx.arc(0, 0, 28, 0, Math.PI * 2);
                 ctx.stroke();
 
-                ctx.shadowColor = '#00ffff';
-                ctx.shadowBlur = 15;
+                // Glow approximation using multiple strokes (cheaper than shadowBlur)
+                ctx.beginPath();
+                ctx.strokeStyle = "rgba(0, 255, 255, 0.1)";
+                ctx.lineWidth = 8;
+                ctx.arc(0, 0, 30, 0, Math.PI * 2);
+                ctx.stroke();
+
                 ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("🛸", 0, 0);
 
                 // Message Bubble
                 if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) {
-                    ctx.shadowBlur = 0;
                     ctx.rotate(-ufo.rotation); // Keep text level
                     const msg = UFO_MESSAGES[ufo.msgIndex];
                     ctx.font = "bold 12px sans-serif";
@@ -303,12 +311,12 @@ const LandingPage = () => {
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
 
-            // Core Emoji
+            // Core Emoji - optimized (no shadow)
             const pulse = 1 + Math.sin(timestamp * 0.003) * 0.03;
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.scale(pulse, pulse);
-            ctx.shadowColor = 'rgba(255, 140, 0, 0.6)'; ctx.shadowBlur = 40;
+            // ctx.shadowColor = 'rgba(255, 140, 0, 0.6)'; ctx.shadowBlur = 40; // REMOVED FOR PERFORMANCE
             ctx.font = `${sunSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
             ctx.restore();
@@ -317,7 +325,14 @@ const LandingPage = () => {
             planets.forEach(p => {
                 p.angle += p.orbitSpeed * dt;
 
-                const radiusX = p.distance * scale * 2.6;
+                // Updated Orbit Logic: Conserve Text Area (Left Side)
+                // Calculate max safe radius to not cross x = width * 0.5 (approx text boundary)
+                // center is at width * 0.75. Space to left is 0.25 * width.
+                // We leave a bit of margin, so max radiusX = width * 0.20 approx.
+                const safeMaxRadius = width * 0.22;
+                const intendedRadius = p.distance * scale * 2.6;
+                const radiusX = Math.min(intendedRadius, safeMaxRadius);
+
                 const radiusY = p.distance * scale * 0.7;
 
                 const x = centerX + Math.cos(p.angle) * radiusX;
