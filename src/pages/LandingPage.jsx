@@ -234,22 +234,44 @@ const LandingPage = () => {
                         ufo.showMsg = true;
                     }
 
-                    // Mobile: Roam actively in the bottom zone
-                    const roamChance = isMobile ? 1.5 : 1.0;
+                    // Mobile: Roam actively with Zig-Zag and Flybys
+                    const roamChance = isMobile ? 2.0 : 1.0;
                     if (Math.random() < roamChance * dt) {
-                        // Pick a new target
-                        ufo.target.x = Math.random() * width;
                         if (isMobile) {
-                            // Strictly bottom 30%
-                            ufo.target.y = height * 0.65 + Math.random() * (height * 0.25);
+                            // Mobile Logic: 60% Bottom Zone, 40% Full Flyby
+                            if (Math.random() < 0.6) {
+                                // Bottom Zone (Safe)
+                                ufo.target.x = Math.random() * width;
+                                ufo.target.y = height * 0.65 + Math.random() * (height * 0.25);
+                            } else {
+                                // Flyby (Zig-Zag)
+                                ufo.target.x = Math.random() * width;
+                                ufo.target.y = Math.random() * height;
+                            }
+
+                            // AVOID CENTER (Food)
+                            const distToCenter = Math.hypot(ufo.target.x - centerX, ufo.target.y - centerY);
+                            if (distToCenter < 150) {
+                                // Push away from center
+                                ufo.target.x += (ufo.target.x < centerX ? -150 : 150);
+                            }
                         } else {
+                            // Desktop Standard
+                            ufo.target.x = Math.random() * width;
                             ufo.target.y = Math.random() * (height * 0.6);
                         }
                     }
 
                     const dx = ufo.target.x - ufo.pos.x;
                     const dy = ufo.target.y - ufo.pos.y;
-                    ufo.vel.x += dx * 0.5 * dt; // More responsive
+
+                    // Add Zig-Zag Sine Wave to velocity on Mobile
+                    let zigzag = 0;
+                    if (isMobile) {
+                        zigzag = Math.sin(timestamp * 0.005) * 50;
+                    }
+
+                    ufo.vel.x += (dx + zigzag) * 0.5 * dt;
                     ufo.vel.y += dy * 0.5 * dt;
                     const friction = Math.pow(0.1, dt);
                     ufo.vel.x *= friction;
@@ -585,8 +607,8 @@ const LandingPage = () => {
         // Added 'relative' z-index context to container to ensure canvas (absolute) sits correctly under content but over background
         <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-[#020205] to-black selection:bg-orange-500 selection:text-white">
 
-            {/* Canvas changed to ABSOLUTE to ensure correct stacking context within this Relative div */}
-            <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
+            {/* Canvas changed to FIXED to ensure it stays on screen during scroll */}
+            <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
 
             {/* NAVBAR */}
             <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
