@@ -8,7 +8,7 @@ const LandingPage = () => {
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- NEW DELTA-TIME PHYSICS ENGINE (v2.0) ---
+    // --- NEW DELTA-TIME PHYSICS ENGINE (v2.1 - Deep Space Edition) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -36,7 +36,8 @@ const LandingPage = () => {
             msgIndex: 0,
             msgTimer: 0,
             showMsg: true,
-            idleTimer: 0
+            idleTimer: 0,
+            floatOffset: 0 // For subtle hovering
         };
 
         // Inputs
@@ -48,6 +49,10 @@ const LandingPage = () => {
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             const logicX = clientX - rect.left;
             const logicY = clientY - rect.top;
+
+            // Parallax Input
+            mouse.x = (clientX / width) - 0.5; // -0.5 to 0.5
+            mouse.y = (clientY / height) - 0.5;
 
             const dist = Math.hypot(logicX - ufo.pos.x, logicY - ufo.pos.y);
             // Hitbox 100px
@@ -93,14 +98,49 @@ const LandingPage = () => {
             rotSpeed: 0.3 // Slower rotation for clarity
         }));
 
-        // Entities: Stars
-        const stars = Array.from({ length: 90 }, () => ({
+        // Entities: Stars (Twinkling Soft Circles)
+        const stars = Array.from({ length: 120 }, () => ({
             x: Math.random() * 2000,
             y: Math.random() * 1000,
-            size: Math.random() * 2 + 0.5,
-            opacity: Math.random() * 0.8,
-            speed: 10 + Math.random() * 15 // Slower stars for less distraction
+            size: Math.random() * 1.5 + 0.5,
+            baseOpacity: Math.random() * 0.6 + 0.2, // Min brightness
+            phase: Math.random() * Math.PI * 2,
+            speed: 5 + Math.random() * 10
         }));
+
+        // Entities: Shooting Stars
+        let shootingStars = [];
+        const spawnShootingStar = () => {
+            if (Math.random() < 0.005) { // 0.5% chance per frame
+                shootingStars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * (height * 0.5),
+                    vx: -100 - Math.random() * 100,
+                    vy: 50 + Math.random() * 50,
+                    life: 1.0,
+                    length: 50 + Math.random() * 50
+                });
+            }
+        };
+
+        // Entities: Nebula Clouds
+        const nebulas = Array.from({ length: 3 }, (_, i) => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: 300 + Math.random() * 200,
+            color: i === 0 ? 'rgba(76, 29, 149, 0.08)' : i === 1 ? 'rgba(236, 72, 153, 0.05)' : 'rgba(59, 130, 246, 0.05)', // Purple, Pink, Blue
+            vx: (Math.random() - 0.5) * 5,
+            vy: (Math.random() - 0.5) * 5
+        }));
+
+        // Entities: Space Dust (Parallax)
+        const dust = Array.from({ length: 50 }, () => ({
+            x: Math.random() * 2000,
+            y: Math.random() * 1000,
+            size: Math.random() * 1 + 0.5,
+            depth: Math.random() * 2 + 1 // 1 = far, 3 = close
+        }));
+
 
         // Timing
         let lastTime = 0;
@@ -124,6 +164,7 @@ const LandingPage = () => {
             }
 
             // UFO Logic
+            ufo.floatOffset += dt * 2;
             if (ufo.state === 'IDLE') {
                 ufo.idleTimer += dt;
 
@@ -155,7 +196,7 @@ const LandingPage = () => {
                 ufo.vel.x *= friction;
                 ufo.vel.y *= friction;
 
-                ufo.rotation = ufo.vel.x * 0.05;
+                ufo.rotation = ufo.vel.x * 0.05 + Math.sin(ufo.floatOffset) * 0.05; // Gentle rock
                 ufo.scale = 1;
                 ufo.opacity = 1;
 
@@ -164,9 +205,9 @@ const LandingPage = () => {
                 const dy = centerY - ufo.pos.y;
                 const dist = Math.hypot(dx, dy);
 
-                // Gentle pull to center (The "Falling" effect) - Direct path
-                ufo.vel.x += dx * 2.5 * dt;
-                ufo.vel.y += dy * 2.5 * dt;
+                // VERY Gentle pull to center (Slower Fall)
+                ufo.vel.x += dx * 0.5 * dt; // Reduced from 2.5 to 0.5
+                ufo.vel.y += dy * 0.5 * dt;
 
                 // Heavy friction to kill orbit/sideways momentum => "Falls simply"
                 const warpFriction = Math.pow(0.01, dt);
@@ -174,8 +215,8 @@ const LandingPage = () => {
                 ufo.vel.y *= warpFriction;
 
                 // Improved "Smalling": Non-linear scale + Spin
-                ufo.scale = Math.pow(Math.max(0, dist / 500), 1.5);
-                ufo.rotation += 15 * dt; // Spin while falling
+                ufo.scale = Math.pow(Math.max(0, dist / 600), 1.5);
+                ufo.rotation += 8 * dt; // Slower spin
 
                 if (dist < 20 || ufo.scale < 0.05) {
                     ufo.state = 'RESPAWNING';
@@ -190,7 +231,8 @@ const LandingPage = () => {
                     ufo.state = 'IDLE';
                     ufo.pos.x = -100;
                     ufo.pos.y = Math.random() * height * 0.5;
-                    ufo.vel.x = 60; // Slow entry
+                    ufo.vel.x = 40; // Even slower entry
+                    ufo.vel.y = 0;
                     ufo.opacity = 1;
                     ufo.scale = 1;
                     ufo.rotation = 0;
@@ -233,21 +275,86 @@ const LandingPage = () => {
                 if (p.life <= 0) ufo.trail.splice(i, 1);
             }
 
+            // Update Shooting Stars
+            spawnShootingStar();
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const s = shootingStars[i];
+                s.x += s.vx * dt;
+                s.y += s.vy * dt;
+                s.life -= 1.0 * dt;
+                if (s.life <= 0) shootingStars.splice(i, 1);
+            }
+
+            // Update Nebulas
+            nebulas.forEach(n => {
+                n.x += n.vx * dt; n.y += n.vy * dt;
+                if (n.x < -n.radius) n.x = width + n.radius;
+                if (n.x > width + n.radius) n.x = -n.radius;
+            });
+
 
             // 2. DRAW
-            ctx.clearRect(0, 0, width, height); // Clear (CSS does background)
+            ctx.clearRect(0, 0, width, height);
 
-            // Draw Stars
+            // Unified Background Fill (Deep Space)
+            // We use a very dark fill here to blend with CSS, ensuring "Unified" look if CSS fails or for consistency
+            // ctx.fillStyle = "#020205"; 
+            // ctx.fillRect(0, 0, width, height); // Optional: Let CSS handle it for transparency? 
+            // The prompt asked for "Unified background". CSS is `bg-[radial-gradient...]`.
+            // We'll let CSS be the main background and just draw additive layers here.
+
+            // Draw Nebula Clouds (Subtle)
+            ctx.globalCompositeOperation = 'screen'; // Additive blending for space gas
+            nebulas.forEach(n => {
+                const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.radius);
+                g.addColorStop(0, n.color);
+                g.addColorStop(1, 'transparent');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.globalCompositeOperation = 'source-over'; // Reset
+
+            // Draw Stars (Twinkling)
             ctx.fillStyle = "white";
             stars.forEach(s => {
                 s.y += s.speed * dt;
                 if (s.y > height) { s.y = -10; s.x = Math.random() * width; }
-                if (s.opacity > 0.3) {
-                    ctx.globalAlpha = s.opacity;
-                    ctx.fillRect(s.x, s.y, s.size, s.size);
+
+                // Twinkle math
+                const opacity = s.baseOpacity + Math.sin(timestamp * 0.005 + s.phase) * 0.2;
+
+                if (opacity > 0.05) {
+                    ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             });
             ctx.globalAlpha = 1;
+
+            // Draw Dust (Parallax)
+            ctx.fillStyle = "rgba(200, 200, 255, 0.3)";
+            dust.forEach(d => {
+                // Parallax shift based on mouse pos
+                const px = d.x + (mouse.x * 50 * d.depth);
+                const py = d.y + (mouse.y * 50 * d.depth);
+
+                // Wrap visual only
+                const wx = (px % width + width) % width;
+                const wy = (py % height + height) % height;
+
+                ctx.beginPath(); ctx.arc(wx, wy, d.size, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // Draw Shooting Stars
+            shootingStars.forEach(s => {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${s.life})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(s.x, s.y);
+                ctx.lineTo(s.x - s.vx * 0.1, s.y - s.vy * 0.1); // Small trail
+                ctx.stroke();
+            });
 
             // Draw UFO "Tail Fire"
             ufo.trail.forEach(t => {
@@ -360,6 +467,12 @@ const LandingPage = () => {
         window.addEventListener('resize', debouncedResize);
         window.addEventListener('mousedown', handleInteraction);
         window.addEventListener('touchstart', handleInteraction);
+        window.addEventListener('mousemove', (e) => {
+            // Passive mouse tracker for dust
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / width) - 0.5;
+            mouse.y = ((e.clientY - rect.top) / height) - 0.5;
+        });
 
         // Init
         resize();
