@@ -158,6 +158,27 @@ const LandingPage = () => {
             depth: Math.random() * 2 + 1
         }));
 
+        // Entities: Emitted Food (Mobile Only)
+        let emittedFoods = [];
+        const spawnFoodBurst = () => {
+            if (!isMobile) return;
+            // Burst of 4-5 items
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 * i) / 5 + Math.random() * 0.5;
+                const speed = 60 + Math.random() * 40;
+                emittedFoods.push({
+                    x: centerX, y: centerY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
+                    life: 1.0,
+                    scale: 0.5,
+                    rot: Math.random() * Math.PI,
+                    rotSpeed: (Math.random() - 0.5) * 2
+                });
+            }
+        };
+
 
         // Timing
         let lastTime = 0;
@@ -188,6 +209,18 @@ const LandingPage = () => {
                 if (coreTimer > 2.0) {
                     coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
                     coreTimer = 0;
+                    spawnFoodBurst(); // Trigger burst on change
+                }
+
+                // Update Emitted Food
+                for (let i = emittedFoods.length - 1; i >= 0; i--) {
+                    const f = emittedFoods[i];
+                    f.x += f.vx * dt;
+                    f.y += f.vy * dt;
+                    f.life -= 0.5 * dt; // 2 seconds life
+                    f.scale += 0.5 * dt; // Grow slightly
+                    f.rot += f.rotSpeed * dt;
+                    if (f.life <= 0) emittedFoods.splice(i, 1);
                 }
 
                 // UFO Logic
@@ -201,32 +234,34 @@ const LandingPage = () => {
                         ufo.showMsg = true;
                     }
 
-                    // Mobile: Less warping, more roaming + Restricted Zone
-                    const warpChance = isMobile ? 0.05 : 1.0;
-                    if (Math.random() < warpChance * dt) {
-                        // Only warp occasionally on mobile
-                        if (!isMobile || Math.random() < 0.2) {
-                            ufo.target.x = Math.random() * width;
-                            if (isMobile) {
-                                // Keep in bottom 30% (below buttons)
-                                ufo.target.y = height * 0.6 + Math.random() * (height * 0.25);
-                            } else {
-                                ufo.target.y = Math.random() * (height * 0.6);
-                            }
+                    // Mobile: Roam actively in the bottom zone
+                    const roamChance = isMobile ? 1.5 : 1.0;
+                    if (Math.random() < roamChance * dt) {
+                        // Pick a new target
+                        ufo.target.x = Math.random() * width;
+                        if (isMobile) {
+                            // Strictly bottom 30%
+                            ufo.target.y = height * 0.65 + Math.random() * (height * 0.25);
+                        } else {
+                            ufo.target.y = Math.random() * (height * 0.6);
                         }
                     }
 
                     const dx = ufo.target.x - ufo.pos.x;
                     const dy = ufo.target.y - ufo.pos.y;
-                    ufo.vel.x += dx * 0.2 * dt;
-                    ufo.vel.y += dy * 0.2 * dt;
+                    ufo.vel.x += dx * 0.5 * dt; // More responsive
+                    ufo.vel.y += dy * 0.5 * dt;
                     const friction = Math.pow(0.1, dt);
                     ufo.vel.x *= friction;
                     ufo.vel.y *= friction;
 
                     ufo.rotation = ufo.vel.x * 0.05 + Math.sin(ufo.floatOffset) * 0.05;
-                    ufo.scale = 1;
-                    ufo.opacity = 1;
+
+                    // Depth Effect: Smoothly scale up to 1 if just spawned
+                    if (ufo.scale < 1) {
+                        ufo.scale += (1 - ufo.scale) * dt * 2;
+                    }
+                    ufo.opacity = Math.min(1, ufo.opacity + dt);
 
                 } else if (ufo.state === 'WARP_TO_SUN') {
                     const dx = centerX - ufo.pos.x;
@@ -253,14 +288,24 @@ const LandingPage = () => {
                     ufo.idleTimer -= dt;
                     if (ufo.idleTimer <= 0) {
                         ufo.state = 'IDLE';
-                        ufo.pos.x = -100;
-                        ufo.pos.y = Math.random() * height * 0.5;
-                        ufo.vel.x = 40;
+                        // "Come from space" Effect
+                        // Spawn at random X, restricted Y
+                        ufo.pos.x = Math.random() * width;
+                        if (isMobile) {
+                            ufo.pos.y = height * 0.7 + (Math.random() - 0.5) * 100;
+                        } else {
+                            ufo.pos.y = Math.random() * height * 0.5;
+                        }
+
+                        // Start small (far away) and transparent
+                        ufo.scale = 0.1;
+                        ufo.opacity = 0;
+
+                        ufo.vel.x = 0;
                         ufo.vel.y = 0;
-                        ufo.opacity = 1;
-                        ufo.scale = 1;
                         ufo.rotation = 0;
-                        ufo.target.x = width * 0.2;
+                        ufo.target.x = ufo.pos.x; // Start by hovering
+                        ufo.target.y = ufo.pos.y;
                     }
                 }
 
@@ -445,6 +490,19 @@ const LandingPage = () => {
                 const pulse = 1 + Math.sin(timestamp * 0.003) * 0.03;
                 // Mobile: Huge Pulse, Desktop: Normal
                 const finalScale = isMobile ? pulse * 1.5 : pulse;
+
+                // Draw Emitted Food (Behind Core)
+                emittedFoods.forEach(f => {
+                    ctx.save();
+                    ctx.translate(f.x, f.y);
+                    ctx.rotate(f.rotation + f.rot);
+                    ctx.scale(f.scale * (isMobile ? 1.5 : 1), f.scale * (isMobile ? 1.5 : 1));
+                    ctx.globalAlpha = f.life;
+                    ctx.font = "30px Arial";
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                    ctx.fillText(f.emoji, 0, 0);
+                    ctx.restore();
+                });
 
                 ctx.save(); ctx.translate(centerX, centerY); ctx.scale(finalScale, finalScale);
                 ctx.font = `${sunSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
