@@ -3,19 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock } from 'lucide-react';
 
-import InteractiveCubes from '../components/InteractiveCubes';
-
 const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
-    const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
-
-    useEffect(() => {
-        const handleResize = () => setIsMobileView(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     // --- NEW DELTA-TIME PHYSICS ENGINE (v2.2 - Robust Edition) ---
     useEffect(() => {
