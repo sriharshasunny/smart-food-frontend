@@ -82,15 +82,15 @@ const LandingPage = () => {
         };
 
         // Entities: Planets
-        const planets = Array.from({ length: 12 }, (_, i) => ({
+        const planets = Array.from({ length: 4 }, (_, i) => ({
             emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-            angle: (i / 12) * Math.PI * 2,
+            angle: (i / 4) * Math.PI * 2,
             distance: 180 + (i % 2) * 80,
-            orbitSpeed: 0.15 + (i % 2) * 0.1, // Radians per second
-            size: 45,
-            heightOffset: (Math.random() - 0.5) * 50,
+            orbitSpeed: 0.08 + (i % 2) * 0.05, // Slower orbit for smoothness
+            size: 55, // Slightly larger for clarity
+            heightOffset: (Math.random() - 0.5) * 30,
             rotation: Math.random() * Math.PI,
-            rotSpeed: 1.0 // Rotation per second
+            rotSpeed: 0.3 // Slower rotation for clarity
         }));
 
         // Entities: Stars
@@ -99,7 +99,7 @@ const LandingPage = () => {
             y: Math.random() * 1000,
             size: Math.random() * 2 + 0.5,
             opacity: Math.random() * 0.8,
-            speed: 20 + Math.random() * 30 // Pixels per second
+            speed: 10 + Math.random() * 15 // Slower stars for less distraction
         }));
 
         // Timing
@@ -302,7 +302,7 @@ const LandingPage = () => {
                 const fontSize = p.size * depthScale;
                 ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.globalAlpha = 0.3 + (depthScale * 0.7);
+                ctx.globalAlpha = 0.7 + (depthScale * 0.3); // Clearer visibility
                 ctx.rotate(p.rotation + (timestamp * 0.001 * p.rotSpeed));
                 ctx.fillText(p.emoji, 0, 0);
                 ctx.restore();
