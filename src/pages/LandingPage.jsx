@@ -364,21 +364,22 @@ const LandingPage = () => {
                         const pad = 12;
                         const boxW = metrics.width + pad * 2;
 
-                        // Sci-Fi HUD Bubble
+                        // Sci-Fi HUD Bubble (Offset x=45 to clear UFO radius)
+                        const offsetX = 45;
                         ctx.fillStyle = "rgba(0, 15, 30, 0.85)"; // Dark transparent background
                         ctx.strokeStyle = "rgba(0, 255, 255, 0.6)"; // Cyan border
                         ctx.lineWidth = 1.5;
 
                         ctx.beginPath();
-                        ctx.roundRect(25, -30, boxW, 34, 4); // Sharper corners for sci-fi look
+                        ctx.roundRect(offsetX, -30, boxW, 34, 4);
                         ctx.fill();
                         ctx.stroke();
 
-                        // Connector Line
+                        // Connector Line (Triangle pointing to UFO)
                         ctx.beginPath();
-                        ctx.moveTo(25, -10);
-                        ctx.lineTo(15, 0);
-                        ctx.lineTo(35, -5);
+                        ctx.moveTo(offsetX, -5);
+                        ctx.lineTo(30, 0); // Point touches UFO edge radius ~30
+                        ctx.lineTo(offsetX, 5);
                         ctx.fillStyle = "rgba(0, 255, 255, 0.6)";
                         ctx.fill();
 
@@ -387,7 +388,7 @@ const LandingPage = () => {
                         ctx.shadowBlur = 4;
                         ctx.fillStyle = "#0ff"; // Cyan text
                         ctx.font = "bold 13px 'Courier New', monospace";
-                        ctx.fillText(msg, 25 + pad, -30 + 17);
+                        ctx.fillText(msg, offsetX + boxW / 2, -30 + 17); // Center text in box
                         ctx.shadowBlur = 0; // Reset shadow
                     }
                     ctx.restore();
