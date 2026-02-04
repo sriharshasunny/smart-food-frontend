@@ -74,9 +74,13 @@ const LandingPage = () => {
 
         const resize = () => {
             if (!canvas) return;
-            const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
             width = window.innerWidth;
             height = window.innerHeight;
+
+            // OPTIMIZATION: Max Speed on Mobile (Cap DPR at 1.0)
+            const mobileView = width < 768;
+            const dpr = mobileView ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.5);
+
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             // Force CSS dimensions
