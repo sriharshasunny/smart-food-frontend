@@ -147,11 +147,11 @@ const LandingPage = () => {
 
                 // Acceleration = Force / Mass
                 // Simplification for smooth UI: Velocity += (Dist * SpeedFactor) * dt
-                ufo.vel.x += dx * 0.5 * dt;
-                ufo.vel.y += dy * 0.5 * dt;
+                ufo.vel.x += dx * 0.2 * dt; // Even slower movement
+                ufo.vel.y += dy * 0.2 * dt;
 
                 // Friction
-                const friction = Math.pow(0.05, dt); // Higher friction for stability
+                const friction = Math.pow(0.1, dt); // Drifting feel
                 ufo.vel.x *= friction;
                 ufo.vel.y *= friction;
 
@@ -198,15 +198,35 @@ const LandingPage = () => {
             ufo.pos.x += ufo.vel.x * dt * 8; // Scale factor for pixel movement
             ufo.pos.y += ufo.vel.y * dt * 8;
 
-            // Update Trail
-            if (ufo.opacity > 0.1 && (Math.abs(ufo.vel.x) > 0.5 || ufo.state === 'WARP_TO_SUN')) {
-                // Add trail particle
-                ufo.trail.push({ x: ufo.pos.x, y: ufo.pos.y, life: 1.0, size: Math.random() * 3 + 2 });
+            // Update Tail Fire (Thruster)
+            if (ufo.opacity > 0.1 && (Math.abs(ufo.vel.x) > 0.1 || Math.abs(ufo.vel.y) > 0.1)) {
+                // Emit particles opposite to velocity
+                // Normalize velocity for direction
+                const vLen = Math.hypot(ufo.vel.x, ufo.vel.y) || 1;
+                const vxNorm = ufo.vel.x / vLen;
+                const vyNorm = ufo.vel.y / vLen;
+
+                // Offset emission to back of UFO
+                const offset = 20 * ufo.scale;
+
+                ufo.trail.push({
+                    x: ufo.pos.x - vxNorm * offset,
+                    y: ufo.pos.y - vyNorm * offset,
+                    vx: -vxNorm * 50 + (Math.random() - 0.5) * 20, // Blast back
+                    vy: -vyNorm * 50 + (Math.random() - 0.5) * 20,
+                    life: 1.0,
+                    size: Math.random() * 6 + 4
+                });
             }
-            // Update Trail Life
+            // Update Trail Life and Physics
             for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                ufo.trail[i].life -= 2.0 * dt; // Fade out in 0.5s
-                if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
+                const p = ufo.trail[i];
+                p.life -= 4.0 * dt; // Burn out fast
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.size *= 0.95; // Shrink
+
+                if (p.life <= 0) ufo.trail.splice(i, 1);
             }
 
 
@@ -225,13 +245,14 @@ const LandingPage = () => {
             });
             ctx.globalAlpha = 1;
 
-            // Draw UFO Trail
-            ctx.fillStyle = '#00ffff';
-            ctx.beginPath();
+            // Draw UFO "Tail Fire"
             ufo.trail.forEach(t => {
-                ctx.rect(t.x, t.y, t.size * ufo.scale, t.size * ufo.scale);
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.size * ufo.scale, 0, Math.PI * 2);
+                // Fire Gradient: Cyan -> Transparent (Sci-Fi Plasma)
+                ctx.fillStyle = `rgba(0, 255, 255, ${t.life * 0.6})`;
+                ctx.fill();
             });
-            ctx.fill();
 
             // Draw UFO
             if (ufo.opacity > 0) {
