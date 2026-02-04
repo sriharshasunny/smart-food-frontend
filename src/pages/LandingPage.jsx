@@ -48,8 +48,9 @@ const LandingPage = () => {
             floatOffset: 0
         };
 
-        // Inputs
-        let mouse = { x: 0, y: 0 };
+        // Inputs - Smoothed for 3D feel
+        let targetMouse = { x: 0, y: 0 };
+        let mouse = { x: 0, y: 0 }; // Current smoothed pos
 
         const handleInteraction = (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -60,8 +61,8 @@ const LandingPage = () => {
 
             // Parallax Input
             if (width > 0 && height > 0) {
-                mouse.x = (clientX / width) - 0.5;
-                mouse.y = (clientY / height) - 0.5;
+                targetMouse.x = (clientX / width) - 0.5;
+                targetMouse.y = (clientY / height) - 0.5;
             }
 
             const dist = Math.hypot(logicX - ufo.pos.x, logicY - ufo.pos.y);
@@ -109,8 +110,8 @@ const LandingPage = () => {
             rotSpeed: 0.3
         }));
 
-        // Entities: Stars (Brighter & More Visible)
-        const stars = Array.from({ length: 150 }, () => ({
+        // Entities: Stars (Optimized Count)
+        const stars = Array.from({ length: 50 }, () => ({
             x: Math.random() * 2000,
             y: Math.random() * 1000,
             size: Math.random() * 2 + 1, // Increased size
@@ -122,7 +123,7 @@ const LandingPage = () => {
         // Entities: Shooting Stars
         let shootingStars = [];
         const spawnShootingStar = () => {
-            if (Math.random() < 0.005) {
+            if (Math.random() < 0.002) {
                 shootingStars.push({
                     x: Math.random() * width,
                     y: Math.random() * (height * 0.5),
@@ -144,8 +145,8 @@ const LandingPage = () => {
             vy: (Math.random() - 0.5) * 5
         }));
 
-        // Entities: Space Dust (Parallax)
-        const dust = Array.from({ length: 60 }, () => ({
+        // Entities: Space Dust (Parallax & Optimized)
+        const dust = Array.from({ length: 20 }, () => ({
             x: Math.random() * 2000,
             y: Math.random() * 1000,
             size: Math.random() * 1.5 + 0.5,
@@ -170,6 +171,11 @@ const LandingPage = () => {
                     resize();
                     if (!width) return requestAnimationFrame(loop);
                 }
+
+                // 0. SMOOTH INPUT (Lerp)
+                // factor 0.1 gives a nice weight/delay to the movement
+                mouse.x += (targetMouse.x - mouse.x) * 0.1;
+                mouse.y += (targetMouse.y - mouse.y) * 0.1;
 
                 // 1. UPDATE PHYSICS (Safeguarded)
                 coreTimer += dt;
@@ -417,8 +423,8 @@ const LandingPage = () => {
         window.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             if (width > 0 && height > 0) {
-                mouse.x = ((e.clientX - rect.left) / width) - 0.5;
-                mouse.y = ((e.clientY - rect.top) / height) - 0.5;
+                targetMouse.x = ((e.clientX - rect.left) / width) - 0.5;
+                targetMouse.y = ((e.clientY - rect.top) / height) - 0.5;
             }
         });
 
@@ -530,10 +536,10 @@ const LandingPage = () => {
                                     { title: "Command Center", desc: "Full control via app.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
                                 ].map((item, i) => (
                                     <ScrollReveal key={i} delay={i * 0.05}>
-                                        <div className="group p-8 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-orange-500/20 transition-all hover:-translate-y-2 hover:bg-white/5 text-center h-full">
-                                            <div className="mb-6 inline-block opacity-80 group-hover:opacity-100 transition-opacity p-3 bg-white/5 rounded-2xl">{item.icon}</div>
-                                            <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                                            <p className="text-gray-500 text-sm font-medium">{item.desc}</p>
+                                        <div className="group p-8 rounded-[2rem] bg-white/[0.05] backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all hover:-translate-y-2 hover:bg-white/10 text-center h-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+                                            <div className="mb-6 inline-block opacity-90 group-hover:opacity-100 transition-opacity p-4 bg-white/5 rounded-2xl shadow-lg ring-1 ring-white/10">{item.icon}</div>
+                                            <h3 className="text-xl font-bold mb-3 text-white/90">{item.title}</h3>
+                                            <p className="text-gray-400 text-sm font-medium leading-relaxed">{item.desc}</p>
                                         </div>
                                     </ScrollReveal>
                                 ))}
