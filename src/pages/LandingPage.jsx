@@ -105,17 +105,7 @@ const LandingPage = () => {
             }
         };
 
-        // Entities: Planets
-        const planets = Array.from({ length: 4 }, (_, i) => ({
-            emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-            angle: (i / 4) * Math.PI * 2,
-            distance: 180 + (i % 2) * 80,
-            orbitSpeed: 0.08 + (i % 2) * 0.05,
-            size: 55,
-            heightOffset: (Math.random() - 0.5) * 30,
-            rotation: Math.random() * Math.PI,
-            rotSpeed: 0.3
-        }));
+
 
         // Entities: Stars (Optimized Count)
         // Entities: Stars (Optimized Count)
@@ -162,20 +152,24 @@ const LandingPage = () => {
             depth: Math.random() * 2 + 1
         }));
 
-        // Entities: Emitted Food (Mobile Only)
+        // Entities: Emitted Food (Mobile & Laptop)
         let emittedFoods = [];
         const spawnFoodBurst = () => {
-            if (!isMobile) return;
-            // Burst of 4-5 items
-            for (let i = 0; i < 5; i++) {
-                const angle = (Math.PI * 2 * i) / 5 + Math.random() * 0.5;
-                const speed = 60 + Math.random() * 40;
+            // Burst Settings: Mobile = 5 items, Laptop = 3-4 items
+            const count = isMobile ? 5 : Math.floor(Math.random() * 2) + 3;
+
+            for (let i = 0; i < count; i++) {
+                // Radial spread
+                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+                // Faster speed on desktop to cover more screen
+                const speed = (isMobile ? 60 : 80) + Math.random() * 40;
+
                 emittedFoods.push({
                     x: centerX, y: centerY,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
-                    life: 1.0,
+                    life: 1.2, // Slightly longer life
                     scale: 0.5,
                     rot: Math.random() * Math.PI,
                     rotSpeed: (Math.random() - 0.5) * 2
@@ -209,11 +203,14 @@ const LandingPage = () => {
 
                 // 1. UPDATE PHYSICS (Safeguarded)
                 coreTimer += dt;
-                // Update central food every 2.0s
-                if (coreTimer > 2.0) {
+
+                // Update central food: Mobile every 2.0s, Desktop every 3.0s
+                const switchTime = isMobile ? 2.0 : 3.0;
+
+                if (coreTimer > switchTime) {
                     coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
                     coreTimer = 0;
-                    spawnFoodBurst(); // Trigger burst on change
+                    spawnFoodBurst(); // Trigger burst on change (Both views)
                 }
 
                 // Update Emitted Food
@@ -536,30 +533,6 @@ const LandingPage = () => {
                     ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
                 }
                 ctx.restore();
-
-                // Planets (Hide on Mobile)
-                if (!isMobile) {
-                    planets.forEach(p => {
-                        p.angle += p.orbitSpeed * dt;
-                        const safeMaxRadius = width * 0.22;
-                        const intendedRadius = p.distance * scale * 2.6;
-                        const radiusX = Math.min(intendedRadius, safeMaxRadius);
-                        const radiusY = p.distance * scale * 0.7;
-                        const x = centerX + Math.cos(p.angle) * radiusX;
-                        const zDepth = Math.sin(p.angle) * radiusY;
-                        const y = centerY + zDepth * 0.5 + p.heightOffset;
-                        const depthScale = 1 + (Math.sin(p.angle) * 0.3);
-
-                        ctx.save(); ctx.translate(x, y);
-                        const fontSize = p.size * depthScale;
-                        ctx.font = `${fontSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                        ctx.globalAlpha = 0.7 + (depthScale * 0.3);
-                        ctx.rotate(p.rotation + (timestamp * 0.001 * p.rotSpeed));
-                        ctx.fillText(p.emoji, 0, 0);
-                        ctx.restore();
-                    });
-                }
-
             } catch (err) {
                 console.error("Animation Loop Error", err);
             }
