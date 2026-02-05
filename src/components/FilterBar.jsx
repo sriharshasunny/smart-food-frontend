@@ -37,7 +37,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         transition-all duration-200
                         ${isSticky
                             ? 'flex flex-row items-center gap-2 h-full'
-                            : 'flex flex-row md:flex-col gap-2 md:gap-1.5 overflow-x-auto md:overflow-visible md:max-h-none md:overflow-y-visible hide-scrollbar pl-0 md:pl-2 py-1 items-center md:items-end w-full md:w-auto'
+                            : 'flex flex-row gap-2 overflow-x-auto md:overflow-visible hide-scrollbar pl-0 md:pl-2 py-1 items-center w-full md:w-auto'
                         }
                     `}>
 
@@ -49,7 +49,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 onClick={() => setSubFilters({ rating45Plus: false, rating4Plus: false, rating35Plus: false, vegOnly: false, maxPrice: 1000 })}
-                                className={`text-[10px] text-red-500 font-bold hover:underline flex items-center gap-1 ${isSticky ? 'order-last bg-white px-2 py-1 rounded-full border border-red-100 shadow-sm whitespace-nowrap' : 'mb-1'}`}
+                                className={`text-[10px] text-red-500 font-bold hover:underline flex items-center gap-1 ${isSticky ? 'order-last bg-white px-2 py-1 rounded-full border border-red-100 shadow-sm whitespace-nowrap' : 'mb-1 order-first md:order-none'}`}
                             >
                                 {isSticky ? <span className="text-red-600 font-extrabold">&times;</span> : <span>Clear All &times;</span>}
                             </motion.button>
@@ -62,7 +62,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             onClick={() => toggleSubFilter('rating45Plus')}
                             className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
-                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.rating45Plus ? 'bg-orange-500 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
+                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.rating45Plus ? 'bg-orange-500 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-200 hover:shadow-sm'}`
                                     : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.rating45Plus ? 'bg-gray-900 border-gray-900 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
                                 }`}
                         >
@@ -77,7 +77,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             onClick={() => toggleSubFilter('vegOnly')}
                             className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
-                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.vegOnly ? 'bg-green-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
+                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.vegOnly ? 'bg-green-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-200 hover:shadow-sm'}`
                                     : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.vegOnly ? 'bg-green-600 border-green-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
                                 }`}
                         >
@@ -93,7 +93,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                 onClick={() => setShowPriceSlider(!showPriceSlider)}
                                 className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
-                                        ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.maxPrice < 1000 ? 'bg-blue-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
+                                        ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.maxPrice < 1000 ? 'bg-blue-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-200 hover:shadow-sm'}`
                                         : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.maxPrice < 1000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
                                     }`}
                             >
@@ -104,50 +104,27 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             <AnimatePresence>
                                 {showPriceSlider && (
                                     <motion.div
-                                        initial={{ opacity: 0, x: 10, scale: 0.95 }}
-                                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                                        exit={{ opacity: 0, x: 10, scale: 0.95 }}
-                                        className={`absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 z-50 flex flex-col items-center gap-2 h-32 w-12 justify-between
-                                            ${isSticky ? 'top-full right-0 mt-2 translate-y-0 h-auto w-auto flex-row' : ''} 
-                                        `}
+                                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                                        className={`absolute right-0 top-full mt-2 bg-white p-3 rounded-xl shadow-xl border border-gray-100 z-50 w-64 flex flex-col gap-2`}
                                     >
-                                        {/* Logic: Side vertical popup for Sidebar view, small dropdown for Sticky view to avoid conflict */}
-                                        {isSticky ? (
-                                            // Fallback for sticky: Simple horizontal dropdown if needed, or keep vertical? 
-                                            // User asked for "open vertically". Let's stick to vertical side pop for main view.
-                                            // Actually, let's allow the vertical side pop for sticky too if space allows? 
-                                            // Sticky is usually top bar. Left of button might overlap text.
-                                            // Let's force the requested "Vertical Side" style for the main view.
-                                            <>
-                                                <input
-                                                    type="range"
-                                                    min="100"
-                                                    max="1000"
-                                                    step="50"
-                                                    value={subFilters.maxPrice || 1000}
-                                                    onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                                    onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
-                                                    className="w-32 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all"
-                                                />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span className="text-[9px] font-bold text-gray-400">₹1k</span>
-                                                <div className="h-20 w-6 flex items-center justify-center">
-                                                    <input
-                                                        type="range"
-                                                        min="100"
-                                                        max="1000"
-                                                        step="50"
-                                                        value={subFilters.maxPrice || 1000}
-                                                        onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                                        onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
-                                                        className="w-20 h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all -rotate-90"
-                                                    />
-                                                </div>
-                                                <span className="text-[9px] font-bold text-gray-400">₹100</span>
-                                            </>
-                                        )}
+                                        <div className="relative w-full h-5 flex items-center">
+                                            <input
+                                                type="range"
+                                                min="100"
+                                                max="1000"
+                                                step="50"
+                                                value={subFilters.maxPrice || 1000}
+                                                onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                                onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
+                                                className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all"
+                                            />
+                                        </div>
+                                        <div className="flex justify-between text-[9px] text-gray-400 font-bold px-0.5">
+                                            <span>₹100</span>
+                                            <span>₹1000</span>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
