@@ -104,27 +104,50 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             <AnimatePresence>
                                 {showPriceSlider && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                                        className={`absolute right-0 top-full mt-2 bg-white p-3 rounded-xl shadow-xl border border-gray-100 z-50 w-48 flex flex-col gap-2`}
+                                        initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                                        exit={{ opacity: 0, x: 10, scale: 0.95 }}
+                                        className={`absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 z-50 flex flex-col items-center gap-2 h-32 w-12 justify-between
+                                            ${isSticky ? 'top-full right-0 mt-2 translate-y-0 h-auto w-auto flex-row' : ''} 
+                                        `}
                                     >
-                                        <div className="relative w-full h-5 flex items-center">
-                                            <input
-                                                type="range"
-                                                min="100"
-                                                max="1000"
-                                                step="50"
-                                                value={subFilters.maxPrice || 1000}
-                                                onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                                onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
-                                                className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all"
-                                            />
-                                        </div>
-                                        <div className="flex justify-between text-[9px] text-gray-400 font-bold px-0.5">
-                                            <span>₹100</span>
-                                            <span>₹1000</span>
-                                        </div>
+                                        {/* Logic: Side vertical popup for Sidebar view, small dropdown for Sticky view to avoid conflict */}
+                                        {isSticky ? (
+                                            // Fallback for sticky: Simple horizontal dropdown if needed, or keep vertical? 
+                                            // User asked for "open vertically". Let's stick to vertical side pop for main view.
+                                            // Actually, let's allow the vertical side pop for sticky too if space allows? 
+                                            // Sticky is usually top bar. Left of button might overlap text.
+                                            // Let's force the requested "Vertical Side" style for the main view.
+                                            <>
+                                                <input
+                                                    type="range"
+                                                    min="100"
+                                                    max="1000"
+                                                    step="50"
+                                                    value={subFilters.maxPrice || 1000}
+                                                    onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                                    onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
+                                                    className="w-32 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all"
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="text-[9px] font-bold text-gray-400">₹1k</span>
+                                                <div className="h-20 w-6 flex items-center justify-center">
+                                                    <input
+                                                        type="range"
+                                                        min="100"
+                                                        max="1000"
+                                                        step="50"
+                                                        value={subFilters.maxPrice || 1000}
+                                                        onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                                        onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
+                                                        className="w-20 h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all -rotate-90"
+                                                    />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-gray-400">₹100</span>
+                                            </>
+                                        )}
                                     </motion.div>
                                 )}
                             </AnimatePresence>
