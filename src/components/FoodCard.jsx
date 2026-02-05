@@ -3,7 +3,7 @@ import { Star, Plus, Heart, Clock, Flame } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { motion } from 'framer-motion';
 
-const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = false }) => {
+const FoodCard = React.memo(({ food, restaurantName, variant = 'vertical', isFeatured = false, onAdd }) => {
     const { addToCart, toggleWishlist, isInWishlist, cart } = useShop();
     const isWishlisted = isInWishlist(food.id);
 
@@ -24,6 +24,8 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                     <img
                         src={food.image}
                         alt={food.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
 
@@ -106,7 +108,7 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        addToCart(food);
+                                        if (onAdd) onAdd(food); else addToCart(food);
                                     }}
                                     className="hover:scale-110 transition-transform"
                                 >
@@ -117,7 +119,7 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    addToCart(food);
+                                    if (onAdd) onAdd(food); else addToCart(food);
                                 }}
                                 className="bg-gray-50 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white text-gray-700 font-bold py-2 px-5 rounded-lg transition-all duration-300 flex items-center gap-1.5 group/btn shadow-sm hover:shadow-orange-200 hover:shadow-md active:scale-95 border border-gray-100 hover:border-transparent text-xs uppercase tracking-wide"
                             >
@@ -140,6 +142,8 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                 <img
                     src={food.image}
                     alt={food.name}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
 
@@ -207,7 +211,7 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            addToCart(food);
+                            if (onAdd) onAdd(food); else addToCart(food);
                         }}
                         className="bg-white hover:bg-orange-50 text-orange-600 hover:text-orange-700 font-bold py-2 px-4 rounded-xl transition-all duration-300 flex items-center gap-1.5 group/btn shadow-sm hover:shadow-md border border-orange-100 active:scale-95 text-xs uppercase tracking-wide"
                     >
@@ -218,6 +222,6 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
             </div>
         </div>
     );
-};
+});
 
 export default FoodCard;

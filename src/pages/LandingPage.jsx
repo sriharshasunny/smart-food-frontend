@@ -109,7 +109,7 @@ const LandingPage = () => {
 
 
         // Entities: Stars (Optimized Count - Higher Density for "3D Texture")
-        const stars = Array.from({ length: 150 }, () => ({
+        const stars = Array.from({ length: 100 }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             z: Math.random() * 2 + 0.5, // Deeper Z range

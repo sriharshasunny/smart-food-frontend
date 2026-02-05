@@ -182,6 +182,11 @@ const Home = () => {
         </div>
     );
 
+    // Memoized add handler to prevent prop thrashing on FoodCard
+    const handleAddToCart = React.useCallback((food) => {
+        addToCart(food);
+    }, [addToCart]);
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
             {/* Reduced Top Padding for more content space */}
@@ -241,7 +246,7 @@ const Home = () => {
                                 ) : (
                                     filteredData.dishes.slice(0, 8).map((dish) => (
                                         <div key={dish.id} className="min-w-[200px] snap-start">
-                                            <FoodCard food={dish} />
+                                            <FoodCard food={dish} onAdd={handleAddToCart} />
                                         </div>
                                     ))
                                 )}
@@ -281,7 +286,7 @@ const Home = () => {
                                     <div className="absolute inset-0 rounded-[1.25rem] border border-white/50 pointer-events-none z-20" />
                                     {/* Image with Floating Badge */}
                                     <div className="h-[4.5rem] w-[4.5rem] rounded-2xl overflow-hidden relative shrink-0 shadow-sm group-hover/item:shadow-md transition-all duration-500">
-                                        <img src={dish.image} alt={dish.name} className="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-700 ease-out" />
+                                        <img src={dish.image} alt={dish.name} loading="lazy" className="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-700 ease-out" />
                                         {/* Rating Badge Overlay */}
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1 pt-4 flex justify-center">
                                             <div className="flex items-center gap-0.5 text-[8px] font-bold text-white">
@@ -376,7 +381,7 @@ const Home = () => {
                                             key={dish.id}
                                             food={dish}
                                             restaurantName={restaurant?.name}
-                                            onAdd={addToCart}
+                                            onAdd={handleAddToCart}
                                         />
                                     );
                                 })}
