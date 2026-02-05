@@ -14,6 +14,36 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
         setSubFilters(prev => ({ ...prev, [filterKey]: !prev[filterKey] }));
     };
 
+    // Use callback to ensure stable reference
+    const updateSliderPosition = React.useCallback(() => {
+        requestAnimationFrame(() => {
+            if (buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                let top = rect.top;
+                let left = rect.right + 10;
+
+                if (isSticky) {
+                    top = rect.bottom + 10;
+                    left = rect.right - 250;
+                }
+                setSliderPos({ top, left });
+            }
+        });
+    }, [isSticky]);
+
+    // Update slider position on scroll/resize
+    React.useEffect(() => {
+        if (showPriceSlider) {
+            window.addEventListener('scroll', updateSliderPosition, true);
+            window.addEventListener('resize', updateSliderPosition);
+
+            return () => {
+                window.removeEventListener('scroll', updateSliderPosition, true);
+                window.removeEventListener('resize', updateSliderPosition);
+            };
+        }
+    }, [showPriceSlider, updateSliderPosition]);
+
     return (
         <div
             className={`transition-all duration-300 ease-out z-20
@@ -98,19 +128,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => {
                                     if (!showPriceSlider && buttonRef.current) {
-                                        const rect = buttonRef.current.getBoundingClientRect();
-                                        // Calculate position: right side for sidebar (if space permits), bottom for sticky
-                                        // Default to right side popout
-                                        let top = rect.top;
-                                        let left = rect.right + 10;
-
-                                        // Specific logic for sticky header or mobile fallback if needed
-                                        if (isSticky) {
-                                            top = rect.bottom + 10;
-                                            left = rect.right - 250; // Align right edge
-                                        }
-
-                                        setSliderPos({ top, left });
+                                        updateSliderPosition(); // Calculate position when opening
                                     }
                                     setShowPriceSlider(!showPriceSlider);
                                 }}
@@ -138,12 +156,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                         }}
                                         className={`bg-white p-4 rounded-2xl shadow-xl border border-gray-100 flex flex-col gap-3 w-64`}
                                     >
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs font-bold text-gray-400">Max Price</span>
-                                            <span className="text-sm font-black text-blue-600">₹{subFilters.maxPrice || 1000}</span>
-                                        </div>
-
-                                        <div className="relative w-full h-6 flex items-center">
+                                        <div className="relative w-full h-6 flex items-center mt-2">
                                             <input
                                                 type="range"
                                                 min="100"
