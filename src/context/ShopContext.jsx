@@ -183,21 +183,23 @@ export const ShopProvider = ({ children }) => {
     const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
     return (
-        <ShopContext.Provider
-            value={{
-                cart,
-                wishlist,
-                addToCart,
-                removeFromCart,
-                updateQuantity,
-                clearCart,
-                toggleWishlist,
-                isInWishlist,
-                cartTotal,
-                cartCount
-            }}
-        >
+    const value = React.useMemo(() => ({
+        cart,
+        wishlist,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        toggleWishlist,
+        isInWishlist,
+        cartTotal,
+        cartCount
+    }), [cart, wishlist, user]); // Added user to dependencies just in case, though mostly derived
+
+    return (
+        <ShopContext.Provider value={value}>
             {children}
         </ShopContext.Provider>
+    );
     );
 };
