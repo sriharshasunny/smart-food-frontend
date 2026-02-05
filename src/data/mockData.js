@@ -43,7 +43,8 @@ export const categories = [
     { id: 7, name: 'Desserts', image: dessertsImg },
     { id: 13, name: 'Bakery', image: bakeryImg },
     { id: 8, name: 'Healthy', image: healthyImg },
-    { id: 4, name: 'Sushi', image: sushiImg }
+    { id: 4, name: 'Sushi', image: sushiImg },
+    { id: 14, name: 'Ice Cream', image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=800&q=80" }
 ];
 
 export const offers = [
@@ -148,6 +149,18 @@ export const mockRestaurants = [
         tags: ["Healthy", "Salads", "Smoothies"],
         cuisine: "Healthy",
         type: "restaurant"
+    },
+    {
+        id: 9,
+        name: "Scoops & Cones",
+        rating: 4.9,
+        deliveryTime: "15-25 min",
+        costForTwo: "₹250",
+        minOrder: 100,
+        image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=800&q=80",
+        tags: ["Ice Cream", "Desserts", "Shakes"],
+        cuisine: "Desserts",
+        type: "restaurant"
     }
 ];
 
@@ -160,7 +173,7 @@ export const mockDishes = [
     { id: 105, name: "Veg Biryani", price: 240, description: "Flavorful rice with seasoned vegetables.", image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80", restaurantId: 1, category: "Biryani", rating: 4.4, isVeg: true },
     { id: 106, name: "Tandoori Chicken", price: 350, description: "Roasted chicken marinated in yogurt and spices.", image: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=80", restaurantId: 1, category: "Starters", rating: 4.9, isVeg: false },
     { id: 107, name: "Samosa", price: 40, description: "Crispy pastry filled with spiced potatoes.", image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80", restaurantId: 1, category: "Starters", rating: 4.5, isVeg: true },
-    { id: 108, name: "Gulab Jamun", price: 90, description: "Sweet milk dumplings in rose syrup.", image: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?auto=format&fit=crop&w=800&q=80", restaurantId: 1, category: "Dessert", rating: 4.8, isVeg: true },
+    { id: 108, name: "Gulab Jamun", price: 90, description: "Sweet milk dumplings in rose syrup.", image: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?auto=format&fit=crop&w=800&q=80", restaurantId: 1, category: "Desserts", rating: 4.8, isVeg: true },
 
     // 2. Sushi Master (Japanese)
     { id: 201, name: "Salmon Nigiri", price: 450, description: "Fresh salmon over pressed vinegared rice.", image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80", restaurantId: 2, category: "Sushi", rating: 4.9, isVeg: false },
@@ -184,7 +197,7 @@ export const mockDishes = [
     { id: 402, name: "Pepperoni Pizza", price: 450, description: "Pizza topped with spicy pepperoni slices.", image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=800&q=80", restaurantId: 4, category: "Pizza", rating: 4.8, isVeg: false },
     { id: 403, name: "Carbonara Pasta", price: 420, description: "Creamy pasta with bacon and egg.", image: "https://images.unsplash.com/photo-1612874742237-982867143824?auto=format&fit=crop&w=800&q=80", restaurantId: 4, category: "Pasta", rating: 4.7, isVeg: false },
     { id: 404, name: "Lasagna", price: 480, description: "Layered pasta with meat sauce and cheese.", image: "https://images.unsplash.com/photo-1574868235814-7d4761643195?auto=format&fit=crop&w=800&q=80", restaurantId: 4, category: "Pasta", rating: 4.8, isVeg: false },
-    { id: 405, name: "Tiramisu", price: 250, description: "Coffee-flavoured Italian dessert.", image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=800&q=80", restaurantId: 4, category: "Dessert", rating: 4.9, isVeg: true },
+    { id: 405, name: "Tiramisu", price: 250, description: "Coffee-flavoured Italian dessert.", image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=800&q=80", restaurantId: 4, category: "Desserts", rating: 4.9, isVeg: true },
 
     // 5. Wok & Roll (Chinese)
     { id: 501, name: "Kung Pao Chicken", price: 320, description: "Spicy stir-fry chicken with peanuts.", image: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=800&q=80", restaurantId: 5, category: "Main", rating: 4.5, isVeg: false },
@@ -214,5 +227,12 @@ export const mockDishes = [
     { id: 802, name: "Avocado Toast", price: 250, description: "Toasted bread with mashed avocado.", image: "/assets/food/avocado_toast.png", restaurantId: 8, category: "Breakfast", rating: 4.8, isVeg: true },
     { id: 803, name: "Green Smoothie", price: 180, description: "Blend of spinach, apple, and ginger.", image: "/assets/food/green_smoothie.png", restaurantId: 8, category: "Smoothie", rating: 4.6, isVeg: true },
     { id: 804, name: "Quinoa Power Bowl", price: 320, description: "Protein-packed bowl with veggies.", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80", restaurantId: 8, category: "Bowl", rating: 4.9, isVeg: true },
-    { id: 805, name: "Fruit Parfait", price: 160, description: "Yogurt layered with fresh berries.", image: "/assets/food/fruit_parfait.png", restaurantId: 8, category: "Dessert", rating: 4.8, isVeg: true }
+    { id: 805, name: "Fruit Parfait", price: 160, description: "Yogurt layered with fresh berries.", image: "/assets/food/fruit_parfait.png", restaurantId: 8, category: "Desserts", rating: 4.8, isVeg: true },
+
+    // 9. Scoops & Cones (Ice Cream)
+    { id: 901, name: "Belgian Chocolate Scoop", price: 120, description: "Rich dark chocolate ice cream.", image: "https://images.unsplash.com/photo-1580915411954-282cb1b0d780?auto=format&fit=crop&w=800&q=80", restaurantId: 9, category: "Ice Cream", rating: 4.9, isVeg: true },
+    { id: 902, name: "Strawberry Swirl", price: 110, description: "Fresh strawberry ice cream.", image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=800&q=80", restaurantId: 9, category: "Ice Cream", rating: 4.7, isVeg: true },
+    { id: 903, name: "Vanilla Bean", price: 100, description: "Classic vanilla with real bean pods.", image: "https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=800&q=80", restaurantId: 9, category: "Ice Cream", rating: 4.6, isVeg: true },
+    { id: 904, name: "Mango Sorbet", price: 130, description: "Dairy-free fresh mango delight.", image: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=800&q=80", restaurantId: 9, category: "Ice Cream", rating: 4.8, isVeg: true },
+    { id: 905, name: "Cookie Dough", price: 150, description: "Vanilla ice cream with chunks of cookie dough.", image: "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?auto=format&fit=crop&w=800&q=80", restaurantId: 9, category: "Ice Cream", rating: 4.9, isVeg: true }
 ];
