@@ -108,49 +108,48 @@ const LandingPage = () => {
 
 
 
-        // Entities: Stars (Optimized Count)
-        // Entities: Stars (Optimized Count)
-        const stars = Array.from({ length: 50 }, () => ({
-            x: Math.random() * width, // Use dynamic width
+        // Entities: Stars (Optimized Count - Higher Density for "3D Texture")
+        const stars = Array.from({ length: 150 }, () => ({
+            x: Math.random() * width,
             y: Math.random() * height,
-            z: Math.random() * 2 + 0.1, // Depth for 3D effect
-            size: Math.random() * 2 + 1, // Increased size
-            baseOpacity: Math.random() * 0.7 + 0.3, // Increased min opacity
+            z: Math.random() * 2 + 0.5, // Deeper Z range
+            size: Math.random() * 1.5 + 0.5,
+            baseOpacity: Math.random() * 0.6 + 0.4,
             phase: Math.random() * Math.PI * 2,
-            speed: 5 + Math.random() * 10
+            speed: 50 + Math.random() * 80 // MUCHO FASTER
         }));
 
-        // Entities: Shooting Stars
+        // Entities: Shooting Stars (More Frequent)
         let shootingStars = [];
         const spawnShootingStar = () => {
-            if (Math.random() < 0.002) {
+            if (Math.random() < 0.015) { // Increased spawn rate
                 shootingStars.push({
                     x: Math.random() * width,
                     y: Math.random() * (height * 0.5),
-                    vx: -100 - Math.random() * 100,
-                    vy: 50 + Math.random() * 50,
+                    vx: -200 - Math.random() * 200, // Faster
+                    vy: 50 + Math.random() * 80,
                     life: 1.0,
-                    length: 50 + Math.random() * 50
+                    length: 80 + Math.random() * 60
                 });
             }
         };
 
-        // Entities: Nebula Clouds
+        // Entities: Nebula Clouds (Faster)
         const nebulas = Array.from({ length: 3 }, (_, i) => ({
             x: Math.random() * width,
             y: Math.random() * height,
             radius: 300 + Math.random() * 200,
-            color: i === 0 ? 'rgba(76, 29, 149, 0.1)' : i === 1 ? 'rgba(236, 72, 153, 0.08)' : 'rgba(59, 130, 246, 0.08)', // Slightly increased opacity
-            vx: (Math.random() - 0.5) * 5,
-            vy: (Math.random() - 0.5) * 5
+            color: i === 0 ? 'rgba(76, 29, 149, 0.1)' : i === 1 ? 'rgba(236, 72, 153, 0.08)' : 'rgba(59, 130, 246, 0.08)',
+            vx: (Math.random() - 0.5) * 15, // Faster drift
+            vy: (Math.random() - 0.5) * 15
         }));
 
-        // Entities: Space Dust (Parallax & Optimized)
-        const dust = Array.from({ length: 20 }, () => ({
+        // Entities: Space Dust (High Density for "Texture")
+        const dust = Array.from({ length: 60 }, () => ({
             x: Math.random() * 2000,
             y: Math.random() * 1000,
-            size: Math.random() * 1.5 + 0.5,
-            depth: Math.random() * 2 + 1
+            size: Math.random() * 1.2 + 0.2,
+            depth: Math.random() * 3 + 1 // More depth layers
         }));
 
         // Entities: Orbiting Food (Satellites)

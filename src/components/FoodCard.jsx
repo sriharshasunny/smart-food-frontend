@@ -136,7 +136,7 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
         <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-orange-100 flex flex-col h-full transform hover:-translate-y-1 relative">
 
             {/* Image Section - Adaptive Height for Bento Grid */}
-            <div className={`relative overflow-hidden ${isFeatured ? 'h-48 md:h-56' : 'h-40'} rounded-t-2xl`}>
+            <div className={`relative overflow-hidden h-40 rounded-t-2xl`}>
                 <img
                     src={food.image}
                     alt={food.name}

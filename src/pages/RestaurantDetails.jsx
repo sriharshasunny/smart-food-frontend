@@ -291,14 +291,10 @@ const RestaurantDetails = () => {
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto grid-flow-dense px-1">
                                             {displayGroups[category].map((item, index) => {
-                                                // Bento Logic: "Premium" items (High price or High Rating) span 2 columns
-                                                // Variable sizing to create "Masonry/Bento" feel
-                                                const isPremium = item.price > 350 || item.rating >= 4.8;
-                                                const spanClass = isPremium ? "md:col-span-2 md:row-span-1" : "col-span-1";
-
+                                                // Simplified Grid: Uniform sizing for all cards
                                                 return (
-                                                    <div key={item.id} className={`${spanClass} h-full`}>
-                                                        <FoodCard food={item} isFeatured={isPremium} />
+                                                    <div key={item.id} className="col-span-1 h-full">
+                                                        <FoodCard food={item} isFeatured={false} />
                                                     </div>
                                                 );
                                             })}
