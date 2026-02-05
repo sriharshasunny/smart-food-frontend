@@ -107,10 +107,14 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             <AnimatePresence>
                                 {showPriceSlider && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                        className="absolute top-full right-0 mt-2 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 z-50 w-64 flex flex-col gap-3"
+                                        initial={{ opacity: 0, scale: 0.9, x: isSticky ? 0 : -10, y: isSticky ? 10 : 0 }}
+                                        animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.9, x: isSticky ? 0 : -10, y: isSticky ? 10 : 0 }}
+                                        className={`absolute bg-white p-4 rounded-2xl shadow-xl border border-gray-100 z-50 w-64 flex flex-col gap-3
+                                            ${isSticky
+                                                ? 'top-full right-0 mt-2' // Dropdown for sticky top bar
+                                                : 'top-0 left-full ml-4'  // Right-side popout for sidebar/list view
+                                            }`}
                                     >
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs font-bold text-gray-400">Max Price</span>
