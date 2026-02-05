@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilters, isSticky }) => {
     const [showPriceSlider, setShowPriceSlider] = React.useState(false);
+    const [sliderPos, setSliderPos] = React.useState({ top: 0, left: 0 });
+    const buttonRef = React.useRef(null);
 
 
     const toggleSubFilter = (filterKey) => {
@@ -89,11 +91,29 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         {/* Price Range Slider (Volume Style) */}
                         <div
                             className="relative flex items-center"
+                            ref={buttonRef}
                         >
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowPriceSlider(!showPriceSlider)}
+                                onClick={() => {
+                                    if (!showPriceSlider && buttonRef.current) {
+                                        const rect = buttonRef.current.getBoundingClientRect();
+                                        // Calculate position: right side for sidebar (if space permits), bottom for sticky
+                                        // Default to right side popout
+                                        let top = rect.top;
+                                        let left = rect.right + 10;
+
+                                        // Specific logic for sticky header or mobile fallback if needed
+                                        if (isSticky) {
+                                            top = rect.bottom + 10;
+                                            left = rect.right - 250; // Align right edge
+                                        }
+
+                                        setSliderPos({ top, left });
+                                    }
+                                    setShowPriceSlider(!showPriceSlider);
+                                }}
                                 className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
                                         ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.maxPrice < 1000 ? 'bg-blue-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
@@ -110,11 +130,13 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                         initial={{ opacity: 0, scale: 0.9, x: isSticky ? 0 : -10, y: isSticky ? 10 : 0 }}
                                         animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
                                         exit={{ opacity: 0, scale: 0.9, x: isSticky ? 0 : -10, y: isSticky ? 10 : 0 }}
-                                        className={`absolute bg-white p-4 rounded-2xl shadow-xl border border-gray-100 z-50 w-64 flex flex-col gap-3
-                                            ${isSticky
-                                                ? 'top-full right-0 mt-2' // Dropdown for sticky top bar
-                                                : 'top-0 left-full ml-4'  // Right-side popout for sidebar/list view
-                                            }`}
+                                        style={{
+                                            position: 'fixed',
+                                            top: sliderPos.top,
+                                            left: sliderPos.left,
+                                            zIndex: 9999
+                                        }}
+                                        className={`bg-white p-4 rounded-2xl shadow-xl border border-gray-100 flex flex-col gap-3 w-64`}
                                     >
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs font-bold text-gray-400">Max Price</span>
