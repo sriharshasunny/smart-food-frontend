@@ -85,7 +85,7 @@ const Home = () => {
         rating4Plus: false,
         rating35Plus: false,
         vegOnly: false,
-        priceLow: false,
+        maxPrice: 1000,
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState('restaurants'); // 'restaurants' | 'recs'
@@ -147,8 +147,8 @@ const Home = () => {
         if (subFilters.vegOnly) {
             dishes = dishes.filter(d => d.isVeg);
         }
-        if (subFilters.priceLow) {
-            dishes = dishes.filter(d => d.price <= 10);
+        if (subFilters.maxPrice < 1000) {
+            dishes = dishes.filter(d => d.price <= subFilters.maxPrice);
         }
         // Restaurant Filters (Separate Logic)
         if (restaurantFilters.topRated) {
