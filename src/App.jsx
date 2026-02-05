@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ShopProvider } from './context/ShopContext';
 const Chatbot = lazy(() => import('./components/Chatbot'));
 import ScrollToTop from './components/ScrollToTop';
+import SmoothScroll from './components/SmoothScroll';
 
 // Lazy Load Pages for Performance
 const Layout = lazy(() => import('./components/Layout'));
@@ -38,6 +39,7 @@ function App() {
         <ShopProvider>
           <LazyMotion features={domAnimation}>
             <Router>
+              <SmoothScroll />
               <ScrollToTop />
               <Suspense fallback={<Loading />}>
                 <Routes>
