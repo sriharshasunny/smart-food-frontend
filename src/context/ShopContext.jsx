@@ -182,7 +182,6 @@ export const ShopProvider = ({ children }) => {
     const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
     const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
-    return (
     const value = React.useMemo(() => ({
         cart,
         wishlist,
@@ -200,6 +199,5 @@ export const ShopProvider = ({ children }) => {
         <ShopContext.Provider value={value}>
             {children}
         </ShopContext.Provider>
-    );
     );
 };
