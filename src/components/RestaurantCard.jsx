@@ -14,12 +14,8 @@ const RestaurantCard = ({ restaurant }) => {
 
     return (
         <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">
-            <motion.div
-                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100"
-                whileHover={{ y: -4 }}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
+            <div
+                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100 hover:-translate-y-1 gpu-accelerated"
             >
                 {/* Image Section */}
                 <div className="relative h-32 md:h-40 overflow-hidden shrink-0">
@@ -83,7 +79,7 @@ const RestaurantCard = ({ restaurant }) => {
                         </span>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         </Link>
     );
 };

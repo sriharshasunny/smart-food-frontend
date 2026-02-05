@@ -43,7 +43,7 @@ const OffersCarousel = () => {
     const prevSlide = () => setCurrent((prev) => (prev - 1 + offers.length) % offers.length);
 
     return (
-        <div className="relative w-full h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl group">
+        <div className="relative w-full h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl group gpu-accelerated">
             <AnimatePresence mode='wait'>
                 <motion.div
                     key={current}
