@@ -100,4 +100,11 @@ body {
       background-position: 0% 50%;
     }
   }
+
+  /* Performance Utility */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 1px;
+    /* Fallback size */
+  }
 }

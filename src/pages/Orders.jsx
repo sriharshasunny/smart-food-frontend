@@ -100,7 +100,7 @@ const Orders = () => {
                         </Link>
                     </motion.div>
                 ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-6 content-visibility-auto contain-layout">
                         {orders.map((order, index) => (
                             <motion.div
                                 key={order._id}

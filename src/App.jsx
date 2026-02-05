@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ShopProvider } from './context/ShopContext';
@@ -35,35 +36,37 @@ function App() {
     <AuthProvider>
       <ThemeProvider>
         <ShopProvider>
-          <Router>
-            <ScrollToTop />
-            <Suspense fallback={<Loading />}>
-              <Routes>
-                {/* Landing Page Route (No Layout) */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Login />} />
+          <LazyMotion features={domAnimation}>
+            <Router>
+              <ScrollToTop />
+              <Suspense fallback={<Loading />}>
+                <Routes>
+                  {/* Landing Page Route (No Layout) */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Login />} />
 
-                {/* Protected App Routes (Wrapped in Layout) */}
-                <Route path="/home" element={<Layout><Home /></Layout>} />
-                <Route path="/restaurants" element={<Layout><RestaurantList /></Layout>} />
-                <Route path="/restaurant/:id" element={<Layout><RestaurantDetails /></Layout>} />
-                <Route path="/recommendations" element={<Layout><Recommendations /></Layout>} />
-                <Route path="/cart" element={<Layout><Cart /></Layout>} />
-                <Route path="/wishlist" element={<Layout><Wishlist /></Layout>} />
-                <Route path="/orders" element={<Layout><Orders /></Layout>} />
-                {/* Alias for Orders */}
-                <Route path="/history" element={<Layout><Orders /></Layout>} />
-                <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="/settings" element={<Layout><Settings /></Layout>} />
-                <Route path="/profile" element={<Layout><Profile /></Layout>} />
-                <Route path="/orders/:orderId/invoice" element={<Invoice />} />
-              </Routes>
-            </Suspense>
-            <Suspense fallback={null}>
-              <Chatbot />
-            </Suspense>
-          </Router>
+                  {/* Protected App Routes (Wrapped in Layout) */}
+                  <Route path="/home" element={<Layout><Home /></Layout>} />
+                  <Route path="/restaurants" element={<Layout><RestaurantList /></Layout>} />
+                  <Route path="/restaurant/:id" element={<Layout><RestaurantDetails /></Layout>} />
+                  <Route path="/recommendations" element={<Layout><Recommendations /></Layout>} />
+                  <Route path="/cart" element={<Layout><Cart /></Layout>} />
+                  <Route path="/wishlist" element={<Layout><Wishlist /></Layout>} />
+                  <Route path="/orders" element={<Layout><Orders /></Layout>} />
+                  {/* Alias for Orders */}
+                  <Route path="/history" element={<Layout><Orders /></Layout>} />
+                  <Route path="/payment-success" element={<PaymentSuccess />} />
+                  <Route path="/settings" element={<Layout><Settings /></Layout>} />
+                  <Route path="/profile" element={<Layout><Profile /></Layout>} />
+                  <Route path="/orders/:orderId/invoice" element={<Invoice />} />
+                </Routes>
+              </Suspense>
+              <Suspense fallback={null}>
+                <Chatbot />
+              </Suspense>
+            </Router>
+          </LazyMotion>
         </ShopProvider>
       </ThemeProvider>
     </AuthProvider>

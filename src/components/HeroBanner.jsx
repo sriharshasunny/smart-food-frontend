@@ -62,7 +62,9 @@ const HeroParticles = () => {
         });
 
         const initParticles = () => {
-            particles = Array.from({ length: 50 }, createParticle);
+            const isMobile = window.innerWidth < 768; // Mobile detection
+            const particleCount = isMobile ? 15 : 50; // Reduced count for mobile
+            particles = Array.from({ length: particleCount }, createParticle);
         };
 
         const animate = () => {

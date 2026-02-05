@@ -72,7 +72,7 @@ const Wishlist = () => {
                         initial="hidden"
                         animate="visible"
                         exit="hidden"
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 content-visibility-auto contain-layout"
                     >
                         {foodItems.map((item) => (
                             <motion.div key={item.id} variants={itemVariants} layout>
