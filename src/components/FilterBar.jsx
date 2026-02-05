@@ -41,20 +41,6 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         }
                     `}>
 
-                        {/* Clear Button */}
-                        {(subFilters.rating45Plus || subFilters.vegOnly || subFilters.maxPrice < 1000) && (
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                onClick={() => setSubFilters({ rating45Plus: false, rating4Plus: false, rating35Plus: false, vegOnly: false, maxPrice: 1000 })}
-                                className={`text-[10px] text-red-500 font-bold hover:underline flex items-center gap-1 ${isSticky ? 'order-last bg-white px-2 py-1 rounded-full border border-red-100 shadow-sm whitespace-nowrap' : 'mb-1 order-first md:order-none'}`}
-                            >
-                                {isSticky ? <span className="text-red-600 font-extrabold">&times;</span> : <span>Clear All &times;</span>}
-                            </motion.button>
-                        )}
-
                         {/* Top Rated */}
                         <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -62,7 +48,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             onClick={() => toggleSubFilter('rating45Plus')}
                             className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
-                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.rating45Plus ? 'bg-orange-500 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-200 hover:shadow-sm'}`
+                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.rating45Plus ? 'bg-orange-500 text-white shadow-md border-transparent' : 'bg-white text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
                                     : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.rating45Plus ? 'bg-gray-900 border-gray-900 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
                                 }`}
                         >
@@ -77,7 +63,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                             onClick={() => toggleSubFilter('vegOnly')}
                             className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
-                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.vegOnly ? 'bg-green-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-200 hover:shadow-sm'}`
+                                    ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.vegOnly ? 'bg-green-600 text-white shadow-md border-transparent' : 'bg-white text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
                                     : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.vegOnly ? 'bg-green-600 border-green-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
                                 }`}
                         >
@@ -93,12 +79,25 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                 onClick={() => setShowPriceSlider(!showPriceSlider)}
                                 className={`flex items-center gap-1.5 transition-all border w-max flex-shrink-0 relative overflow-hidden active:scale-95 duration-200
                                 ${isSticky
-                                        ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.maxPrice < 1000 ? 'bg-blue-600 text-white shadow-md border-transparent' : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-200 hover:shadow-sm'}`
-                                        : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.maxPrice < 1000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
+                                        ? `h-9 px-4 rounded-full text-[11px] font-bold tracking-wide ${subFilters.maxPrice < 1000 ? 'bg-blue-600 text-white shadow-md border-transparent pr-2' : 'bg-white text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'}`
+                                        : `px-3 py-1 rounded-full text-[11px] font-bold ${subFilters.maxPrice < 1000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm pr-2' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`
                                     }`}
                             >
                                 <span className="text-sm">💰</span>
                                 {subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}
+
+                                {/* Toggle Clear Icon (X) for Budget */}
+                                {subFilters.maxPrice < 1000 && (
+                                    <span
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent opening slider
+                                            setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); // Reset
+                                        }}
+                                        className="ml-1 p-0.5 rounded-full hover:bg-white/20 transition-colors"
+                                    >
+                                        &times;
+                                    </span>
+                                )}
                             </motion.button>
 
                             <AnimatePresence>
