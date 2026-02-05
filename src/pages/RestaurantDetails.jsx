@@ -276,7 +276,7 @@ const RestaurantDetails = () => {
                                     <motion.div
                                         key={category}
                                         id={category}
-                                        className="scroll-mt-32"
+                                        className="scroll-mt-32 content-visibility-auto contain-layout"
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.3 }}

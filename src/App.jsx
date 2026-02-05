@@ -3,7 +3,7 @@ import { Suspense, lazy } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ShopProvider } from './context/ShopContext';
-import Chatbot from './components/Chatbot';
+const Chatbot = lazy(() => import('./components/Chatbot'));
 import ScrollToTop from './components/ScrollToTop';
 
 // Lazy Load Pages for Performance
@@ -60,7 +60,9 @@ function App() {
                 <Route path="/orders/:orderId/invoice" element={<Invoice />} />
               </Routes>
             </Suspense>
-            <Chatbot />
+            <Suspense fallback={null}>
+              <Chatbot />
+            </Suspense>
           </Router>
         </ShopProvider>
       </ThemeProvider>

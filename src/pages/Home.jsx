@@ -369,7 +369,7 @@ const Home = () => {
                 </div>
 
                 {/* 2. Popular Food Items Section (Bottom) */}
-                <section className="min-h-[500px]">
+                <section className="min-h-[500px] content-visibility-auto contain-layout">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
                         {filteredData.dishes.length > 0 ? (
