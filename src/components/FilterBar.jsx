@@ -89,8 +89,6 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         {/* Price Range Slider (Volume Style) */}
                         <div
                             className="relative flex items-center"
-                            onMouseEnter={() => setShowPriceSlider(true)}
-                            onMouseLeave={() => setShowPriceSlider(false)}
                         >
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
@@ -112,7 +110,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                         initial={{ opacity: 0, y: 10, scale: 0.9 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                        className="absolute top-full right-0 md:left-0 mt-2 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 z-50 w-64 flex flex-col gap-3"
+                                        className="absolute top-full right-0 mt-2 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 z-50 w-64 flex flex-col gap-3"
                                     >
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs font-bold text-gray-400">Max Price</span>
@@ -122,17 +120,18 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                                         <div className="relative w-full h-6 flex items-center">
                                             <input
                                                 type="range"
-                                                min="0"
+                                                min="100"
                                                 max="1000"
                                                 step="50"
                                                 value={subFilters.maxPrice || 1000}
                                                 onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                                onMouseUp={() => setTimeout(() => setShowPriceSlider(false), 800)}
                                                 className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500 transition-all"
                                             />
                                         </div>
 
                                         <div className="flex justify-between text-[10px] text-gray-400 font-medium px-0.5">
-                                            <span>₹0</span>
+                                            <span>₹100</span>
                                             <span>₹500</span>
                                             <span>₹1000</span>
                                         </div>
