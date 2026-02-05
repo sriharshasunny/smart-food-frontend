@@ -466,8 +466,18 @@ const LandingPage = () => {
                     ctx.beginPath(); ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2); ctx.fill();
                 });
 
+                // 0. SMOOTH INPUT (Lerp) - Improved Responsiveness for Parallax
+                // factor 0.1 gives a nice weight/delay to the movement
+                mouse.x += (targetMouse.x - mouse.x) * 0.1;
+                mouse.y += (targetMouse.y - mouse.y) * 0.1;
+
+                // 1. UPDATE PHYSICS (Safeguarded)
+                coreTimer += dt;
+
+                // ... (existing core updates)
+
                 // Stars
-                // Mobile: 3D Radial Warp | Desktop: Vertical Scroll
+                // Mobile: 3D Radial Warp | Desktop: Vertical Scroll with Parallax
                 ctx.fillStyle = "white";
                 stars.forEach(s => {
                     if (isMobile) {
@@ -485,31 +495,45 @@ const LandingPage = () => {
                         if (s.x < 0 || s.x > width || s.y < 0 || s.y > height) {
                             s.x = Math.random() * width;
                             s.y = Math.random() * height;
-                            // Avoid center spawn to prevent "pop-in"
                             if (Math.hypot(s.x - centerX, s.y - centerY) < 50) s.x += 100;
                         }
                     } else {
-                        // Vertical Scroll (Desktop)
-                        s.y += s.speed * dt;
-                        if (s.y > height) { s.y = -10; s.x = Math.random() * width; }
-                    }
+                        // Vertical Scroll (Desktop) with ENHANCED PARALLAX
+                        // Depth factor: Closer stars (high z) move faster with mouse
+                        const parallaxX = mouse.x * 120 * s.z; // Stronger parallax
+                        const parallaxY = mouse.y * 120 * s.z;
 
-                    const opacity = s.baseOpacity + Math.sin(timestamp * 0.005 + s.phase) * 0.2;
-                    if (opacity > 0.05) {
-                        ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
-                        ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+                        s.y += s.speed * dt * s.z * 0.5; // Speed based on depth
+
+                        let renderX = s.x + parallaxX;
+                        let renderY = s.y + parallaxY;
+
+                        // Wrap around logic need to use base coordinates
+                        if (s.y > height) { s.y = -50; s.x = Math.random() * width; }
+
+                        // Render
+                        const opacity = s.baseOpacity + Math.sin(timestamp * 0.005 + s.phase) * 0.2;
+                        if (opacity > 0.05) {
+                            ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+                            ctx.beginPath();
+                            // Size also affected by depth even more
+                            const pSize = s.size * s.z * 0.8;
+                            ctx.arc(renderX % width, renderY % height, pSize, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                     }
                 });
                 ctx.globalAlpha = 1;
 
-                // Dust
+                // Dust with ENHANCED DEPTH
                 ctx.fillStyle = "rgba(200, 200, 255, 0.4)";
                 dust.forEach(d => {
-                    const px = d.x + (mouse.x * 50 * d.depth);
-                    const py = d.y + (mouse.y * 50 * d.depth);
+                    const px = d.x + (mouse.x * 150 * d.depth); // Increased multiplier
+                    const py = d.y + (mouse.y * 150 * d.depth);
                     const wx = (px % width + width) % width;
                     const wy = (py % height + height) % height;
-                    ctx.beginPath(); ctx.arc(wx, wy, d.size, 0, Math.PI * 2); ctx.fill();
+                    const size = d.size * d.depth; // Scale size by depth
+                    ctx.beginPath(); ctx.arc(wx, wy, size, 0, Math.PI * 2); ctx.fill();
                 });
 
                 // Shooting Stars

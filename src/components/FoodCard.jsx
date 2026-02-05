@@ -133,10 +133,10 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
 
     // Vertical layout (original - for home page grid)
     return (
-        <div className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-500 overflow-hidden group border border-gray-100 hover:border-orange-100 flex flex-col h-full transform hover:-translate-y-1 relative">
+        <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-orange-100 flex flex-col h-full transform hover:-translate-y-1 relative">
 
             {/* Image Section - Adaptive Height for Bento Grid */}
-            <div className={`relative overflow-hidden rounded-t-[1.5rem] ${isFeatured ? 'h-52 md:h-60' : 'h-44'}`}>
+            <div className={`relative overflow-hidden ${isFeatured ? 'h-48 md:h-56' : 'h-40'} rounded-t-2xl`}>
                 <img
                     src={food.image}
                     alt={food.name}
@@ -157,14 +157,14 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                 )}
 
                 {/* Compact Rating Badge */}
-                <div className="absolute bottom-2 left-2 flex items-center gap-0.5 bg-black/60 px-1.5 py-0.5 rounded-lg border border-white/20 shadow-sm transition-colors">
-                    <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                    <span className="text-[9px] font-bold text-white leading-none">{food.rating}</span>
+                <div className="absolute bottom-2 left-2 flex items-center gap-0.5 bg-black/60 px-2 py-1 rounded-lg border border-white/20 shadow-sm transition-colors backdrop-blur-md">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    <span className="text-[10px] font-bold text-white leading-none">{food.rating}</span>
                 </div>
 
                 {/* Compact Time Badge */}
-                <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-black/60 px-1.5 py-0.5 rounded-lg border border-white/10 text-white text-[9px] font-bold shadow-sm">
-                    <Clock className="w-2.5 h-2.5" />
+                <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-black/60 px-2 py-1 rounded-lg border border-white/10 text-white text-[10px] font-bold shadow-sm backdrop-blur-md">
+                    <Clock className="w-3 h-3" />
                     {food.time || '25'}m
                 </div>
 
@@ -174,29 +174,33 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                         e.stopPropagation();
                         toggleWishlist(food);
                     }}
-                    className={`absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
+                    className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 shadow-sm border border-white/20 backdrop-blur-md ${isWishlisted
                         ? 'bg-red-500/90 text-white'
-                        : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
+                        : 'bg-white/20 text-white hover:bg-white hover:text-red-500'
                         }`}
                 >
-                    <Heart className={`w-3 h-3 ${isWishlisted ? 'fill-current' : ''}`} />
+                    <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
             </div>
 
             {/* Content - Compact Padding */}
-            <div className="p-3.5 flex flex-col flex-grow bg-white relative z-10">
+            <div className="p-4 flex flex-col flex-grow bg-white relative z-10">
+                <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-bold text-base text-gray-900 leading-tight group-hover:text-orange-600 transition-colors line-clamp-1">
+                        {food.name}
+                    </h3>
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${food.isVeg ? 'border-green-600' : 'border-red-600'}`}>
+                        <div className={`w-2 h-2 rounded-full ${food.isVeg ? 'bg-green-600' : 'bg-red-600'}`}></div>
+                    </div>
+                </div>
 
-                <h3 className="font-bold text-[15px] text-gray-900 leading-tight group-hover:text-orange-600 transition-colors line-clamp-1 mb-1">
-                    {food.name}
-                </h3>
-
-                <p className="text-gray-400 text-[10px] font-medium mb-3 line-clamp-2 leading-relaxed">
+                <p className="text-gray-500 text-[11px] font-medium mb-3 line-clamp-2 leading-relaxed">
                     {food.description}
                 </p>
 
-                <div className="mt-auto flex items-center justify-between gap-2 pt-2 border-t border-gray-50/50">
+                <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-gray-50">
                     <div className="flex flex-col leading-none">
-                        <span className="text-[9px] text-gray-400 font-bold line-through ml-0.5">₹{(food.price * 1.2).toFixed(0)}</span>
+                        <span className="text-[10px] text-gray-400 font-bold line-through ml-0.5">₹{(food.price * 1.2).toFixed(0)}</span>
                         <span className="font-black text-lg text-gray-900 tracking-tight">₹{food.price}</span>
                     </div>
 
@@ -205,10 +209,10 @@ const FoodCard = ({ food, restaurantName, variant = 'vertical', isFeatured = fal
                             e.stopPropagation();
                             addToCart(food);
                         }}
-                        className="bg-gray-50 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white text-gray-700 font-bold py-1.5 px-4 rounded-lg transition-all duration-300 flex items-center gap-1 group/btn shadow-sm hover:shadow-orange-200 hover:shadow-md active:scale-95 border border-gray-100 hover:border-transparent text-xs"
+                        className="bg-white hover:bg-orange-50 text-orange-600 hover:text-orange-700 font-bold py-2 px-4 rounded-xl transition-all duration-300 flex items-center gap-1.5 group/btn shadow-sm hover:shadow-md border border-orange-100 active:scale-95 text-xs uppercase tracking-wide"
                     >
                         ADD
-                        <Plus className="w-3 h-3 transition-transform group-hover/btn:rotate-90" />
+                        <Plus className="w-3.5 h-3.5 transition-transform group-hover/btn:rotate-90" />
                     </button>
                 </div>
             </div>
