@@ -107,4 +107,19 @@ body {
     contain-intrinsic-size: 1px 1px;
     /* Fallback size */
   }
+
+  /* GPU Acceleration & Smoothness */
+  .gpu-accelerated {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Font Rendering */
+  .optimize-legibility {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
