@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "open:admin": "start http://localhost:5173/admin-portal/"
+    "open:admin": "start http://localhost:5173/admin.html",
+    "open:restaurant": "start http://localhost:5173/restaurant.html"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
