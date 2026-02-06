@@ -57,7 +57,12 @@ const Home = () => {
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             filteredDishes = filteredDishes.filter(d => (d.name?.toLowerCase() || '').includes(query) || (d.category?.toLowerCase() || '').includes(query));
-            filteredRestaurants = filteredRestaurants.filter(r => (r.name?.toLowerCase() || '').includes(query) || (r.cuisine?.toLowerCase() || '').includes(query));
+            filteredRestaurants = filteredRestaurants.filter(r => {
+                const nameMatch = (r.name?.toLowerCase() || '').includes(query);
+                const cuisineStr = Array.isArray(r.cuisine) ? r.cuisine.join(' ') : (r.cuisine || '');
+                const cuisineMatch = cuisineStr.toLowerCase().includes(query);
+                return nameMatch || cuisineMatch;
+            });
         }
 
         // 2. Category Filter (Biryani, Sushi, etc) - ONLY FOR DISHES
@@ -87,10 +92,11 @@ const Home = () => {
         }
         if (restaurantFilters.veg) {
             // Check cuisine or tags if available
-            filteredRestaurants = filteredRestaurants.filter(r =>
-                (r.cuisine && r.cuisine.toLowerCase().includes('veg')) ||
-                (r.tags && (r.tags.includes('Vegetarian') || r.tags.includes('Pure Veg')))
-            );
+            filteredRestaurants = filteredRestaurants.filter(r => {
+                const cuisineStr = Array.isArray(r.cuisine) ? r.cuisine.join(' ') : (r.cuisine || '');
+                return cuisineStr.toLowerCase().includes('veg') ||
+                    (r.tags && (r.tags.includes('Vegetarian') || r.tags.includes('Pure Veg')));
+            });
         }
         if (restaurantFilters.fastDelivery) {
             // Prioritize reliable check
