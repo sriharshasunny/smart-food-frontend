@@ -46,7 +46,65 @@ const Home = () => {
         fetchData();
     }, []);
 
-    // ... (Geolocation logic remains same) ...
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeCategory, setActiveCategory] = useState('All');
+    const [subFilters, setSubFilters] = useState({
+        rating45Plus: false,
+        rating4Plus: false,
+        rating35Plus: false,
+        vegOnly: false,
+        maxPrice: 1000
+    });
+    const [restaurantFilters, setRestaurantFilters] = useState({
+        topRated: false,
+        veg: false,
+        fastDelivery: false
+    });
+    const [viewMode, setViewMode] = useState('restaurants'); // 'restaurants' | 'recs'
+    const [isSticky, setIsSticky] = useState(false);
+    const filterRef = React.useRef(null);
+    const sectionHeaderRef = React.useRef(null); // Track the "Explore Food Items" text
+
+    // --- Geolocation State ---
+    const [locationName, setLocationName] = useState("Detecting...");
+    const [loadingLocation, setLoadingLocation] = useState(false);
+
+    // --- Geolocation Logic ---
+    const detectLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationName("Not Supported");
+            return;
+        }
+
+        setLoadingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    // Reverse Geocoding (using a free API or mock)
+                    // For demo, we'll use a mock response based on coords or just "Current Location"
+                    // In real app -> fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`)
+
+                    // Simulating API delay
+                    await new Promise(r => setTimeout(r, 1000));
+                    setLocationName("Indiranagar, BLR"); // Mock result
+                } catch (error) {
+                    setLocationName("Unknown Location");
+                } finally {
+                    setLoadingLocation(false);
+                }
+            },
+            () => {
+                setLocationName("Permission Denied");
+                setLoadingLocation(false);
+            }
+        );
+    };
+
+    // Auto-detect on mount
+    React.useEffect(() => {
+        detectLocation();
+    }, []);
 
     // --- Filtering Logic ---
     const filteredData = useMemo(() => {
