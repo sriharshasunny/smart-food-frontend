@@ -42,7 +42,7 @@ const AdminRestaurantPanel = () => {
             }
         } catch (error) {
             console.error(error);
-            alert("Error creating restaurant");
+            alert(`Error creating restaurant: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
