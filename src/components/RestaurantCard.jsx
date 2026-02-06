@@ -10,7 +10,7 @@ const RestaurantCard = ({ restaurant }) => {
     const { isInWishlist, toggleWishlist } = useShop();
     const isWishlisted = isInWishlist(id);
 
-    const cuisineText = cuisine || (categories ? categories.join(', ') : "Restaurant");
+    const cuisineText = Array.isArray(cuisine) ? cuisine.join(', ') : (cuisine || (Array.isArray(categories) ? categories.join(', ') : "Restaurant"));
 
     return (
         <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">

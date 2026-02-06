@@ -123,7 +123,9 @@ const AdminRestaurantPanel = () => {
                                 <input
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium outline-none"
                                     value={formData.cuisine} onChange={e => setFormData({ ...formData, cuisine: e.target.value })} required
+                                    placeholder="e.g. Indian, Chinese"
                                 />
+                                <p className="text-[10px] text-gray-400 mt-1 font-medium">Separate with commas</p>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Address</label>
