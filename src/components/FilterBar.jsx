@@ -35,6 +35,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                 <div className={`transition-all duration-300 ease-in-out flex-shrink-0 ${isSticky ? 'w-auto flex items-center' : 'w-full md:w-auto'}`}>
                     <div className={`
                         transition-all duration-200
+                        ${isSticky
                             ? 'flex flex-row items-center gap-2 h-full'
                             : 'flex flex-row gap-2 overflow-x-auto md:overflow-visible hide-scrollbar px-4 md:px-2 py-2 items-center w-full md:w-auto'
                         }
