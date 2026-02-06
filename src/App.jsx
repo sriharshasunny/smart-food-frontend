@@ -69,9 +69,6 @@ function App() {
                   {/* Restaurant Partner Routes */}
                   <Route path="/restaurant/login" element={<RestaurantLogin />} />
                   <Route path="/restaurant/dashboard" element={<RestaurantDashboard />} />
-
-                  {/* Admin Route */}
-                  <Route path="/admin/portal" element={<AdminRestaurantPanel />} />
                 </Routes>
               </Suspense>
               <Suspense fallback={null}>
