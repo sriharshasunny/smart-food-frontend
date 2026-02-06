@@ -19,7 +19,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                     : 'relative w-full bg-transparent'
                 }`}
         >
-            <div className={`w-full h-full ${isSticky ? 'w-full px-4 flex items-center justify-between gap-4' : 'flex flex-col md:flex-row gap-6 h-full'}`}>
+            <div className={`w-full ${isSticky ? 'w-full px-4 flex items-center justify-between gap-4 h-full' : 'flex flex-col md:flex-row gap-2 h-auto py-1'}`}>
 
                 {/* 1. Categories */}
                 <div className={`w-full ${isSticky ? 'flex-1 overflow-hidden h-full flex items-center origin-left' : 'md:flex-1'} min-w-0 transition-all duration-300`}>
@@ -35,9 +35,8 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                 <div className={`transition-all duration-300 ease-in-out flex-shrink-0 ${isSticky ? 'w-auto h-full flex items-center' : 'w-auto'}`}>
                     <div className={`
                         transition-all duration-200
-                        ${isSticky
                             ? 'flex flex-row items-center gap-2 h-full'
-                            : 'flex flex-row gap-2 overflow-x-auto md:overflow-visible hide-scrollbar pl-0 md:pl-2 py-1 items-center w-full md:w-auto'
+                            : 'flex flex-row gap-2 overflow-x-auto md:overflow-visible hide-scrollbar px-4 md:px-2 py-2 items-center w-full md:w-auto'
                         }
                     `}>
 
