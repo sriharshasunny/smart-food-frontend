@@ -26,6 +26,7 @@ const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const Invoice = lazy(() => import('./pages/Invoice'));
 const RestaurantLogin = lazy(() => import('./pages/RestaurantLogin'));
 const RestaurantDashboard = lazy(() => import('./pages/RestaurantDashboard'));
+const AppAdmin = lazy(() => import('./admin/AppAdmin'));
 const AdminRestaurantPanel = lazy(() => import('./pages/AdminRestaurantPanel'));
 
 // Simple Loading Spinner
@@ -68,7 +69,8 @@ function App() {
 
                   {/* Restaurant Partner Routes */}
                   <Route path="/restaurant/login" element={<RestaurantLogin />} />
-                  <Route path="/restaurant/dashboard" element={<RestaurantDashboard />} />
+                  {/* Admin Route - Hidden from Navigation */}
+                  <Route path="/admin/portal" element={<AppAdmin />} />
                 </Routes>
               </Suspense>
               <Suspense fallback={null}>
