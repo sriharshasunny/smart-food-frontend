@@ -9,9 +9,33 @@ import { mockRestaurants, mockDishes, categories } from '../data/mockData';
 import { Search, MapPin, ChevronRight, Sparkles } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 
+import { API_URL } from '../config';  // Import Config
+
 const Home = () => {
     const { addToCart } = useShop();
     const navigate = useNavigate();
+
+    // Data State
+    const [dishes, setDishes] = useState([]);
+    const [loadingData, setLoadingData] = useState(true);
+
+    // Fetch Real Data
+    React.useEffect(() => {
+        const fetchFoods = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/food/all`);
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    setDishes(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch foods", err);
+            } finally {
+                setLoadingData(false);
+            }
+        };
+        fetchFoods();
+    }, []);
 
     // Geolocation State
     const [locationName, setLocationName] = useState('Sunnyvale, CA');
@@ -95,37 +119,37 @@ const Home = () => {
 
     // --- Filtering Logic ---
     const filteredData = useMemo(() => {
-        let dishes = mockDishes;
+        let filteredDishes = dishes; // Use State instead of Mock
         let restaurants = mockRestaurants;
 
         // 1. Search Query
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            dishes = dishes.filter(d => (d.name?.toLowerCase() || '').includes(query) || (d.category?.toLowerCase() || '').includes(query));
+            filteredDishes = filteredDishes.filter(d => (d.name?.toLowerCase() || '').includes(query) || (d.category?.toLowerCase() || '').includes(query));
             restaurants = restaurants.filter(r => (r.name?.toLowerCase() || '').includes(query) || (r.cuisine?.toLowerCase() || '').includes(query));
         }
 
         // 2. Category Filter (Biryani, Sushi, etc) - ONLY FOR DISHES
         if (activeCategory !== 'All') {
-            dishes = dishes.filter(d => d.category === activeCategory || d.name.includes(activeCategory));
+            filteredDishes = filteredDishes.filter(d => d.category === activeCategory || d.name.includes(activeCategory));
             // restaurants NOT filtered by activeCategory anymore
         }
 
         // 3. Sub Filters (applies to FOOD/DISHES)
         if (subFilters.rating45Plus) {
-            dishes = dishes.filter(d => d.rating >= 4.5);
+            filteredDishes = filteredDishes.filter(d => d.rating >= 4.5);
         }
         if (subFilters.rating4Plus) {
-            dishes = dishes.filter(d => d.rating >= 4.0);
+            filteredDishes = filteredDishes.filter(d => d.rating >= 4.0);
         }
         if (subFilters.rating35Plus) {
-            dishes = dishes.filter(d => d.rating >= 3.5);
+            filteredDishes = filteredDishes.filter(d => d.rating >= 3.5);
         }
         if (subFilters.vegOnly) {
-            dishes = dishes.filter(d => d.isVeg);
+            filteredDishes = filteredDishes.filter(d => d.isVeg);
         }
         if (subFilters.maxPrice < 1000) {
-            dishes = dishes.filter(d => d.price <= subFilters.maxPrice);
+            filteredDishes = filteredDishes.filter(d => d.price <= subFilters.maxPrice);
         }
         // Restaurant Filters (Separate Logic)
         if (restaurantFilters.topRated) {
@@ -138,8 +162,8 @@ const Home = () => {
             restaurants = restaurants.filter(r => parseInt(r.deliveryTime) <= 30);
         }
 
-        return { dishes, restaurants };
-    }, [searchQuery, activeCategory, subFilters, restaurantFilters]);
+        return { dishes: filteredDishes, restaurants };
+    }, [searchQuery, activeCategory, subFilters, restaurantFilters, dishes]);
 
     // Location Widget Logic within Render
     const locationWidget = (

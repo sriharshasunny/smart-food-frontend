@@ -24,6 +24,9 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Orders = lazy(() => import('./pages/Orders'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const Invoice = lazy(() => import('./pages/Invoice'));
+const RestaurantLogin = lazy(() => import('./pages/RestaurantLogin'));
+const RestaurantDashboard = lazy(() => import('./pages/RestaurantDashboard'));
+const AdminRestaurantPanel = lazy(() => import('./pages/AdminRestaurantPanel'));
 
 // Simple Loading Spinner
 const Loading = () => (
@@ -62,6 +65,13 @@ function App() {
                   <Route path="/settings" element={<Layout><Settings /></Layout>} />
                   <Route path="/profile" element={<Layout><Profile /></Layout>} />
                   <Route path="/orders/:orderId/invoice" element={<Invoice />} />
+
+                  {/* Restaurant Partner Routes */}
+                  <Route path="/restaurant/login" element={<RestaurantLogin />} />
+                  <Route path="/restaurant/dashboard" element={<RestaurantDashboard />} />
+
+                  {/* Admin Route */}
+                  <Route path="/admin/portal" element={<AdminRestaurantPanel />} />
                 </Routes>
               </Suspense>
               <Suspense fallback={null}>
