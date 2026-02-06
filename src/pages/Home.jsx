@@ -297,12 +297,14 @@ const Home = () => {
                     <ErrorBoundary key="food-grid">
                         {filteredData.dishes.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 gap-y-10">
-                                {filteredData.dishes.map((dish) => {
-                                    restaurantName = { dish.restaurantName }
-                                    onAdd = { handleAddToCart }
-                                        />
-                                    );
-                                })}
+                                {filteredData.dishes.map((dish) => (
+                                    <FoodCard
+                                        key={dish.id}
+                                        food={dish}
+                                        restaurantName={dish.restaurantName}
+                                        onAdd={handleAddToCart}
+                                    />
+                                ))}
                             </div>
                         ) : (
                             <div className="text-center py-24 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
