@@ -106,6 +106,24 @@ const Home = () => {
         detectLocation();
     }, []);
 
+    // --- Sticky Scroll Logic ---
+    React.useEffect(() => {
+        const handleScroll = () => {
+            if (filterRef.current) {
+                const rect = filterRef.current.getBoundingClientRect();
+                // If the top of the filter container hits the top offset (64px for navbar), it's sticky
+                // Adjust threshold as needed. 
+                // Since 'sticky' CSS handles the positioning, we just need to know WHEN it sticks to change style.
+                // A better way for "sticky" detection is IntersectionObserver with a sentinel, 
+                // but checking rect.top <= 65 (navbar height + 1) is a simple proxy for "is it stuck?"
+                setIsSticky(rect.top <= 65);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     // --- Filtering Logic ---
     const filteredData = useMemo(() => {
         let filteredDishes = dishes;
@@ -342,9 +360,9 @@ const Home = () => {
                     <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
 
-                {/* Instance 1: Native Sticky Filter Bar */}
-                <div ref={filterRef} className="w-full z-30 bg-gray-50/95 backdrop-blur-sm relative sticky top-[64px] transition-all duration-300">
-                    <div className="py-2">
+                {/* Instance 1: Native Sticky Filter Bar using CSS sticky */}
+                <div ref={filterRef} className={`w-full z-30 transition-all duration-300 sticky top-[64px] ${isSticky ? 'bg-white/95 backdrop-blur-md shadow-sm py-0' : 'bg-transparent py-2'}`}>
+                    <div className={`${isSticky ? 'py-1' : 'py-0'}`}>
                         <FilterBar
                             activeCategory={activeCategory}
                             setActiveCategory={setActiveCategory}
