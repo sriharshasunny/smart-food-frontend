@@ -16,10 +16,10 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
             className={`transition-all duration-300 ease-out z-20
             ${isSticky
                     ? 'w-full h-[60px] flex items-center justify-between'
-                    : 'relative w-full bg-transparent flex flex-col gap-6'
+                    : 'relative w-full bg-transparent'
                 }`}
         >
-            <div className={`w-full ${isSticky ? 'flex items-center justify-between gap-4 px-2' : 'flex flex-col gap-4'}`}>
+            <div className={`w-full ${isSticky ? 'flex items-center justify-between gap-4 px-2' : 'flex flex-col md:flex-row items-center gap-4 md:gap-6'}`}>
 
                 {/* 1. Categories */}
                 <div className={`w-full ${isSticky ? 'flex-1 overflow-hidden h-full flex items-center origin-left' : 'md:flex-1'} min-w-0 transition-all duration-300`}>
