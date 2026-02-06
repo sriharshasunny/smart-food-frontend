@@ -15,11 +15,11 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
         <div
             className={`transition-all duration-300 ease-out z-20
             ${isSticky
-                    ? 'w-full h-[67px] flex items-center bg-white shadow-md border-b border-gray-100 fixed top-0 left-0'
-                    : 'relative w-full bg-transparent'
+                    ? 'w-full h-[60px] flex items-center justify-between'
+                    : 'relative w-full bg-transparent flex flex-col gap-6'
                 }`}
         >
-            <div className={`w-full ${isSticky ? 'w-full px-4 flex items-center justify-between gap-4 h-full' : 'flex flex-col md:flex-row gap-2 h-auto py-1'}`}>
+            <div className={`w-full ${isSticky ? 'flex items-center justify-between gap-4 px-2' : 'flex flex-col gap-4'}`}>
 
                 {/* 1. Categories */}
                 <div className={`w-full ${isSticky ? 'flex-1 overflow-hidden h-full flex items-center origin-left' : 'md:flex-1'} min-w-0 transition-all duration-300`}>
@@ -32,7 +32,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                 </div>
 
                 {/* 2. Secondary Filters */}
-                <div className={`transition-all duration-300 ease-in-out flex-shrink-0 ${isSticky ? 'w-auto h-full flex items-center' : 'w-auto'}`}>
+                <div className={`transition-all duration-300 ease-in-out flex-shrink-0 ${isSticky ? 'w-auto flex items-center' : 'w-full md:w-auto'}`}>
                     <div className={`
                         transition-all duration-200
                             ? 'flex flex-row items-center gap-2 h-full'
