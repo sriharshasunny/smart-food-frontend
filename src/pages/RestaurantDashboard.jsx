@@ -98,6 +98,23 @@ const RestaurantDashboard = () => {
         }
     };
 
+    const handleToggleStock = async (id, currentStatus) => {
+        const newStatus = !currentStatus;
+        // Optimistic
+        setFoods(prev => prev.map(f => f.id === id ? { ...f, available: newStatus } : f));
+
+        try {
+            await fetch(`${API_URL}/api/food/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ available: newStatus })
+            });
+        } catch (error) {
+            console.error(error);
+            fetchDashboardData(restaurant._id || restaurant.id); // Revert
+        }
+    };
+
     if (!restaurant) return null;
 
     return (
@@ -219,8 +236,19 @@ const RestaurantDashboard = () => {
                                                 </div>
                                                 <p className="text-xs text-gray-500 font-medium line-clamp-1 mt-0.5">{food.category} • {food.is_veg ? 'Veg' : 'Non-Veg'}</p>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-end justify-between gap-2 mt-4">
                                                 <span className="font-black text-lg text-gray-900">₹{food.price}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleToggleStock(food.id, food.available)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${food.available
+                                                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                            }`}
+                                                    >
+                                                        {food.available ? 'In Stock' : 'Out of Stock'}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

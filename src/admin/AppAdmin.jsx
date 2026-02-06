@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
 import AdminRestaurantPanel from '../pages/AdminRestaurantPanel';
 import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
 
@@ -82,9 +83,11 @@ const AppAdmin = () => {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen">
-            <AdminRestaurantPanel />
-        </div>
+        <Router>
+            <div className="bg-gray-50 min-h-screen">
+                <AdminRestaurantPanel />
+            </div>
+        </Router>
     );
 };
 
