@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
 import { ShieldCheck, PlusCircle, CheckCircle, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
