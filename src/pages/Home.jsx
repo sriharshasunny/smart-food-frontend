@@ -93,29 +93,6 @@ const Home = () => {
     const filterRef = React.useRef(null);
     const sectionHeaderRef = React.useRef(null); // Track the "Explore Food Items" text
 
-    // Filter Bar Sticky Observer - Optimized with IntersectionObserver (Zero Layout Thrashing)
-    React.useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                // When sentinel scrolls out of view (isIntersecting false) & bounding box is above top (negative top), stick it.
-                // However, simpler: if sentinel is NOT intersecting and its bounding rect is near top.
-                // Actually, let's just track if the sentinel is visible.
-                // We want sticky to be active when the static filter bar is scrolled PAST.
-                // So we place a sentinel right AFTER the static bar.
-                setIsSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
-            },
-            { threshold: 0, rootMargin: "-80px 0px 0px 0px" } // Adjust rootMargin based on navbar height
-        );
-
-        if (filterRef.current) {
-            observer.observe(filterRef.current);
-        }
-
-        return () => {
-            observer.disconnect();
-        };
-    }, []);
-
     // --- Filtering Logic ---
     const filteredData = useMemo(() => {
         let dishes = mockDishes;
@@ -342,22 +319,9 @@ const Home = () => {
                     <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
 
-                {/* Instance 1: Static (Scrolls with page) */}
-                <div ref={filterRef} className="w-full bg-transparent py-0 mb-1 z-10 relative">
-                    <FilterBar
-                        activeCategory={activeCategory}
-                        setActiveCategory={setActiveCategory}
-                        subFilters={subFilters}
-                        setSubFilters={setSubFilters}
-                        isSticky={false}
-                    />
-                </div>
-
-                {/* Instance 2: Sticky Sentinel (Zero Height, Anchor) */}
-                {/* This div sticks to the top, but has 0 height. It acts as an anchor for the absolute child. */}
-                <div className="sticky top-[54px] md:top-[70px] z-40 h-0 w-full -mx-4 md:-mx-10 lg:-mx-12 px-4 md:px-10 lg:px-12 pointer-events-none">
-                    {/* Floating Filter (Fixed Position - Viewport Relative with 15px gaps) */}
-                    <div className={`fixed top-[54px] md:top-[70px] left-[10px] right-[10px] md:left-[15px] md:right-[15px] z-40 w-auto transition-all duration-200 ease-out ${isSticky ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+                {/* Instance 1: Native Sticky Filter Bar */}
+                <div ref={filterRef} className="w-full z-30 bg-gray-50/95 backdrop-blur-sm relative sticky top-[64px] transition-all duration-300">
+                    <div className="py-2">
                         <FilterBar
                             activeCategory={activeCategory}
                             setActiveCategory={setActiveCategory}

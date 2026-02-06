@@ -10,6 +10,7 @@ export const ShopProvider = ({ children }) => {
     // 1. Fetch User Data on Login (Sync from Backend)
     const { user, loading } = useAuth();
 
+    // Init from LocalStorage (Guest Support)
     const [cart, setCart] = useState(() => {
         try {
             const savedCart = localStorage.getItem('cart');
@@ -17,7 +18,6 @@ export const ShopProvider = ({ children }) => {
             return Array.isArray(parsed) ? parsed : [];
         } catch (e) {
             console.error("Failed to parse cart", e);
-            localStorage.removeItem('cart');
             return [];
         }
     });
@@ -27,97 +27,140 @@ export const ShopProvider = ({ children }) => {
             const savedWishlist = localStorage.getItem('wishlist');
             const parsed = savedWishlist ? JSON.parse(savedWishlist) : [];
             const list = Array.isArray(parsed) ? parsed : [];
-            return list.map(item => {
-                if (item.type) return item;
-                if (item.costForTwo || item.deliveryTime || (item.cuisine && !item.price)) {
-                    return { ...item, type: 'restaurant' };
-                }
-                return { ...item, type: 'food' };
-            });
+            return list.map(item => ({
+                ...item,
+                type: (item.costForTwo || item.deliveryTime) ? 'restaurant' : (item.type || 'food')
+            }));
         } catch (e) {
             console.error("Failed to parse wishlist", e);
-            localStorage.removeItem('wishlist');
             return [];
         }
     });
 
-    // Flag to prevent syncing empty local state before backend fetch completes
+    // Track synchronization state
     const [isInitialized, setIsInitialized] = useState(false);
+
+    // Track previous user to detect Login vs Logout
+    const prevUserRef = React.useRef(null);
 
     useEffect(() => {
         if (loading) return;
 
-        // 1. LOGOUT: Clear local state if user logs out
-        if (!user) {
-            setCart([]);
-            setWishlist([]);
-            localStorage.removeItem('cart');
-            localStorage.removeItem('wishlist');
-            setIsInitialized(false);
-            return;
-        }
+        const currentUser = user?._id;
+        const previousUser = prevUserRef.current;
 
-        // 2. LOGIN: Fetch User Data & Overwrite Local State
-        if (user?._id) {
-            setIsInitialized(false); // Reset while fetching
-            fetch(`${API_URL}/api/user/${user._id}`)
+        // 1. LOGIN Detection (Guest -> User) OR (User A -> User B)
+        if (currentUser && currentUser !== previousUser) {
+            // Fetch Backend Data & MERGE
+            setIsInitialized(false);
+            fetch(`${API_URL}/api/user/${currentUser}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.user) {
-                        // LOAD CART
-                        let backendCart = [];
-                        if (data.user.cart && data.user.cart.length > 0) {
-                            backendCart = data.user.cart.map(item => ({
-                                ...item.foodId,
-                                quantity: item.quantity,
-                                notes: item.notes,
-                                id: item.foodId._id
-                            }));
-                        }
-                        setCart(backendCart);
+                        const backendCart = data.user.cart?.map(item => ({
+                            ...item.foodId,
+                            quantity: item.quantity,
+                            notes: item.notes,
+                            id: item.foodId._id
+                        })) || [];
 
-                        // LOAD WISHLIST
-                        let backendWishlist = [];
-                        if (data.user.wishlist && data.user.wishlist.length > 0) {
-                            backendWishlist = data.user.wishlist.map(item => ({
-                                ...item.foodId,
-                                id: item.foodId._id,
-                                type: 'food',
-                                addedAt: item.addedAt
-                            }));
-                        }
-                        setWishlist(backendWishlist);
+                        const backendWishlist = data.user.wishlist?.map(item => ({
+                            ...item.foodId,
+                            id: item.foodId._id,
+                            type: 'food',
+                            addedAt: item.addedAt
+                        })) || [];
+
+                        // MERGE STRATEGY: 
+                        // Combined Cart = Backend Cart + (Local Cart Items that aren't in Backend)
+                        // Actually better: If in both, sum quantity? Or prefer Local?
+                        // Let's sum quantity for duplicates, add unique ones.
+
+                        const fastCartMap = new Map();
+                        backendCart.forEach(item => fastCartMap.set(item.id, item));
+
+                        // Merge Local into Backend Map
+                        cart.forEach(localItem => {
+                            if (fastCartMap.has(localItem.id)) {
+                                const existing = fastCartMap.get(localItem.id);
+                                existing.quantity += localItem.quantity; // Sum quantities
+                            } else {
+                                fastCartMap.set(localItem.id, localItem);
+                            }
+                        });
+
+                        const mergedCart = Array.from(fastCartMap.values());
+
+                        // Merge Wishlist (Unique IDs)
+                        const mergedWishlist = [...backendWishlist];
+                        wishlist.forEach(localItem => {
+                            if (!mergedWishlist.find(i => i.id === localItem.id)) {
+                                mergedWishlist.push(localItem);
+                            }
+                        });
+
+                        setCart(mergedCart);
+                        setWishlist(mergedWishlist);
+
+                        // Trigger Sync Back to DB with Merged Cart
+                        fetch(`${API_URL}/api/user/cart`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: currentUser, cart: mergedCart })
+                        }).catch(console.error);
+
                     }
                 })
-                .catch(err => console.error("Failed to sync user data", err))
-                .finally(() => setIsInitialized(true)); // Allow edits/sync after fetch
-        } else {
-            // Guest mode (if allowed) or error state
+                .catch(err => console.error("Sync Error", err))
+                .finally(() => setIsInitialized(true));
+        }
+
+        // 2. LOGOUT Detection
+        else if (!currentUser && previousUser) {
+            // User logged out. 
+            // Optional: Clear cart to be clean? Or keep for guest?
+            // "Cart items disappearing" - User might want them to stay?
+            // Usually standard is Discard. 
+            // But if I want to "Fix items appearing", I'll keep them in LocalStorage but clear Context?
+            // No, Context mirrors LS.
+            // Let's CLEAR for security, assuming "Disappearing" referred to the Refresh issue, not Logout.
+            // But if they refresh, `currentUser` is null initially? No, Firebase Auth persists.
+            // If they Refresh, `loading` is true, then `user` comes back.
+            // So this `else if` only hits on explicit Logout.
+            setCart([]);
+            setWishlist([]);
+            localStorage.removeItem('cart'); // Clean slate for new guest
+            localStorage.removeItem('wishlist');
             setIsInitialized(true);
         }
+        else if (!currentUser && !previousUser) {
+            // Just Guest Mode (Initial Load)
+            setIsInitialized(true);
+        }
+
+        prevUserRef.current = currentUser;
+
     }, [user, loading]);
 
-    // 2. Persist to LocalStorage
+    // 2. Persist to LocalStorage (Always)
     useEffect(() => {
-        if (isInitialized) {
+        if (isInitialized || !user) { // Always save if initialized OR if guest
             localStorage.setItem('cart', JSON.stringify(cart));
             localStorage.setItem('wishlist', JSON.stringify(wishlist));
         }
-    }, [cart, wishlist, isInitialized]);
+    }, [cart, wishlist, isInitialized, user]);
 
-    // 3. Sync Cart to Backend (Debounced)
+    // 3. Sync Cart directly to Backend (Debounced) - Only for Logged In
     useEffect(() => {
-        if (!isInitialized) return; // Block sync until backend load is done
+        if (!isInitialized || !user?._id) return;
 
         const syncCart = setTimeout(() => {
-            if (user?._id) {
-                fetch(`${API_URL}/api/user/cart`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: user._id, cart: cart })
-                }).catch(e => console.error("Cart Sync Error", e));
-            }
-        }, 1000);
+            fetch(`${API_URL}/api/user/cart`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id, cart: cart })
+            }).catch(e => console.error("Cart Sync Error", e));
+        }, 2000);
 
         return () => clearTimeout(syncCart);
     }, [cart, user, isInitialized]);
@@ -193,7 +236,7 @@ export const ShopProvider = ({ children }) => {
         isInWishlist,
         cartTotal,
         cartCount
-    }), [cart, wishlist, user]); // Added user to dependencies just in case, though mostly derived
+    }), [cart, wishlist, user]);
 
     return (
         <ShopContext.Provider value={value}>
