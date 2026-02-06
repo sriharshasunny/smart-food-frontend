@@ -11,7 +11,7 @@ const FoodCard = React.memo(({ food, restaurantName, variant = 'vertical', isFea
     const cartItem = cart.find(item => item.id === food.id);
     const quantity = cartItem?.quantity || 0;
 
-    // Horizontal layout for restaurant menu page
+    // Variant Check: Horizontal layout for restaurant menu page
     if (variant === 'horizontal') {
         return (
 
