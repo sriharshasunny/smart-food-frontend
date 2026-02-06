@@ -38,7 +38,7 @@ const AdminRestaurantPanel = () => {
                 setFormData({ name: '', email: '', cuisine: '', address: '' });
                 fetchRestaurants(); // Refresh list
             } else {
-                alert(data.message || "Failed to create");
+                alert(data.message + (data.error ? `\nDetails: ${data.error}` : "") || "Failed to create");
             }
         } catch (error) {
             console.error(error);
