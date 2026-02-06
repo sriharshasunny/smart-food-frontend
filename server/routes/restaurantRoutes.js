@@ -30,7 +30,7 @@ router.post('/create', async (req, res) => {
                 email,
                 password: email, // ID and Pass are same
                 address,
-                cuisine,
+                cuisine: typeof cuisine === 'string' ? cuisine.split(',').map(c => c.trim()) : cuisine,
                 rating: 0,
                 image: ''
             })
