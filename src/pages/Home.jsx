@@ -107,16 +107,15 @@ const Home = () => {
     }, []);
 
     // --- Sticky Scroll Logic ---
+    const [showStickyFilters, setShowStickyFilters] = useState(false);
+
     React.useEffect(() => {
         const handleScroll = () => {
             if (filterRef.current) {
                 const rect = filterRef.current.getBoundingClientRect();
-                // If the top of the filter container hits the top offset (64px for navbar), it's sticky
-                // Adjust threshold as needed. 
-                // Since 'sticky' CSS handles the positioning, we just need to know WHEN it sticks to change style.
-                // A better way for "sticky" detection is IntersectionObserver with a sentinel, 
-                // but checking rect.top <= 65 (navbar height + 1) is a simple proxy for "is it stuck?"
-                setIsSticky(rect.top <= 65);
+                // Show sticky bar only when the main filter bar has almost scrolled out of view (e.g. bottom touches top nav)
+                // rect.bottom <= 64 (Navbar height) + some buffer if needed
+                setShowStickyFilters(rect.bottom <= 100);
             }
         };
 
@@ -360,21 +359,33 @@ const Home = () => {
                     <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
 
-                {/* Instance 1: Native Sticky Filter Bar using CSS sticky */}
-                <div ref={filterRef} className={`w-full z-30 transition-all duration-300 sticky top-[64px] ${isSticky ? 'bg-white/95 backdrop-blur-md shadow-sm py-0' : 'bg-transparent py-2'}`}>
-                    <div className={`${isSticky ? 'py-1' : 'py-0'}`}>
+                {/* 3. Filter Stack (MAIN + STICKY) */}
+                <div className="relative">
+                    {/* A. Main Filters (Visual Glossy Mode) - Scrolls away */}
+                    <div ref={filterRef} className="w-full z-10 relative">
                         <FilterBar
                             activeCategory={activeCategory}
                             setActiveCategory={setActiveCategory}
                             subFilters={subFilters}
                             setSubFilters={setSubFilters}
-                            isSticky={true}
+                            isSticky={false} // Always Glossy
+                        />
+                    </div>
+
+                    {/* B. Sticky Filter Bar (Text Mode) - Slides down when main is gone */}
+                    <div className={`fixed top-[64px] left-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-md transition-all duration-300 transform ${showStickyFilters ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+                        <FilterBar
+                            activeCategory={activeCategory}
+                            setActiveCategory={setActiveCategory}
+                            subFilters={subFilters}
+                            setSubFilters={setSubFilters}
+                            isSticky={true} // Always Compact Text
                         />
                     </div>
                 </div>
 
-                {/* 2. Popular Food Items Section (Bottom) */}
-                <section className="min-h-[500px] content-visibility-auto contain-layout">
+                {/* 4. Popular Food Items Section (Bottom) */}
+                <section className="min-h-[500px] content-visibility-auto contain-layout pt-4">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
                         {filteredData.dishes.length > 0 ? (
