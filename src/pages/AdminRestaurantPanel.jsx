@@ -42,7 +42,7 @@ const AdminRestaurantPanel = () => {
             }
         } catch (error) {
             console.error(error);
-            alert(`Error creating restaurant: ${error.message}`);
+            alert(`Error creating restaurant: ${error.message}\n\nTrying to reach: ${API_URL}/api/restaurant/create`);
         } finally {
             setIsLoading(false);
         }
