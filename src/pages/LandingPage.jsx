@@ -107,9 +107,10 @@ const LandingPage = () => {
         };
 
 
-
         // Entities: Stars (Optimized Count - Higher Density for "3D Texture")
-        const stars = Array.from({ length: 100 }, () => ({
+        // Mobile Optimization: Significantly reduce counts
+        const starCount = isMobile ? 40 : 100;
+        const stars = Array.from({ length: starCount }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
             z: Math.random() * 2 + 0.5, // Deeper Z range
@@ -122,7 +123,8 @@ const LandingPage = () => {
         // Entities: Shooting Stars (More Frequent)
         let shootingStars = [];
         const spawnShootingStar = () => {
-            if (Math.random() < 0.015) { // Increased spawn rate
+            // Reduced spawn rate on mobile
+            if (Math.random() < (isMobile ? 0.005 : 0.015)) {
                 shootingStars.push({
                     x: Math.random() * width,
                     y: Math.random() * (height * 0.5),
@@ -145,7 +147,8 @@ const LandingPage = () => {
         }));
 
         // Entities: Space Dust (High Density for "Texture")
-        const dust = Array.from({ length: 60 }, () => ({
+        const dustCount = isMobile ? 15 : 60;
+        const dust = Array.from({ length: dustCount }, () => ({
             x: Math.random() * 2000,
             y: Math.random() * 1000,
             size: Math.random() * 1.2 + 0.2,
