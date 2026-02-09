@@ -28,6 +28,7 @@ const RestaurantLogin = lazy(() => import('./pages/RestaurantLogin'));
 const RestaurantDashboard = lazy(() => import('./pages/RestaurantDashboard'));
 const AppAdmin = lazy(() => import('./admin/AppAdmin'));
 const AdminRestaurantPanel = lazy(() => import('./pages/AdminRestaurantPanel'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Simple Loading Spinner
 const Loading = () => (
@@ -71,6 +72,9 @@ function App() {
                   <Route path="/restaurant/login" element={<RestaurantLogin />} />
                   {/* Admin Route - Hidden from Navigation */}
                   <Route path="/admin/portal" element={<AppAdmin />} />
+
+                  {/* 404 Catch-All Route */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
               <Suspense fallback={null}>
