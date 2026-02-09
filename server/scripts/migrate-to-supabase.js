@@ -131,7 +131,7 @@ async function migrate() {
             }
 
             const { data, error } = await supabase
-                .from('food_items')
+                .from('foods')
                 .insert({
                     mongo_id: food._id.toString(),
                     restaurant_id: newRestId,

@@ -34,7 +34,7 @@ async function updateImages() {
         // Let's try to update all instances with this name.
 
         const { data, error } = await supabase
-            .from('food_items')
+            .from('foods')
             .update({ image: item.image })
             .ilike('name', item.name) // Case insensitive match
             .select();

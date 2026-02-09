@@ -2,9 +2,11 @@ const supabase = require('../utils/supabase');
 const emailService = require('../utils/emailService');
 
 // 1. Verify/Confirm Order (Post-Payment)
+// 1. Verify/Confirm Order (Post-Payment)
 exports.verifyOrder = async (req, res) => {
     try {
         const { orderId, paymentId } = req.body;
+        // ... (rest of logic)
 
         if (!orderId) {
             return res.status(400).json({ message: "Order ID is required" });

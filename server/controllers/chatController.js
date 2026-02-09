@@ -27,10 +27,10 @@ exports.askChatbot = async (req, res) => {
                     cart_items (
                         quantity,
                         notes,
-                        food_items ( name )
+                        foods ( name )
                     ),
                     wishlist_items (
-                        food_items ( name )
+                        foods ( name )
                     )
                 `)
                 .eq('id', userId)
@@ -41,11 +41,11 @@ exports.askChatbot = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     cart: user.cart_items?.map(item => ({
-                        item: item.food_items?.name || "Unknown Item",
+                        item: item.foods?.name || "Unknown Item",
                         quantity: item.quantity,
                         notes: item.notes
                     })) || [],
-                    wishlist: user.wishlist_items?.map(item => item.food_items?.name || "Unknown Item") || []
+                    wishlist: user.wishlist_items?.map(item => item.foods?.name || "Unknown Item") || []
                 };
             }
 
@@ -86,7 +86,7 @@ exports.askChatbot = async (req, res) => {
 
         // D. Food Menu (All Items for now, limit to 50)
         const { data: foodMenu } = await supabase
-            .from('food_items')
+            .from('foods')
             .select(`
                 name, 
                 price, 
