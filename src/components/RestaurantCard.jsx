@@ -5,12 +5,16 @@ import { Link } from 'react-router-dom';
 
 import { useShop } from '../context/ShopContext';
 
+import { optimizeImage } from '../utils/imageOptimizer';
+
 const RestaurantCard = memo(({ restaurant }) => {
     const { id, name, image, rating, cuisine, deliveryTime, minOrder, categories, costForTwo, tags } = restaurant || {};
     const { isInWishlist, toggleWishlist } = useShop();
     const isWishlisted = isInWishlist(id);
 
     const cuisineText = Array.isArray(cuisine) ? cuisine.join(', ') : (cuisine || (Array.isArray(categories) ? categories.join(', ') : "Restaurant"));
+
+    const fallbackImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4";
 
     return (
         <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">
@@ -20,7 +24,7 @@ const RestaurantCard = memo(({ restaurant }) => {
                 {/* Image Section */}
                 <div className="relative h-32 md:h-40 overflow-hidden shrink-0">
                     <img
-                        src={image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80"}
+                        src={optimizeImage(image || fallbackImage, 500)}
                         alt={name}
                         loading="lazy"
                         decoding="async"

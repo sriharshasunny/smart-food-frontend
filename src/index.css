@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
 body {
   background-color: #f8fafc;
   /* slate-50 */
@@ -114,6 +135,12 @@ body {
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
+  }
+
+  /* Force hardware acceleration on key scrolling elements */
+  .scroll-container {
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
   }
 
   /* Font Rendering */

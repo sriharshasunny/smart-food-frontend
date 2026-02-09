@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
-X, Trash2, Edit2, LogOut, TrendingUp, Utensils, CheckCircle
+import {
+    LayoutDashboard, Plus, Package, DollarSign, Image as ImageIcon,
+    X, Trash2, Edit2, LogOut, TrendingUp, Utensils, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
