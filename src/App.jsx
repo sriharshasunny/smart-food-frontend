@@ -73,6 +73,11 @@ function App() {
                   {/* Admin Route - Hidden from Navigation */}
                   <Route path="/admin/portal" element={<AppAdmin />} />
 
+                  {/* Legacy/Typo Redirects to fix "Blank Screen" issues */}
+                  <Route path="/restaurants.html" element={<Navigate to="/restaurants" replace />} />
+                  <Route path="/resturants.html" element={<Navigate to="/restaurants" replace />} />
+                  <Route path="/restaurant.html" element={<Navigate to="/restaurants" replace />} />
+
                   {/* 404 Catch-All Route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
