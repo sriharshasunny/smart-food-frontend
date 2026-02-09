@@ -61,24 +61,44 @@ exports.syncCart = async (req, res) => {
 
         if (cart && cart.length > 0) {
             // 2. Insert new items with UUID Validation
-            const itemsToInsert = cart.map(item => {
-                let foodId = item.foodId || item._id || item.id;
-                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(foodId);
-                if (!isUUID) foodId = null;
+            const validUUIDs = cart
+                .map(item => item.foodId || item._id || item.id)
+                .filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
 
-                return {
-                    user_id: userId,
-                    food_id: foodId,
-                    quantity: item.quantity,
-                    notes: item.notes
-                };
-            });
+            if (validUUIDs.length > 0) {
+                // Check which IDs actually exist in 'foods' table
+                const { data: existingFoods, error: validationError } = await supabase
+                    .from('foods')
+                    .select('id')
+                    .in('id', validUUIDs);
 
-            const { error: insertError } = await supabase
-                .from('cart_items')
-                .insert(itemsToInsert);
+                if (validationError) {
+                    console.error("Validation Error:", validationError);
+                    // Proceeding with empty set or throwing? Let's skip insertion to be safe.
+                } else {
+                    const existingIds = new Set(existingFoods.map(f => f.id));
 
-            if (insertError) throw insertError;
+                    const itemsToInsert = cart
+                        .filter(item => {
+                            const id = item.foodId || item._id || item.id;
+                            return existingIds.has(id);
+                        })
+                        .map(item => ({
+                            user_id: userId,
+                            food_id: item.foodId || item._id || item.id,
+                            quantity: item.quantity,
+                            notes: item.notes
+                        }));
+
+                    if (itemsToInsert.length > 0) {
+                        const { error: insertError } = await supabase
+                            .from('cart_items')
+                            .insert(itemsToInsert);
+
+                        if (insertError) throw insertError;
+                    }
+                }
+            }
         }
 
         // 3. Fetch updated cart with details
