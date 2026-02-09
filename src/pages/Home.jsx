@@ -28,7 +28,7 @@ const Home = () => {
                 // Parallel Fetch
                 const [foodsRes, restsRes] = await Promise.all([
                     fetch(`${API_URL}/api/food/all`),
-                    fetch(`${API_URL}/api/restaurant/all/list`)
+                    fetch(`${API_URL}/api/restaurant/active/list`) // Fetch ONLY active restaurants
                 ]);
 
                 const foodsData = await foodsRes.json();

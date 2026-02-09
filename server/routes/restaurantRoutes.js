@@ -7,32 +7,44 @@ router.post('/create', async (req, res) => {
     try {
         const { name, email, address, cuisine } = req.body;
 
-        if (!name || !email) {
-            return res.status(400).json({ message: "Name and Email are required." });
+        if (!name) {
+            return res.status(400).json({ message: "Name is required." });
         }
+
+        // Auto-generate email/credentials if not provided
+        // Logic: specific email > name@gmail.com
+        let finalEmail = email;
+        if (!finalEmail) {
+            const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            finalEmail = `${cleanName}@gmail.com`;
+        }
+
+        // Simple Password Generation (Same as Email for now, or 'password123')
+        const password = finalEmail;
 
         // Check exists
         const { data: existing } = await supabase
             .from('restaurants')
             .select('id')
-            .eq('email', email)
+            .eq('email', finalEmail)
             .single();
 
         if (existing) {
-            return res.status(400).json({ message: "Restaurant already registered." });
+            return res.status(400).json({ message: `Restaurant with email ${finalEmail} already exists.` });
         }
 
-        // Create with Password = Email (Student Demo Request)
+        // Create
         const { data: newRest, error } = await supabase
             .from('restaurants')
             .insert({
                 name,
-                email,
-                password: email, // ID and Pass are same
-                address,
-                cuisine: typeof cuisine === 'string' ? cuisine.split(',').map(c => c.trim()) : cuisine,
+                email: finalEmail,
+                password: password,
+                address: address || '123 Food Street',
+                cuisine: typeof cuisine === 'string' ? cuisine.split(',').map(c => c.trim()) : (cuisine || ['Multi-Cuisine']),
                 rating: 0,
-                image: ''
+                image: '', // Placeholder can be set on frontend or default here
+                is_active: true // Default Active
             })
             .select()
             .single();
@@ -41,7 +53,8 @@ router.post('/create', async (req, res) => {
 
         res.status(201).json({
             message: "Restaurant created successfully!",
-            restaurant: { ...newRest, _id: newRest.id }
+            restaurant: { ...newRest, _id: newRest.id },
+            credentials: { email: finalEmail, password: password }
         });
 
     } catch (error) {
@@ -63,6 +76,10 @@ router.post('/login', async (req, res) => {
 
         if (error || !restaurant || restaurant.password !== password) {
             return res.status(400).json({ message: "Invalid credentials." });
+        }
+
+        if (restaurant.is_active === false) {
+            return res.status(403).json({ message: "Account suspended. Contact Admin." });
         }
 
         res.json({
@@ -102,7 +119,7 @@ router.get('/:id/dashboard', async (req, res) => {
     }
 });
 
-// 4. ADMIN: Get All Restaurants
+// 4. ADMIN: Get All Restaurants (Include Suspended)
 router.get('/all/list', async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -117,7 +134,47 @@ router.get('/all/list', async (req, res) => {
     }
 });
 
-// 5. ADMIN: Toggle Active Status
+// 5. PUBLIC: Get Active Restaurants Only
+router.get('/active/list', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('restaurants')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching restaurants", error: error.message });
+    }
+});
+
+// 6. PUBLIC: Get Single Restaurant Details (For RestaurantDetails Page)
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data: restaurant, error } = await supabase
+            .from('restaurants')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error || !restaurant) {
+            return res.status(404).json({ message: "Restaurant not found" });
+        }
+
+        // Optional: Check is_active? Maybe allow viewing if direct link but show warning?
+        // Ideally should block if suspended, but let's allow fetching and let frontend decide handling.
+
+        res.json(restaurant);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching details", error: error.message });
+    }
+});
+
+// 7. ADMIN: Toggle Active Status
 router.patch('/:id/status', async (req, res) => {
     try {
         const { is_active } = req.body;

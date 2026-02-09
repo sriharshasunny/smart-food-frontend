@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { API_URL } from '../config';
 
-import { mockRestaurants as restaurants, mockDishes as foodItems } from '../data/mockData';
+// import { mockRestaurants as restaurants, mockDishes as foodItems } from '../data/mockData'; // REMOVED MOCK
 import FoodCard from '../components/FoodCard';
-import { Star, Clock, MapPin, ChevronLeft, Search, X } from 'lucide-react';
+import { Star, Clock, MapPin, ChevronLeft, Search, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const RestaurantDetails = () => {
@@ -12,6 +13,9 @@ const RestaurantDetails = () => {
     const navigate = useNavigate();
     const [restaurant, setRestaurant] = useState(null);
     const [menu, setMenu] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
     const [vegOnly, setVegOnly] = useState(false);
@@ -19,24 +23,51 @@ const RestaurantDetails = () => {
 
 
     useEffect(() => {
-        const foundRestaurant = restaurants.find(r => r.id === parseInt(id));
-        if (foundRestaurant) {
-            // Ensure all required fields have default values
-            const safeRestaurant = {
-                ...foundRestaurant,
-                image: foundRestaurant.image || '/placeholder-restaurant.jpg',
-                cuisine: foundRestaurant.cuisine || 'Multi-Cuisine',
-                rating: foundRestaurant.rating || 4.0,
-                deliveryTime: foundRestaurant.deliveryTime || '30-40 mins',
-                costForTwo: foundRestaurant.costForTwo || '₹400',
-                address: foundRestaurant.address || '123 Food Street, Culinary District'
-            };
-            setRestaurant(safeRestaurant);
-            setMenu(foodItems.filter(item => item.restaurantId === parseInt(id)));
-        } else {
-            navigate('/home');
-        }
-    }, [id, navigate]);
+        const fetchDetails = async () => {
+            setLoading(true);
+            try {
+                // Parallel Fetch: Restaurant Details + Menu
+                const [restRes, menuRes] = await Promise.all([
+                    fetch(`${API_URL}/api/restaurant/${id}`),
+                    fetch(`${API_URL}/api/food/restaurant/${id}`)
+                ]);
+
+                if (!restRes.ok) {
+                    if (restRes.status === 404) throw new Error("Restaurant not found");
+                    throw new Error("Failed to load restaurant");
+                }
+
+                const restData = await restRes.json();
+                const menuData = await menuRes.json();
+
+                // Ensure defaults
+                setRestaurant({
+                    ...restData,
+                    image: restData.image || '/placeholder-restaurant.jpg',
+                    cuisine: Array.isArray(restData.cuisine) ? restData.cuisine.join(', ') : (restData.cuisine || 'Multi-Cuisine'),
+                    rating: restData.rating || 0,
+                    deliveryTime: restData.deliveryTime || '30-40 mins', // Backend doesn't have this yet, maybe add col later
+                    costForTwo: restData.costForTwo || '₹400',
+                    address: restData.address || 'Location not available'
+                });
+
+                // Format menu if needed (backend matches frontend mostly)
+                setMenu(menuData.map(item => ({
+                    ...item,
+                    isVeg: item.is_veg, // Map snake_case to camelCase
+                    rating: 4.2 // Default rating for items if missing
+                })));
+
+            } catch (err) {
+                console.error(err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) fetchDetails();
+    }, [id]);
 
     // Grouping & Filtering Logic
     const filteredMenu = useMemo(() => {
@@ -80,7 +111,35 @@ const RestaurantDetails = () => {
         }, {});
     }, [displayItems]);
 
-    if (!restaurant) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div></div>;
+    // --- Loading / Error States ---
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-500 font-bold animate-pulse">Loading Menu...</p>
+            </div>
+        </div>
+    );
+
+    if (error) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center p-8 bg-white rounded-3xl shadow-xl max-w-md">
+                <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="text-red-500 w-8 h-8" />
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 mb-2">Oops!</h2>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <button
+                    onClick={() => navigate('/home')}
+                    className="bg-black text-white font-bold py-3 px-8 rounded-xl hover:scale-105 transition-transform"
+                >
+                    Go Home
+                </button>
+            </div>
+        </div>
+    );
+
+    if (!restaurant) return null; // Should be handled by loading/error
 
     const categories = ['All', ...Object.keys(groupedMenu)];
 
@@ -95,6 +154,7 @@ const RestaurantDetails = () => {
                     src={restaurant.image}
                     alt={restaurant.name}
                     className="w-full h-full object-cover brightness-[0.85]"
+                    onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop'} // Fallback
                 />
                 {/* Enhanced Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
@@ -129,10 +189,11 @@ const RestaurantDetails = () => {
                                     Top Rated
                                 </span>
                             )}
-                            {parseInt(restaurant.deliveryTime) <= 30 && (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 rounded-lg text-xs font-bold text-white shadow-md">
-                                    <Clock className="w-3 h-3" />
-                                    Fast Delivery
+                            {/* Suspended Badge if needed, though we filter active */}
+                            {!restaurant.is_active && (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 rounded-lg text-xs font-bold text-white shadow-md">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Temporarily Closed
                                 </span>
                             )}
                         </div>
@@ -140,7 +201,7 @@ const RestaurantDetails = () => {
                         <h1 className="text-4xl md:text-6xl font-black tracking-tight drop-shadow-2xl leading-none">{restaurant.name}</h1>
                         <p className="text-lg md:text-xl font-medium text-gray-100 opacity-95 max-w-2xl flex items-center gap-2">
                             <MapPin className="w-5 h-5 text-orange-400" />
-                            {restaurant.address || "123 Food Street, Culinary District"}
+                            {restaurant.address}
                         </p>
                     </motion.div>
                 </div>
@@ -167,7 +228,7 @@ const RestaurantDetails = () => {
                                     <div className="p-2 bg-yellow-50 rounded-xl">
                                         <Star className="w-6 h-6 text-yellow-500 fill-current" />
                                     </div>
-                                    <span className="font-black text-3xl">{restaurant.rating}</span>
+                                    <span className="font-black text-3xl">{restaurant.rating || "New"}</span>
                                 </div>
                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rating</span>
                             </div>
@@ -190,7 +251,7 @@ const RestaurantDetails = () => {
                             {/* Cost */}
                             <div className="flex flex-col items-center md:items-start gap-2">
                                 <div className="flex items-center gap-2 text-gray-900">
-                                    <span className="font-black text-3xl">{restaurant.costForTwo || "₹400"}</span>
+                                    <span className="font-black text-3xl">{restaurant.costForTwo}</span>
                                 </div>
                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cost for Two</span>
                             </div>
@@ -294,7 +355,7 @@ const RestaurantDetails = () => {
                                                 // Simplified Grid: Uniform sizing for all cards
                                                 return (
                                                     <div key={item.id} className="col-span-1 h-full">
-                                                        <FoodCard food={item} isFeatured={false} />
+                                                        <FoodCard food={item} isFeatured={false} restaurantName={restaurant.name} />
                                                     </div>
                                                 );
                                             })}
@@ -307,7 +368,7 @@ const RestaurantDetails = () => {
                                         <Search className="w-8 h-8 text-gray-400" />
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900">No dishes found</h3>
-                                    <p className="text-gray-500">Try changing your filters</p>
+                                    <p className="text-gray-500">Try changing your filters or checking back later.</p>
                                 </div>
                             )}
                         </div>
