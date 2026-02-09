@@ -192,4 +192,22 @@ router.patch('/:id/status', async (req, res) => {
     }
 });
 
+// 8. ADMIN: Delete Restaurant
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Delete restaurant (Cascades to foods automatically due to schema)
+        const { error } = await supabase
+            .from('restaurants')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        res.json({ message: "Restaurant deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting restaurant", error: error.message });
+    }
+});
+
 module.exports = router;
