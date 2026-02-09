@@ -388,6 +388,26 @@ const Home = () => {
                 <section className="min-h-[500px] content-visibility-auto contain-layout pt-4">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
+                        {/* Error State for API Failure */}
+                        {realRestaurants.length === 0 && !loadingData && (
+                            <div className="w-full text-center py-20 flex flex-col items-center justify-center p-4">
+                                <div className="bg-red-50 p-6 rounded-full mb-6 relative">
+                                    <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-20"></div>
+                                    <span className="text-4xl">🔌</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-gray-800 mb-2">Connection Issue</h3>
+                                <p className="text-gray-500 max-w-md mx-auto mb-6 leading-relaxed">
+                                    We couldn't load the restaurants at the moment. The backend might be waking up or updating.
+                                </p>
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="px-8 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                                >
+                                    Retry Connection
+                                </button>
+                            </div>
+                        )}
+
                         {filteredData.dishes.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 gap-y-10">
                                 {filteredData.dishes.map((dish) => (
@@ -400,13 +420,16 @@ const Home = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-24 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
-                                <div className="bg-gray-50 p-6 rounded-full mb-4">
-                                    <Search size={48} className="text-gray-300" />
+                            // Only show "No items found" if we actually have restaurants properly loaded but filtered out
+                            realRestaurants.length > 0 && (
+                                <div className="text-center py-24 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                                    <div className="bg-gray-50 p-6 rounded-full mb-4">
+                                        <Search size={48} className="text-gray-300" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-700">No items found</h3>
+                                    <p className="text-gray-500 mt-2">Try changing your filters or search term.</p>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-700">No items found</h3>
-                                <p className="text-gray-500 mt-2">Try changing your filters or search term.</p>
-                            </div>
+                            )
                         )}
                     </ErrorBoundary>
                 </section>
