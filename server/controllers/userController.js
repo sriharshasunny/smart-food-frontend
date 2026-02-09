@@ -107,20 +107,20 @@ exports.syncCart = async (req, res) => {
             .select(`
                 quantity, 
                 notes, 
-                food_items ( * )
+                foods ( * )
             `)
             .eq('user_id', userId);
 
         if (fetchError) throw fetchError;
 
         // Flatten structure to match frontend expectation if needed, or frontend adapts
-        // Supabase returns { quantity, food_items: { ... } }
+        // Supabase returns { quantity, foods: { ... } }
         // Frontend likely expects { quantity, foodId: { ... } } or similar.
         // Let's map it to resemble Mongoose populate
         const formattedCart = newCart.map(item => ({
             quantity: item.quantity,
             notes: item.notes,
-            foodId: item.food_items // Rename for compatibility
+            foodId: item.foods // Rename for compatibility
         }));
 
         res.status(200).json({ cart: formattedCart });
@@ -155,24 +155,24 @@ exports.getUserData = async (req, res) => {
         // 3. Get Wishlist (populated)
         const { data: wishlistData } = await supabase
             .from('wishlist_items')
-            .select('added_at, food_items ( * )')
+            .select('added_at, foods ( * )')
             .eq('user_id', userId);
 
         user.wishlist = (wishlistData || []).map(w => ({
             addedAt: w.added_at,
-            foodId: w.food_items
+            foodId: w.foods
         }));
 
         // 4. Get Cart (populated)
         const { data: cartData } = await supabase
             .from('cart_items')
-            .select('quantity, notes, food_items ( * )')
+            .select('quantity, notes, foods ( * )')
             .eq('user_id', userId);
 
         user.cart = (cartData || []).map(c => ({
             quantity: c.quantity,
             notes: c.notes,
-            foodId: c.food_items
+            foodId: c.foods
         }));
 
         // 5. Get Orders

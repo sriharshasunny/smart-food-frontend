@@ -46,7 +46,6 @@ create policy "Enable update access for all users" on foods for update using (tr
 create policy "Enable delete access for all users" on foods for delete using (true);
 
 -- 6. Add missing columns (Idempotent checks)
--- This fixes the user's specific error if table exists but column doesn't
 do $$ 
 begin 
   if not exists (select 1 from information_schema.columns where table_name = 'restaurants' and column_name = 'is_active') then 
@@ -58,5 +57,28 @@ begin
   end if;
 end $$;
 
--- 7. Force Schema Cache Refresh
+-- 7. Create Cart and Wishlist Tables (if not exist)
+create table if not exists cart_items (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null, -- Assuming Supabase Auth
+  food_id uuid references foods(id) on delete cascade not null, -- Corrected FK to foods
+  quantity integer default 1,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists wishlist_items (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  food_id uuid references foods(id) on delete cascade not null, -- Corrected FK to foods
+  added_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 8. Add Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_foods_restaurant_id ON foods(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_foods_category ON foods(category);
+CREATE INDEX IF NOT EXISTS idx_restaurants_rating ON restaurants(rating DESC);
+CREATE INDEX IF NOT EXISTS idx_restaurants_active ON restaurants(is_active);
+
+-- 9. Force Schema Cache Refresh
 notify pgrst, 'reload schema';

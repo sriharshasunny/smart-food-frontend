@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Star, Clock, MapPin, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 import { useShop } from '../context/ShopContext';
 
-const RestaurantCard = ({ restaurant }) => {
+const RestaurantCard = memo(({ restaurant }) => {
     const { id, name, image, rating, cuisine, deliveryTime, minOrder, categories, costForTwo, tags } = restaurant || {};
     const { isInWishlist, toggleWishlist } = useShop();
     const isWishlisted = isInWishlist(id);
@@ -15,13 +15,15 @@ const RestaurantCard = ({ restaurant }) => {
     return (
         <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">
             <div
-                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100 hover:-translate-y-1 gpu-accelerated"
+                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100 hover:-translate-y-1 transform-gpu will-change-transform"
             >
                 {/* Image Section */}
                 <div className="relative h-32 md:h-40 overflow-hidden shrink-0">
                     <img
                         src={image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80"}
                         alt={name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
 
@@ -82,6 +84,6 @@ const RestaurantCard = ({ restaurant }) => {
             </div>
         </Link>
     );
-};
+});
 
 export default RestaurantCard;
