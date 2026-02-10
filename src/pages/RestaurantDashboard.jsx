@@ -106,17 +106,60 @@ const RestaurantDashboard = () => {
     };
 
     const handleToggleStock = async (foodId, currentStatus) => {
+        // Log the attempt
+        console.log(`Toggling Stock for Food ID: ${foodId}, Current Status: ${currentStatus}`);
+
+        // Optimistic Update (Immediate Feedback)
+        setFoods(prev => prev.map(f => {
+            const id = f._id || f.id;
+            if (id === foodId) {
+                return { ...f, available: !currentStatus };
+            }
+            return f;
+        }));
+
         try {
             const res = await fetch(`${API_URL}/api/food/${foodId}/toggle`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ available: !currentStatus })
             });
+
             if (res.ok) {
-                setFoods(prev => prev.map(f => (f._id || f.id) === foodId ? { ...f, available: !currentStatus } : f));
+                const updatedFood = await res.json();
+                console.log("Toggle Success, Updated Food:", updatedFood);
+
+                // Confirm Update with Server Truth
+                setFoods(prev => prev.map(f => {
+                    const id = f._id || f.id;
+                    if (id === foodId) {
+                        return { ...f, available: updatedFood.available };
+                    }
+                    return f;
+                }));
+            } else {
+                console.error("Toggle Failed", await res.text());
+                // Revert Optimistic Update
+                setFoods(prev => prev.map(f => {
+                    const id = f._id || f.id;
+                    if (id === foodId) {
+                        return { ...f, available: currentStatus };
+                    }
+                    return f;
+                }));
+                alert("Failed to update status. Please try again.");
             }
         } catch (error) {
             console.error("Toggle Stock Error:", error);
+            // Revert Optimistic Update
+            setFoods(prev => prev.map(f => {
+                const id = f._id || f.id;
+                if (id === foodId) {
+                    return { ...f, available: currentStatus };
+                }
+                return f;
+            }));
+            alert("Network error. Please check your connection.");
         }
     };
 
