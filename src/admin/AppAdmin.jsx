@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router } from 'react-router-dom';
 import AdminRestaurantPanel from '../pages/AdminRestaurantPanel';
-import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Lock, ArrowRight, ScanLine, Terminal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ADMIN_CREDS = {
     id: '6281871173',
@@ -10,162 +11,196 @@ const ADMIN_CREDS = {
 
 const AppAdmin = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loginState, setLoginState] = useState('idle'); // idle, verifying, success
     const [inputID, setInputID] = useState('');
     const [error, setError] = useState('');
 
-    // Mock Stats for Dashboard
-    const stats = [
-        { label: 'Total Revenue', value: '₹12.5L', change: '+14%', icon: '💰', color: 'from-green-400 to-green-600' },
-        { label: 'Total Orders', value: '1,240', change: '+28%', icon: '📦', color: 'from-blue-400 to-blue-600' },
-        { label: 'Active Partners', value: '48', change: '+4%', icon: 'store', color: 'from-orange-400 to-orange-600' },
-        { label: 'Avg. Rating', value: '4.8', change: '+0.2', icon: '⭐', color: 'from-yellow-400 to-yellow-600' },
-    ];
-
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        setLoginState('verifying');
+
+        // Simulate scanning delay
+        await new Promise(r => setTimeout(r, 1500));
+
         if (inputID === ADMIN_CREDS.id) {
-            setIsAuthenticated(true);
+            setLoginState('success');
+            // Wait for "Access Granted" animation before showing dashboard
+            setTimeout(() => setIsAuthenticated(true), 2000);
         } else {
-            setError('Access Denied: Invalid Credential Key');
+            setLoginState('idle');
+            setError('ACCESS DENIED: INVALID KEY');
+            setInputID('');
         }
     };
 
+    // --- CURTAIN ANIMATION ---
+    // If authenticated, we show the dashboard behind the curtains, then open them.
 
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-white font-sans relative overflow-hidden">
-                {/* Background Blobs */}
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black" />
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-600/30 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full blur-[120px] animate-pulse delay-1000" />
+            <div className="relative min-h-screen bg-gray-50 overflow-hidden">
+                {/* The Dashboard */}
+                <Router>
+                    <AdminRestaurantPanel />
+                </Router>
 
-                <div className="relative z-10 w-full max-w-md bg-white/5 backdrop-blur-2xl border border-white/10 p-10 rounded-[2.5rem] shadow-2xl">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-white to-gray-400 rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-white/10 rotate-3 hover:rotate-0 transition-all duration-500">
-                            <ShieldCheck className="w-10 h-10 text-black" />
+                {/* The Curtains Overlay (Animate Out) */}
+                <AnimatePresence>
+                    <motion.div
+                        className="fixed inset-0 z-50 pointer-events-none flex"
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: 0, transition: { delay: 2.5, duration: 1 } }}
+                    >
+                        {/* Left Curtain */}
+                        <motion.div
+                            className="w-1/2 h-full bg-black border-r border-cyan-500/50 shadow-[0_0_50px_rgba(0,255,255,0.2)]"
+                            initial={{ x: 0 }}
+                            animate={{ x: '-100%' }}
+                            transition={{ duration: 1.5, ease: "circInOut", delay: 0.5 }}
+                        >
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-32 bg-cyan-400/50 blur-sm" />
+                        </motion.div>
+
+                        {/* Right Curtain */}
+                        <motion.div
+                            className="w-1/2 h-full bg-black border-l border-cyan-500/50 shadow-[0_0_50px_rgba(0,255,255,0.2)]"
+                            initial={{ x: 0 }}
+                            animate={{ x: '100%' }}
+                            transition={{ duration: 1.5, ease: "circInOut", delay: 0.5 }}
+                        >
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-32 bg-cyan-400/50 blur-sm" />
+                        </motion.div>
+
+                        {/* Welcome Text (Fades out before curtains open) */}
+                        <motion.div
+                            className="absolute inset-0 flex items-center justify-center z-50"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{
+                                opacity: [0, 1, 1, 0],
+                                scale: [0.8, 1, 1, 1.5],
+                            }}
+                            transition={{ duration: 2.5, times: [0, 0.2, 0.8, 1] }}
+                        >
+                            <div className="text-center">
+                                <h2 className="text-4xl md:text-6xl font-black text-white tracking-[0.2em] mb-4 font-mono">
+                                    WELCOME COMMANDER
+                                </h2>
+                                <h3 className="text-2xl md:text-3xl text-cyan-400 font-mono tracking-widest animate-pulse">
+                                    {ADMIN_CREDS.name}
+                                </h3>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                </AnimatePresence>
+            </div>
+        );
+    }
+
+    // --- LOGIN SCREEN ---
+    return (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-white font-mono relative overflow-hidden">
+            {/* Cyberpunk Grid Background */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] perspective-1000 transform-style-3d opacity-30" />
+
+            <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent shadow-[0_0_20px_rgba(0,255,255,0.5)]" />
+            <div className="absolute bottom-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent shadow-[0_0_20px_rgba(168,85,247,0.5)]" />
+
+            {/* Main Login Module */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative z-10 w-full max-w-lg bg-black/80 backdrop-blur-xl border border-cyan-500/30 p-12 rounded-xl shadow-[0_0_60px_rgba(0,255,255,0.1)] overflow-hidden"
+            >
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-cyan-500/50 rounded-tl-xl" />
+                <div className="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-purple-500/50 rounded-br-xl" />
+
+                <div className="flex flex-col items-center mb-10">
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                        className="w-24 h-24 border-2 border-dashed border-cyan-500/50 rounded-full flex items-center justify-center mb-6 relative"
+                    >
+                        <div className="absolute inset-0 border border-cyan-500/20 rounded-full animate-ping" />
+                        <ShieldCheck className="w-10 h-10 text-cyan-400" />
+                    </motion.div>
+
+                    <h1 className="text-4xl font-black tracking-tighter mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+                        ADMIN_GATEWAY
+                    </h1>
+                    <p className="text-cyan-500/60 text-xs tracking-[0.3em]">SECURE CONNECTION ESTABLISHED</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-8 relative">
+                    {loginState === 'success' ? (
+                        <div className="text-center py-8">
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="text-green-500 text-6xl mb-4 mx-auto w-fit"
+                            >
+                                <ScanLine className="w-16 h-16 animate-pulse" />
+                            </motion.div>
+                            <h2 className="text-2xl text-green-400 tracking-widest font-bold">ACCESS GRANTED</h2>
+                            <p className="text-green-500/50 text-sm mt-2">Initializing System Sequence...</p>
                         </div>
-                        <h1 className="text-3xl font-black tracking-tight mb-2">Admin Portal</h1>
-                        <p className="text-gray-400 font-medium">Restricted Access • Ecstacy Food</p>
-                    </div>
-
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div>
+                    ) : (
+                        <>
                             <div className="relative group">
-                                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-white transition-colors" />
+                                <Terminal className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500/50 group-focus-within:text-cyan-400 transition-colors" />
                                 <input
                                     type="text"
-                                    placeholder="Enter Access Key"
+                                    placeholder="ENTER_PASSCODE_ID"
                                     value={inputID}
                                     onChange={(e) => {
                                         setInputID(e.target.value);
                                         setError('');
                                     }}
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-12 py-4 text-white font-mono placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-lg" // Increased visuals
+                                    className="w-full bg-black border border-cyan-500/30 rounded-lg px-14 py-5 text-cyan-100 font-mono tracking-widest focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_30px_rgba(0,255,255,0.2)] transition-all text-xl uppercase placeholder-cyan-900"
                                     autoFocus
+                                    disabled={loginState === 'verifying'}
                                 />
+                                {/* Typing Cursor Effect */}
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 w-2 h-6 bg-cyan-500/50 animate-pulse" />
                             </div>
-                        </div>
 
-                        {error && (
-                            <div className="text-red-400 text-sm font-bold text-center bg-red-500/10 py-3 rounded-xl border border-red-500/20 animate-shake">
-                                {error}
-                            </div>
-                        )}
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 font-bold text-center bg-red-900/20 py-2 border border-red-500/30 rounded tracking-widest text-sm"
+                                >
+                                    ⚠ {error}
+                                </motion.div>
+                            )}
 
-                        <button
-                            type="submit"
-                            className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-gray-200 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 text-lg shadow-xl shadow-white/10"
-                        >
-                            Verify Identity <ArrowRight className="w-5 h-5" />
-                        </button>
-                    </form>
+                            <button
+                                type="submit"
+                                disabled={loginState === 'verifying'}
+                                className="w-full bg-cyan-500/10 border border-cyan-500 text-cyan-400 font-bold py-5 rounded-lg hover:bg-cyan-500 hover:text-black hover:shadow-[0_0_40px_rgba(0,255,255,0.4)] transition-all flex items-center justify-center gap-3 text-lg tracking-widest disabled:opacity-50 disabled:cursor-not-allowed group"
+                            >
+                                {loginState === 'verifying' ? (
+                                    <>
+                                        <ScanLine className="w-5 h-5 animate-spin" />
+                                        VERIFYING...
+                                    </>
+                                ) : (
+                                    <>
+                                        AUTHENTICATE <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </button>
+                        </>
+                    )}
+                </form>
 
-                    <div className="mt-8 text-center border-t border-white/5 pt-6">
-                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
-                            Authorized Personnel Only: {ADMIN_CREDS.name}
-                        </p>
-                    </div>
+                <div className="mt-10 text-center">
+                    <p className="text-[10px] text-gray-600 font-mono">
+                        SYSTEM ID: {ADMIN_CREDS.id.substring(0, 4)}**** • ENCRYPTION: AES-256
+                    </p>
                 </div>
-            </div>
-        );
-    }
-
-    // Authenticated Dashboard View
-    return (
-        <Router>
-            <div className="min-h-screen bg-gray-50 font-sans">
-                {/* Top Navigation Bar */}
-                <nav className="bg-white border-b border-gray-100 sticky top-0 z-30">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between h-20">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-black text-white p-2.5 rounded-xl">
-                                    <ShieldCheck className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h1 className="text-xl font-black text-gray-900 tracking-tight">Admin Console</h1>
-                                    <p className="text-xs text-gray-500 font-bold">v2.4.0 • Live</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-6">
-                                <div className="text-right hidden md:block">
-                                    <p className="text-sm font-bold text-gray-900">Welcome, {ADMIN_CREDS.name}</p>
-                                    <p className="text-xs text-gray-500">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                                </div>
-                                <img
-                                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Harsha"
-                                    alt="Admin"
-                                    className="w-10 h-10 rounded-full border-2 border-orange-100 bg-orange-50"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-                    {/* Welcome Section */}
-                    <div className="relative overflow-hidden rounded-[2.5rem] bg-black text-white p-8 md:p-12 shadow-2xl">
-                        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-orange-600/30 to-transparent rounded-full blur-3xl -mr-32 -mt-32"></div>
-                        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-blue-600/20 to-transparent rounded-full blur-3xl -ml-20 -mb-20"></div>
-
-                        <div className="relative z-10">
-                            <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
-                                Good Evening, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-200">{ADMIN_CREDS.name}</span>.
-                            </h2>
-                            <p className="text-gray-400 text-lg max-w-2xl font-medium">
-                                System performance is optimal. You have <span className="text-white font-bold">5 pending approvals</span> and revenue is up by <span className="text-green-400 font-bold">14%</span> this week.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {stats.map((stat, index) => (
-                            <div key={index} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-xl shadow-lg`}>
-                                        {/* Simple Emoji Icons for now */}
-                                        <span className="text-white">{stat.label.includes('Revenue') ? '$' : stat.label.includes('Orders') ? '📦' : stat.label.includes('Partners') ? '🏪' : '⭐'}</span>
-                                    </div>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${stat.change.startsWith('+') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {stat.change}
-                                    </span>
-                                </div>
-                                <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1">{stat.label}</h3>
-                                <p className="text-3xl font-black text-gray-900">{stat.value}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Main Content Area - Restaurant Panel */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden">
-                        <div className="p-1">
-                            <AdminRestaurantPanel />
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </Router>
+            </motion.div>
+        </div>
     );
 };
 
