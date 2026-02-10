@@ -17,6 +17,7 @@ const RestaurantDashboard = () => {
 
     // Variant: Add Edit Logic
     const [editItem, setEditItem] = useState(null);
+    const [newItem, setNewItem] = useState({ name: '', price: '', description: '', category: 'Main Course', image: '', isVeg: true });
 
     // 120fps Animation Variants
     const containerVariants = {
@@ -35,8 +36,95 @@ const RestaurantDashboard = () => {
         visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
     };
 
+    const fetchDashboardData = async (restId) => {
+        try {
+            // If no restId provided, try to get from local storage or previous state
+            const id = restId || localStorage.getItem('restaurant_id');
+            if (!id) {
+                navigate('/login');
+                return;
+            }
+
+            const [restRes, foodsRes, statsRes] = await Promise.all([
+                fetch(`${API_URL}/api/restaurant/${id}`),
+                fetch(`${API_URL}/api/food/restaurant/${id}`),
+                fetch(`${API_URL}/api/restaurant/${id}/stats`)
+            ]);
+
+            if (restRes.ok) {
+                const restData = await restRes.json();
+                setRestaurant(restData);
+                localStorage.setItem('restaurant_id', restData._id || restData.id);
+            }
+
+            if (foodsRes.ok) {
+                const foodsData = await foodsRes.json();
+                setFoods(foodsData);
+            }
+
+            if (statsRes.ok) {
+                const statsData = await statsRes.json();
+                setStats(statsData);
+            }
+
+        } catch (error) {
+            console.error("Dashboard Fetch Error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const storedId = localStorage.getItem('restaurant_id');
+        if (storedId) {
+            fetchDashboardData(storedId);
+        } else {
+            navigate('/login');
+        }
+    }, [navigate]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('restaurant_id');
+        localStorage.removeItem('restaurant_token');
+        navigate('/login');
+    };
+
+    const handleDeleteItem = async (foodId) => {
+        if (!window.confirm("Are you sure you want to delete this item?")) return;
+        try {
+            const res = await fetch(`${API_URL}/api/food/${foodId}`, { method: 'DELETE' });
+            if (res.ok) {
+                setFoods(prev => prev.filter(f => (f._id || f.id) !== foodId));
+                // Update stats locally or refetch
+                setStats(prev => ({ ...prev, totalItems: prev.totalItems - 1 }));
+            } else {
+                alert("Failed to delete item");
+            }
+        } catch (error) {
+            console.error("Delete Error:", error);
+        }
+    };
+
+    const handleToggleStock = async (foodId, currentStatus) => {
+        try {
+            const res = await fetch(`${API_URL}/api/food/${foodId}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ available: !currentStatus })
+            });
+            if (res.ok) {
+                setFoods(prev => prev.map(f => (f._id || f.id) === foodId ? { ...f, available: !currentStatus } : f));
+            }
+        } catch (error) {
+            console.error("Toggle Stock Error:", error);
+        }
+    };
+
     const handleEditClick = (item) => {
-        setNewItem(item);
+        setNewItem({
+            ...item,
+            isVeg: item.is_veg !== undefined ? item.is_veg : item.isVeg
+        });
         setEditItem(item); // Track editing state
         setShowAddModal(true);
     };
