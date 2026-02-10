@@ -329,60 +329,77 @@ const RestaurantDashboard = () => {
                         >
                             {foods.map((food) => (
                                 <motion.div
+                                    layout
                                     variants={itemVariants}
                                     key={food.id}
-                                    className={`group bg-white rounded-[2rem] border transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 relative overflow-hidden ${food.available ? 'border-gray-100 opacity-100' : 'border-gray-200 bg-gray-50 opacity-75 grayscale-[0.8] hover:grayscale-0'}`}
+                                    className={`group bg-white rounded-[2.5rem] border p-5 transition-all duration-500 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col ${food.available ? 'border-gray-100 opacity-100' : 'border-gray-200 bg-gray-50 opacity-80 grayscale overflow-hidden'}`}
                                 >
-                                    <div className="flex gap-5">
-                                        <div className="w-28 h-28 rounded-2xl overflow-hidden shrink-0 bg-gray-50 shadow-inner">
-                                            {food.image ? (
-                                                <img
-                                                    src={food.image}
-                                                    alt={food.name}
-                                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                                                    loading="lazy"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                                    <Utensils className="w-8 h-8 opacity-50" />
-                                                </div>
-                                            )}
+                                    {/* Image Section */}
+                                    <div className="h-48 w-full rounded-[2rem] overflow-hidden mb-5 relative shrink-0">
+                                        {food.image ? (
+                                            <img
+                                                src={food.image}
+                                                alt={food.name}
+                                                className="w-full h-full object-cover"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
+                                                <Utensils className="w-10 h-10 opacity-50" />
+                                            </div>
+                                        )}
+
+                                        {/* Top Action Bar (Edit/Delete) */}
+                                        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleEditClick(food); }}
+                                                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-700 hover:text-orange-600 flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
+                                                title="Edit Dish"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteItem(food.id); }}
+                                                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-700 hover:text-red-600 flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
+                                                title="Delete Dish"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
 
-                                        <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
-                                            <div>
-                                                <div className="flex justify-between items-start">
-                                                    <h4 className="font-bold text-lg text-gray-900 truncate pr-2 group-hover:text-orange-600 transition-colors">{food.name}</h4>
-                                                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${food.is_veg ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_currentColor]`} />
-                                                </div>
-                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wide mt-1">{food.category}</p>
-                                            </div>
-
-                                            <div className="flex items-end justify-between mt-auto">
-                                                <span className="font-black text-xl text-gray-900">₹{food.price}</span>
-                                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
-                                                    <button onClick={() => handleEditClick(food)} className="p-2 rounded-xl bg-gray-100 hover:bg-orange-50 text-gray-600 hover:text-orange-600 transition-colors">
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDeleteItem(food.id)} className="p-2 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-500 transition-colors">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
+                                        {/* Veg/Non-Veg Badge */}
+                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                                            <div className={`w-2 h-2 rounded-full ${food.is_veg ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_6px_currentColor]`} />
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-gray-600">{food.category}</span>
                                         </div>
                                     </div>
 
-                                    {/* Stock Toggle as a Badge */}
-                                    <div className="mt-4 pt-4 border-t border-dashed border-gray-100 flex items-center justify-between">
-                                        <span className={`text-[10px] font-black uppercase tracking-wider ${food.available ? 'text-green-600' : 'text-gray-400'}`}>
-                                            {food.available ? '● Available Now' : '○ Currently Unavailable'}
-                                        </span>
-                                        <button
-                                            onClick={() => handleToggleStock(food.id, food.available)}
-                                            className={`w-10 h-6 rounded-full flex items-center transition-colors px-1 ${food.available ? 'bg-green-500 justify-end' : 'bg-gray-200 justify-start'}`}
-                                        >
-                                            <motion.div layout className="w-4 h-4 bg-white rounded-full shadow-sm" />
-                                        </button>
+                                    {/* Content Section */}
+                                    <div className="flex-1 flex flex-col">
+                                        <div className="flex justify-between items-start mb-2 gap-2">
+                                            <h3 className="font-bold text-xl text-gray-900 leading-tight line-clamp-1" title={food.name}>{food.name}</h3>
+                                            <span className="font-black text-xl text-gray-900 whitespace-nowrap">₹{food.price}</span>
+                                        </div>
+                                        <p className="text-gray-500 text-sm font-medium line-clamp-2 mb-6 leading-relaxed flex-1">
+                                            {food.description || "No description available."}
+                                        </p>
+
+                                        {/* Bottom Footer: Availability Toggle */}
+                                        <div className="mt-auto pt-4 border-t border-dashed border-gray-100 flex items-center justify-between">
+                                            <span className={`text-[11px] font-black uppercase tracking-wider transition-colors ${food.available ? 'text-green-600' : 'text-gray-400'}`}>
+                                                {food.available ? 'Available Now' : 'Currently Unavailable'}
+                                            </span>
+
+                                            <button
+                                                onClick={() => handleToggleStock(food.id, food.available)}
+                                                className={`relative w-14 h-8 rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-orange-500/20 ${food.available ? 'bg-gradient-to-r from-green-400 to-green-500 shadow-[0_4px_12px_rgba(74,222,128,0.4)]' : 'bg-gray-200 shadow-inner'}`}
+                                            >
+                                                <span className="sr-only">Toggle Availability</span>
+                                                <span
+                                                    className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-spring ${food.available ? 'translate-x-6' : 'translate-x-0'}`}
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))}

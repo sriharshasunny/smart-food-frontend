@@ -92,6 +92,9 @@ const RestaurantDetails = () => {
         if (activeCategory !== 'All') {
             items = items.filter(item => item.category === activeCategory);
         }
+        // ONLY SHOW AVAILABLE ITEMS TO CUSTOMERS
+        items = items.filter(item => item.available !== false);
+
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             items = items.filter(item =>
