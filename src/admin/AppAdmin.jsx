@@ -21,6 +21,16 @@ const AppAdmin = () => {
         { label: 'Avg. Rating', value: '4.8', change: '+0.2', icon: '⭐', color: 'from-yellow-400 to-yellow-600' },
     ];
 
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (inputID === ADMIN_CREDS.id) {
+            setIsAuthenticated(true);
+        } else {
+            setError('Access Denied: Invalid Credential Key');
+        }
+    };
+
+
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-white font-sans relative overflow-hidden">

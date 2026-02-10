@@ -1,3 +1,7 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck, PlusCircle, RefreshCw, CheckCircle, MapPin, Power, Trash2, Search, AlertCircle } from 'lucide-react';
+import { API_URL } from '../config';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 
