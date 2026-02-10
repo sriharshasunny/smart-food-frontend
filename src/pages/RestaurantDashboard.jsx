@@ -138,7 +138,8 @@ const RestaurantDashboard = () => {
                     return f;
                 }));
             } else {
-                console.error("Toggle Failed", await res.text());
+                const errorText = await res.text();
+                console.error("Toggle Failed", errorText);
                 // Revert Optimistic Update
                 setFoods(prev => prev.map(f => {
                     const id = f._id || f.id;
@@ -147,7 +148,7 @@ const RestaurantDashboard = () => {
                     }
                     return f;
                 }));
-                alert("Failed to update status. Please try again.");
+                alert(`Failed to update status. Server says: ${errorText}`);
             }
         } catch (error) {
             console.error("Toggle Stock Error:", error);
