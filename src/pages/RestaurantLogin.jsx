@@ -28,8 +28,12 @@ const RestaurantLogin = () => {
 
             if (res.ok) {
                 // Store Restaurant Data
-                localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
-                navigate('/restaurant/dashboard');
+                const restData = data.restaurant;
+                localStorage.setItem('restaurant', JSON.stringify(restData));
+                localStorage.setItem('restaurant_id', restData._id || restData.id);
+                if (data.token) localStorage.setItem('restaurant_token', data.token);
+
+                navigate('/dashboard');
             } else {
                 alert(data.message || 'Authentication failed');
             }
