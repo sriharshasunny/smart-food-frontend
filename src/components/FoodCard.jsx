@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Star, Plus, Heart, Clock, Flame } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 // Optimization: Use memo to prevent unnecessary re-renders
 const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured = false, onAdd }) => {
@@ -29,9 +30,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
             <div
                 className="bg-white rounded-2xl p-3 border border-gray-100 flex gap-4 relative group hover:border-orange-200 transition-colors will-change-transform"
             >
-                import {optimizeImage} from '../utils/imageOptimizer';
 
-                // ... (inside component)
                 {/* Image Section - Square - Optimized loading */}
                 <div className="relative w-28 h-28 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     <img
