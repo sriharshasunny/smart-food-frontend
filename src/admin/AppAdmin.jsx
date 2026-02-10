@@ -44,50 +44,72 @@ const AppAdmin = () => {
                     <AdminRestaurantPanel />
                 </Router>
 
-                {/* The Curtains Overlay (Animate Out) */}
+                {/* The Curtains Overlay */}
                 <AnimatePresence>
                     <motion.div
                         className="fixed inset-0 z-50 pointer-events-none flex"
                         initial={{ opacity: 1 }}
-                        animate={{ opacity: 0, transition: { delay: 2.5, duration: 1 } }}
+                        animate={{ opacity: 0, transition: { delay: 3.5, duration: 0.5 } }} // Remove container after doors open
                     >
-                        {/* Left Curtain */}
+                        {/* Left Blast Door */}
                         <motion.div
-                            className="w-1/2 h-full bg-black border-r border-cyan-500/50 shadow-[0_0_50px_rgba(0,255,255,0.2)]"
+                            className="w-1/2 h-full bg-[#0a0a0a] border-r-2 border-cyan-900 relative flex items-center justify-end overflow-hidden"
                             initial={{ x: 0 }}
                             animate={{ x: '-100%' }}
-                            transition={{ duration: 1.5, ease: "circInOut", delay: 0.5 }}
+                            transition={{ duration: 1.2, ease: "easeInOut", delay: 2.2 }} // Start opening at 2.2s
                         >
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-32 bg-cyan-400/50 blur-sm" />
+                            {/* Mechanical Details */}
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+                            <div className="w-2 h-32 bg-cyan-500/20 rounded-l-full mr-2 shadow-[0_0_15px_rgba(0,255,255,0.3)]" />
+                            <div className="absolute bottom-20 right-10 flex flex-col gap-2">
+                                <div className="w-16 h-2 bg-yellow-600/50 rounded-full" />
+                                <div className="w-10 h-2 bg-yellow-600/30 rounded-full ml-auto" />
+                            </div>
                         </motion.div>
 
-                        {/* Right Curtain */}
+                        {/* Right Blast Door */}
                         <motion.div
-                            className="w-1/2 h-full bg-black border-l border-cyan-500/50 shadow-[0_0_50px_rgba(0,255,255,0.2)]"
+                            className="w-1/2 h-full bg-[#0a0a0a] border-l-2 border-cyan-900 relative flex items-center justify-start overflow-hidden"
                             initial={{ x: 0 }}
                             animate={{ x: '100%' }}
-                            transition={{ duration: 1.5, ease: "circInOut", delay: 0.5 }}
+                            transition={{ duration: 1.2, ease: "easeInOut", delay: 2.2 }}
                         >
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-32 bg-cyan-400/50 blur-sm" />
+                            {/* Mechanical Details */}
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+                            <div className="w-2 h-32 bg-cyan-500/20 rounded-r-full ml-2 shadow-[0_0_15px_rgba(0,255,255,0.3)]" />
+                            <div className="absolute bottom-20 left-10 flex flex-col gap-2">
+                                <div className="w-16 h-2 bg-yellow-600/50 rounded-full" />
+                                <div className="w-10 h-2 bg-yellow-600/30 rounded-full" />
+                            </div>
                         </motion.div>
 
-                        {/* Welcome Text (Fades out before curtains open) */}
+                        {/* Welcome Text Sequence */}
                         <motion.div
                             className="absolute inset-0 flex items-center justify-center z-50"
-                            initial={{ opacity: 0, scale: 0.8 }}
+                            initial={{ opacity: 0, scale: 0.9 }}
                             animate={{
-                                opacity: [0, 1, 1, 0],
-                                scale: [0.8, 1, 1, 1.5],
+                                opacity: [0, 1, 1, 0], // Fade In -> Stay -> Fade Out
+                                scale: [0.9, 1, 1, 1.2], // Slight Zoom
+                                filter: ["blur(10px)", "blur(0px)", "blur(0px)", "blur(20px)"] // Blur out effect
                             }}
-                            transition={{ duration: 2.5, times: [0, 0.2, 0.8, 1] }}
+                            transition={{
+                                duration: 2.0, // Total text duration 2.0s
+                                times: [0, 0.2, 0.8, 1],
+                                ease: "easeInOut"
+                            }}
                         >
                             <div className="text-center">
-                                <h2 className="text-4xl md:text-6xl font-black text-white tracking-[0.2em] mb-4 font-mono">
-                                    WELCOME COMMANDER
+                                <h2 className="text-4xl md:text-6xl font-black text-white tracking-[0.2em] mb-4 font-mono uppercase drop-shadow-[0_0_10px_rgba(0,255,255,0.8)]">
+                                    Welcome Commander
                                 </h2>
                                 <h3 className="text-2xl md:text-3xl text-cyan-400 font-mono tracking-widest animate-pulse">
                                     {ADMIN_CREDS.name}
                                 </h3>
+                                <div className="mt-8 flex justify-center gap-2">
+                                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" />
+                                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce delay-100" />
+                                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce delay-200" />
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>
