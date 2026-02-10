@@ -331,7 +331,7 @@ const RestaurantDashboard = () => {
                                 <motion.div
                                     variants={itemVariants}
                                     key={food.id}
-                                    className="group bg-white rounded-[2rem] border border-gray-100 p-4 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:border-orange-100 relative overflow-hidden"
+                                    className={`group bg-white rounded-[2rem] border transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 relative overflow-hidden ${food.available ? 'border-gray-100 opacity-100' : 'border-gray-200 bg-gray-50 opacity-75 grayscale-[0.8] hover:grayscale-0'}`}
                                 >
                                     <div className="flex gap-5">
                                         <div className="w-28 h-28 rounded-2xl overflow-hidden shrink-0 bg-gray-50 shadow-inner">

@@ -121,6 +121,24 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// 6. PRIVATE: Toggle Availability
+router.patch('/:id/toggle', async (req, res) => {
+    try {
+        const { available } = req.body;
+        const { data: updated, error } = await supabase
+            .from('foods')
+            .update({ available })
+            .eq('id', req.params.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ message: "Error toggling availability", error: error.message });
+    }
+});
+
 // 5. PRIVATE: Delete Food
 router.delete('/:id', async (req, res) => {
     try {

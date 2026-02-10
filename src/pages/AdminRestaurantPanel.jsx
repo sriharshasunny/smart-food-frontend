@@ -126,6 +126,21 @@ const AdminRestaurantPanel = () => {
         }
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 md:p-8 font-sans">
             <div className="max-w-7xl w-full">
@@ -254,12 +269,16 @@ const AdminRestaurantPanel = () => {
                         </div>
 
                         {/* Restaurant Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="show"
+                            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                        >
                             {restaurants.map((rest) => (
                                 <motion.div
                                     layout
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
+                                    variants={itemVariants}
                                     key={rest.id}
                                     className={`group relative bg-white rounded-3xl p-5 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${rest.is_active === false ? 'border-red-100 bg-red-50/30' : 'border-gray-100 shadow-sm'
                                         }`}
@@ -329,7 +348,7 @@ const AdminRestaurantPanel = () => {
                                     <p className="text-gray-500">Get started by adding a restaurant on the left.</p>
                                 </div>
                             )}
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>
@@ -374,7 +393,7 @@ const AdminRestaurantPanel = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 };
 
