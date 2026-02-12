@@ -137,7 +137,7 @@ const ChatWidget = () => {
                     {/* Header */}
                     <div className="bg-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
                         <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
-                            <ShoppingBag size={16} text-white />
+                            <ShoppingBag size={16} className="text-white" />
                         </div>
                         <div>
                             <h3 className="font-bold text-white">Food Assistant</h3>
