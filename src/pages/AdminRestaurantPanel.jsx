@@ -178,7 +178,7 @@ const AdminRestaurantPanel = () => {
                     </div>
                 </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     {/* LEFT COLUMN: Create Form */}
                     <div className="lg:col-span-4 space-y-8">
                         <motion.div
@@ -305,15 +305,15 @@ const AdminRestaurantPanel = () => {
                                     variants={itemVariants}
                                     key={rest.id}
                                     className={`group relative bg-zinc-900/40 backdrop-blur-md rounded-2xl p-5 border transition-all duration-300 hover:-translate-y-1 ${rest.is_active === false
-                                            ? 'border-red-500/30 bg-red-900/10'
-                                            : 'border-white/5 hover:border-cyan-500/30 hover:shadow-[0_0_30px_rgba(6,182,212,0.1)]'
+                                        ? 'border-red-500/30 bg-red-900/10'
+                                        : 'border-white/5 hover:border-cyan-500/30 hover:shadow-[0_0_30px_rgba(6,182,212,0.1)]'
                                         }`}
                                 >
                                     {/* Status Badge */}
                                     <div className="absolute top-4 right-4 z-10">
                                         <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full border bg-black/40 backdrop-blur-sm ${rest.is_active !== false
-                                                ? 'border-green-500/50 text-green-400'
-                                                : 'border-red-500/50 text-red-400'
+                                            ? 'border-green-500/50 text-green-400'
+                                            : 'border-red-500/50 text-red-400'
                                             }`}>
                                             <div className={`w-1.5 h-1.5 rounded-full ${rest.is_active !== false ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
                                             <span className="text-[10px] font-black uppercase tracking-widest">
