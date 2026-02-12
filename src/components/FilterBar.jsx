@@ -36,39 +36,39 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
 
                     {/* Top Rated */}
                     <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => toggleSubFilter('rating45Plus')}
-                        className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border
+                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1.5
                             ${subFilters.rating45Plus
-                                ? 'bg-black text-white border-black'
-                                : 'bg-white text-gray-600 border-gray-300 hover:border-gray-800'
+                                ? 'bg-gradient-to-br from-black to-gray-800 text-white shadow-lg shadow-black/20 ring-1 ring-black/5 scale-105'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400 hover:shadow-md'
                             }`}
                     >
-                        Top Rated
+                        <span>★</span> Top Rated
                     </motion.button>
 
                     {/* Veg Only */}
                     <motion.button
                         whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.05 }}
                         onClick={() => toggleSubFilter('vegOnly')}
-                        className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border
+                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1.5
                             ${subFilters.vegOnly
-                                ? 'bg-green-600 text-white border-green-600'
-                                : 'bg-white text-gray-600 border-gray-300 hover:border-green-600 hover:text-green-600'
+                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-green-500/20 ring-1 ring-green-500/20 scale-105'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300 hover:text-green-600 hover:shadow-md'
                             }`}
                     >
-                        Veg Only
+                        <span className={subFilters.vegOnly ? 'text-white' : 'text-green-600'}>☘</span> Veg Only
                     </motion.button>
 
                     {/* Budget Filter */}
                     <div className="relative">
                         <motion.button
                             whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.05 }}
                             onClick={() => setShowPriceSlider(!showPriceSlider)}
-                            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border flex items-center gap-2
+                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2
                                 ${subFilters.maxPrice < 1000
-                                    ? 'bg-orange-600 text-white border-orange-600'
-                                    : 'bg-white text-gray-600 border-gray-300 hover:border-orange-500'
+                                    ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/20 ring-1 ring-orange-500/20 scale-105'
+                                    : 'bg-white text-gray-600 border border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-md'
                                 }`}
                         >
                             <span>{subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}</span>

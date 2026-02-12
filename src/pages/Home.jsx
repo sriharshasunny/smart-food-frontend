@@ -395,10 +395,10 @@ const Home = () => {
                 {/* --- MENU PARTITION --- */}
 
                 {/* 1. Premium Divider */}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-1" />
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
                 {/* 2. Menu Section Header (Professional Single Line) */}
-                <div ref={sectionHeaderRef} className="flex items-center justify-between mb-1 relative">
+                <div ref={sectionHeaderRef} className="flex items-center justify-between relative py-2">
                     <div className="h-px bg-gray-200 flex-1"></div>
                     <span className="px-4 text-sm font-bold tracking-[0.2em] text-gray-400 uppercase">Explore Food Items</span>
                     <div className="h-px bg-gray-200 flex-1"></div>
@@ -430,7 +430,7 @@ const Home = () => {
                 </div>
 
                 {/* 4. Popular Food Items Section (Bottom) */}
-                <section className="min-h-[500px] content-visibility-auto contain-layout pt-4">
+                <section className="min-h-[500px] content-visibility-auto contain-layout pt-2">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
                         {/* Error State for API Failure */}
