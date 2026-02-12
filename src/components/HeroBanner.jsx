@@ -7,7 +7,7 @@ const premiumOffers = [
         title: "Gourmet Cravings",
         subtitle: "Premium Quality",
         description: "Experience five-star dining delivered fresh to your doorstep. Handmade burgers, artisan pizzas, and more.",
-        image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop", // Optimized w=1200
+        image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1600&auto=format&fit=crop", // Pizza/Italian - Vibrant
         accent: "from-orange-500 to-red-600",
         code: "TASTY50",
         icon: Award
@@ -17,7 +17,7 @@ const premiumOffers = [
         title: "Super Fast Delivery",
         subtitle: "30 Mins Promise",
         description: "Hungry? We deliver faster than you can set the table. Live tracking included.",
-        image: "https://images.unsplash.com/photo-1617347454431-f49d7ff5c3b1?q=80&w=1200&auto=format&fit=crop", // Optimized w=1200
+        image: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?q=80&w=1600&auto=format&fit=crop", // Burger/Fast Food - High Contrast
         accent: "from-blue-500 to-indigo-600",
         code: "SPEEDY30",
         icon: Zap
@@ -27,7 +27,7 @@ const premiumOffers = [
         title: "Global Flavors",
         subtitle: "World Cuisine",
         description: "From Italian Pasta to spicy Indian Curry, explore a world of flavors today.",
-        image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1200&auto=format&fit=crop", // Optimized w=1200
+        image: "https://images.unsplash.com/photo-1543353071-087092ec393a?q=80&w=1600&auto=format&fit=crop", // Burrito/Mexican - Colorful
         accent: "from-emerald-500 to-green-600",
         code: "WORLD40",
         icon: Sparkles
