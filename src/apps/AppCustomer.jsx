@@ -7,6 +7,7 @@ import { ShopProvider } from '../context/ShopContext';
 import ScrollToTop from '../components/ScrollToTop';
 import SmoothScroll from '../components/SmoothScroll';
 import Layout from '../components/Layout';
+import ChatErrorBoundary from '../components/ChatErrorBoundary';
 
 const ChatWidget = lazy(() => import('../components/ChatWidget'));
 
@@ -64,7 +65,9 @@ const AppCustomer = () => {
                                 </Routes>
                             </Suspense>
                             <Suspense fallback={null}>
-                                <ChatWidget />
+                                <ChatErrorBoundary>
+                                    <ChatWidget />
+                                </ChatErrorBoundary>
                             </Suspense>
                         </Router>
                     </LazyMotion>
