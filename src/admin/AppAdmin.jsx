@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ADMIN_CREDS = {
     id: '6281871173',
-    name: 'Harsha' // Display name
+    name: 'Harsha' // Display name -- USER REQUEST: Show this FIRST
 };
 
 const AppAdmin = () => {
@@ -37,144 +37,140 @@ const AppAdmin = () => {
     if (isAuthenticated) {
         return (
             <div className="relative min-h-screen bg-black overflow-hidden font-sans">
-                {/* The Dashboard */}
+                {/* The Dashboard -- Underlying Layer */}
                 <Router>
                     <AdminRestaurantPanel />
                 </Router>
 
-                {/* The Blast Doors Overlay */}
+                {/* The Blast Doors Overlay -- Top Layer */}
                 <AnimatePresence>
                     <motion.div
                         className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
                         initial={{ opacity: 1 }}
-                        animate={{ opacity: 0, transition: { delay: 4.5, duration: 0.5 } }}
+                        animate={{ opacity: 0, transition: { delay: 6.0, duration: 0.5 } }} // Fade out container LAST (after doors open)
                     >
-                        {/* LEFT DOOR */}
+                        {/* CAMERA SHAKE WRAPPER */}
                         <motion.div
-                            className="absolute left-0 top-0 w-1/2 h-full bg-[#111] border-r-4 border-cyan-900 overflow-hidden shadow-[10px_0_50px_rgba(0,0,0,0.8)] z-20"
-                            initial={{ x: 0 }}
-                            animate={{ x: '-105%' }}
-                            transition={{ duration: 1.8, ease: "easeInOut", delay: 2.5 }}
+                            className="absolute inset-0 flex"
+                            animate={{ x: [-3, 3, -3, 3, 0], y: [2, -2, 0] }}
+                            transition={{ duration: 0.5, delay: 3.5 }} // Shake when doors start opening
                         >
-                            {/* Industrial Texture */}
-                            <div className="absolute inset-0 opacity-30 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#000_10px,#000_20px)]" />
-                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-40 mix-blend-overlay" />
-
-                            {/* Vertical Caution Stripe */}
-                            <div className="absolute right-0 top-0 h-full w-16 bg-yellow-500/10 border-l border-yellow-500/20 flex flex-col items-center justify-center gap-20 py-10">
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="w-8 h-32 bg-yellow-500/20 skew-y-12 border border-yellow-500/30" />
-                                ))}
-                            </div>
-
-                            {/* Center Locking Piston (Left Half) */}
+                            {/* LEFT DOOR */}
                             <motion.div
-                                className="absolute top-1/2 right-0 -translate-y-1/2 w-40 h-64 bg-zinc-800 border-l-2 border-t-2 border-b-2 border-cyan-500/50 rounded-l-3xl flex items-center justify-end pr-4 shadow-2xl"
+                                className="w-1/2 h-full bg-[#050505] border-r-4 border-cyan-900/50 relative overflow-hidden shadow-[10px_0_50px_rgba(0,0,0,0.9)] z-20 flex items-center justify-end"
                                 initial={{ x: 0 }}
-                                animate={{ x: -50 }}
-                                transition={{ duration: 0.5, delay: 1.8 }}
+                                animate={{ x: '-105%' }}
+                                transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 3.5 }} // Open AFTER text
                             >
-                                <div className="w-4 h-40 bg-cyan-900 rounded-full animate-pulse" />
+                                {/* Industrial Texture - Carbon Fiber + Rivets */}
+                                <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay" />
+                                <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_20px,#fff_20px,#fff_21px)]" />
+
+                                {/* Vertical Caution Stripe */}
+                                <div className="absolute right-0 top-0 h-full w-24 bg-yellow-500/5 border-l border-yellow-500/10 flex flex-col items-center justify-around py-10">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="w-12 h-24 bg-yellow-500/20 skew-y-12 border-t border-b border-yellow-500/30 backdrop-blur-sm" />
+                                    ))}
+                                </div>
+
+                                {/* Center Locking Piston (Left Half) */}
+                                <motion.div
+                                    className="w-32 h-48 bg-zinc-900 border-l-2 border-t-2 border-b-2 border-cyan-500/50 rounded-l-2xl flex items-center justify-end pr-4 shadow-[0_0_30px_rgba(0,255,255,0.1)] relative z-30"
+                                    initial={{ x: 0 }}
+                                    animate={{ x: -100, opacity: 0 }}
+                                    transition={{ duration: 0.4, delay: 3.0, ease: "backIn" }} // Retract before door opens
+                                >
+                                    <div className="w-2 h-32 bg-cyan-400 rounded-full shadow-[0_0_15px_rgba(0,255,255,0.8)]" />
+                                    {/* Sparks Emitter (Visual only) */}
+                                    <div className="absolute right-0 top-1/2 w-1 h-1 bg-white animate-ping" />
+                                </motion.div>
+                            </motion.div>
+
+                            {/* RIGHT DOOR */}
+                            <motion.div
+                                className="w-1/2 h-full bg-[#050505] border-l-4 border-cyan-900/50 relative overflow-hidden shadow-[-10px_0_50px_rgba(0,0,0,0.9)] z-20 flex items-center justify-start"
+                                initial={{ x: 0 }}
+                                animate={{ x: '105%' }}
+                                transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 3.5 }}
+                            >
+                                {/* Industrial Texture */}
+                                <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay" />
+                                <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(-45deg,transparent,transparent_20px,#fff_20px,#fff_21px)]" />
+
+                                {/* Vertical Caution Stripe */}
+                                <div className="absolute left-0 top-0 h-full w-24 bg-yellow-500/5 border-r border-yellow-500/10 flex flex-col items-center justify-around py-10">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="w-12 h-24 bg-yellow-500/20 -skew-y-12 border-t border-b border-yellow-500/30 backdrop-blur-sm" />
+                                    ))}
+                                </div>
+
+                                {/* Center Locking Piston (Right Half) */}
+                                <motion.div
+                                    className="w-32 h-48 bg-zinc-900 border-r-2 border-t-2 border-b-2 border-cyan-500/50 rounded-r-2xl flex items-center justify-start pl-4 shadow-[0_0_30px_rgba(0,255,255,0.1)] relative z-30"
+                                    initial={{ x: 0 }}
+                                    animate={{ x: 100, opacity: 0 }}
+                                    transition={{ duration: 0.4, delay: 3.0, ease: "backIn" }}
+                                >
+                                    <div className="w-2 h-32 bg-cyan-400 rounded-full shadow-[0_0_15px_rgba(0,255,255,0.8)]" />
+                                </motion.div>
                             </motion.div>
                         </motion.div>
 
-                        {/* RIGHT DOOR */}
+                        {/* WELCOME SEQUENCE (Plays WHILE doors are closed, 0s - 3s) */}
                         <motion.div
-                            className="absolute right-0 top-0 w-1/2 h-full bg-[#111] border-l-4 border-cyan-900 overflow-hidden shadow-[-10px_0_50px_rgba(0,0,0,0.8)] z-20"
-                            initial={{ x: 0 }}
-                            animate={{ x: '105%' }}
-                            transition={{ duration: 1.8, ease: "easeInOut", delay: 2.5 }}
-                        >
-                            {/* Industrial Texture */}
-                            <div className="absolute inset-0 opacity-30 bg-[repeating-linear-gradient(-45deg,transparent,transparent_10px,#000_10px,#000_20px)]" />
-                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-40 mix-blend-overlay" />
-
-                            {/* Vertical Caution Stripe */}
-                            <div className="absolute left-0 top-0 h-full w-16 bg-yellow-500/10 border-r border-yellow-500/20 flex flex-col items-center justify-center gap-20 py-10">
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="w-8 h-32 bg-yellow-500/20 -skew-y-12 border border-yellow-500/30" />
-                                ))}
-                            </div>
-
-                            {/* Center Locking Piston (Right Half) */}
-                            <motion.div
-                                className="absolute top-1/2 left-0 -translate-y-1/2 w-40 h-64 bg-zinc-800 border-r-2 border-t-2 border-b-2 border-cyan-500/50 rounded-r-3xl flex items-center justify-start pl-4 shadow-2xl"
-                                initial={{ x: 0 }}
-                                animate={{ x: 50 }}
-                                transition={{ duration: 0.5, delay: 1.8 }}
-                            >
-                                <div className="w-4 h-40 bg-cyan-900 rounded-full animate-pulse" />
-                            </motion.div>
-                        </motion.div>
-
-                        {/* LOCKING MECHANISM - CENTER OVERLAY */}
-                        <motion.div
-                            className="absolute z-30 flex flex-col items-center gap-4"
-                            initial={{ opacity: 1, scale: 1 }}
-                            animate={{ opacity: 0, scale: 0.8 }}
-                            transition={{ duration: 0.3, delay: 1.8 }}
-                        >
-                            <div className="w-32 h-32 bg-black border-4 border-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,255,255,0.4)] relative">
-                                <div className="absolute inset-0 border-2 border-dashed border-cyan-500/50 rounded-full animate-[spin_10s_linear_infinite]" />
-                                <Lock className="w-12 h-12 text-cyan-400" />
-                                {/* Bolts */}
-                                <motion.div
-                                    className="absolute -top-4 w-4 h-12 bg-gray-300 rounded-sm"
-                                    animate={{ y: -50, opacity: 0 }} transition={{ delay: 1.5, duration: 0.3 }}
-                                />
-                                <motion.div
-                                    className="absolute -bottom-4 w-4 h-12 bg-gray-300 rounded-sm"
-                                    animate={{ y: 50, opacity: 0 }} transition={{ delay: 1.5, duration: 0.3 }}
-                                />
-                            </div>
-                            <div className="bg-black/80 px-4 py-1 rounded text-cyan-500 font-mono text-xs tracking-widest border border-cyan-900">
-                                UNLOCKING...
-                            </div>
-                        </motion.div>
-
-                        {/* WELCOME SEQUENCE */}
-                        <motion.div
-                            className="absolute inset-0 flex items-center justify-center z-10"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 3 }}
+                            className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
+                            initial={{ opacity: 1 }}
+                            animate={{ opacity: 0 }}
+                            transition={{ duration: 0.3, delay: 2.8 }} // Fade out right before pistons retract
                         >
                             <div className="text-center relative">
-                                {/* Atmospheric Particles/Glitch Overlay */}
-                                <div className="absolute inset-0 -m-20 bg-cyan-500/10 blur-[100px] animate-pulse" />
+                                {/* Holographic Projector Beam */}
+                                <motion.div
+                                    className="absolute -top-40 left-1/2 -translate-x-1/2 w-1 h-40 bg-gradient-to-b from-transparent to-cyan-500/50 blur-sm"
+                                    initial={{ height: 0 }} animate={{ height: 200 }} transition={{ duration: 0.2 }}
+                                />
 
+                                {/* Glithcy Welcome Text */}
                                 <motion.h2
-                                    className="text-5xl md:text-7xl font-black text-white tracking-widest mb-4 font-mono uppercase mix-blend-screen"
-                                    initial={{ opacity: 0, filter: "blur(20px)" }}
+                                    className="text-6xl md:text-8xl font-black text-white tracking-[0.2em] mb-6 font-mono uppercase mix-blend-lighten"
+                                    initial={{ opacity: 0, scale: 2, filter: "blur(20px)" }}
                                     animate={{
-                                        opacity: [0, 1, 0.8, 1],
-                                        filter: ["blur(20px)", "blur(0px)", "blur(2px)", "blur(0px)"],
-                                        x: [0, -5, 5, 0]
+                                        opacity: [0, 1, 1, 1], // Flash in
+                                        scale: [2, 1, 1, 0.9], // Slam down
+                                        filter: ["blur(20px)", "blur(0px)", "blur(0px)", "blur(2px)"],
+                                        textShadow: [
+                                            "0 0 0px #0ff",
+                                            "2px 2px 0px #f0f, -2px -2px 0px #0ff", // RGB Split
+                                            "0 0 10px #0ff",
+                                            "0 0 0px #0ff"
+                                        ]
                                     }}
-                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    transition={{ duration: 0.8, ease: "circOut" }}
                                 >
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-cyan-400 drop-shadow-[0_0_10px_rgba(0,255,255,0.8)]">
-                                        WELCOME
-                                    </span>
+                                    WELCOME
                                 </motion.h2>
 
-                                <motion.h3
-                                    className="text-4xl md:text-5xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 font-bold tracking-[0.2em] relative inline-block"
-                                    initial={{ scale: 0.8, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ delay: 0.5, type: "spring" }}
-                                >
-                                    {ADMIN_CREDS.name}
-                                    {/* Scanline Effect */}
-                                    <motion.div
-                                        className="absolute top-0 left-0 w-full h-1 bg-white/50 shadow-[0_0_20px_rgba(255,255,255,0.8)]"
-                                        animate={{ top: ['0%', '100%', '0%'] }}
-                                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                    />
-                                </motion.h3>
+                                {/* Commander Name with Scanning Laser */}
+                                <div className="relative inline-block">
+                                    <motion.h3
+                                        className="text-5xl md:text-6xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-purple-500 tracking-widest relative z-10"
+                                        initial={{ clipPath: "polygon(0 0, 100% 0, 100% 0, 0 0)" }}
+                                        animate={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
+                                        transition={{ duration: 1.0, delay: 0.5, ease: "linear" }}
+                                    >
+                                        {ADMIN_CREDS.name}
+                                    </motion.h3>
 
-                                <div className="mt-8 flex justify-center gap-1">
-                                    <motion.div className="w-20 h-1 bg-cyan-500" animate={{ width: [0, 80, 0] }} transition={{ repeat: Infinity, duration: 2 }} />
+                                    {/* The Laser Scanner Line */}
+                                    <motion.div
+                                        className="absolute top-0 w-full h-[2px] bg-red-500 shadow-[0_0_20px_rgba(255,0,0,1)] z-20"
+                                        initial={{ top: 0, opacity: 1 }}
+                                        animate={{ top: "100%", opacity: 0 }}
+                                        transition={{ duration: 1.0, delay: 0.5, ease: "linear" }}
+                                    />
+
+                                    {/* Residual Glow */}
+                                    <div className="absolute inset-0 bg-cyan-500/20 blur-xl -z-10 animate-pulse" />
                                 </div>
                             </div>
                         </motion.div>
