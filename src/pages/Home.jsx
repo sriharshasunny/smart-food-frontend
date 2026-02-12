@@ -219,9 +219,9 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
+        <div className="min-h-screen bg-gray-50 pb-10 font-sans text-gray-900">
             {/* Minimal Padding for Full Screen Feel */}
-            <div className="w-full px-2 sm:px-3 pt-2 space-y-3 mx-auto">
+            <div className="w-full px-1 sm:px-2 pt-0 space-y-1 mx-auto">
 
                 {/* Hero Banner (Offers) WITH Location Widget Embedded */}
                 <ErrorBoundary key="hero">
@@ -231,10 +231,10 @@ const Home = () => {
                 {/* --- Content Sections --- */}
 
                 {/* Split Top Section: Restaurants (Large Left) + Quick Recs (Small Right) */}
-                <div className="flex flex-col xl:flex-row gap-3 h-auto xl:h-[480px]">
+                <div className="flex flex-col xl:flex-row gap-2 h-auto xl:h-[360px]">
 
                     {/* Left: Top Content (Restaurants) */}
-                    <div className="flex-1 min-w-0 bg-white rounded-[1.5rem] p-3 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[320px] xl:h-full group transition-transform duration-300 transform-gpu">
+                    <div className="flex-1 min-w-0 bg-white rounded-[1.25rem] p-2 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[300px] xl:h-full group transition-transform duration-300 transform-gpu">
                         {/* ... (rest of Left content same) ... */}
                         {/* Background Blob */}
                         <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
@@ -253,7 +253,7 @@ const Home = () => {
                             <ChevronRight className="w-5 h-5" />
                         </button>
 
-                        <div className="relative z-10 flex flex-row items-center justify-between mb-2 pt-1 px-1 shrink-0 gap-2 h-10">
+                        <div className="relative z-10 flex flex-row items-center justify-between mb-1 pt-1 px-1 shrink-0 gap-2 h-9">
                             {/* Toggle Switcher - Compact */}
                             <div className="flex items-center bg-gray-100 p-0.5 rounded-full relative shrink-0">
                                 <button
@@ -284,7 +284,7 @@ const Home = () => {
 
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
-                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x overscroll-contain">
+                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-4 pt-1 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x overscroll-contain">
                                 {viewMode === 'restaurants' ? (
                                     filteredData.restaurants.map((restaurant) => (
                                         <RestaurantCard key={restaurant.id} restaurant={restaurant} />
@@ -302,7 +302,7 @@ const Home = () => {
 
 
                     {/* Right: Quick Recommendations (Adjusted Width - Flexible on mobile) */}
-                    <div className="w-full xl:w-[420px] shrink-0 bg-white rounded-[1.5rem] p-3 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[320px] xl:h-full">
+                    <div className="w-full xl:w-[420px] shrink-0 bg-white rounded-[1.25rem] p-2 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[300px] xl:h-full">
                         {/* Background Decoration - Optimized */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50/50 rounded-full translate-x-1/3 -translate-y-1/3 opacity-50" />
 
