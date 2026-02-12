@@ -220,8 +220,8 @@ const Home = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
-            {/* Reduced Top Padding for more content space */}
-            <div className="w-full px-2 md:px-6 lg:px-8 pt-4 space-y-4 md:space-y-8 max-w-[1920px] mx-auto">
+            {/* Minimal Padding for Full Screen Feel */}
+            <div className="w-full px-2 sm:px-3 pt-2 space-y-3 mx-auto">
 
                 {/* Hero Banner (Offers) WITH Location Widget Embedded */}
                 <ErrorBoundary key="hero">
@@ -231,10 +231,10 @@ const Home = () => {
                 {/* --- Content Sections --- */}
 
                 {/* Split Top Section: Restaurants (Large Left) + Quick Recs (Small Right) */}
-                <div className="flex flex-col xl:flex-row gap-4 md:gap-6 mb-0 h-auto xl:h-[450px]">
+                <div className="flex flex-col xl:flex-row gap-3 h-auto xl:h-[480px]">
 
                     {/* Left: Top Content (Restaurants) */}
-                    <div className="flex-1 min-w-0 bg-white rounded-[2rem] p-4 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[350px] xl:h-full group transition-transform duration-300 transform-gpu">
+                    <div className="flex-1 min-w-0 bg-white rounded-[1.5rem] p-3 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[320px] xl:h-full group transition-transform duration-300 transform-gpu">
                         {/* ... (rest of Left content same) ... */}
                         {/* Background Blob */}
                         <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
@@ -284,7 +284,7 @@ const Home = () => {
 
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
-                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x">
+                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x overscroll-contain">
                                 {viewMode === 'restaurants' ? (
                                     filteredData.restaurants.map((restaurant) => (
                                         <RestaurantCard key={restaurant.id} restaurant={restaurant} />
@@ -301,8 +301,8 @@ const Home = () => {
                     </div>
 
 
-                    {/* Right: Quick Recommendations (Adjusted Width - 410px) */}
-                    <div className="w-full xl:w-[410px] shrink-0 bg-white rounded-[2rem] p-4 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[300px] xl:h-full">
+                    {/* Right: Quick Recommendations (Adjusted Width - Flexible on mobile) */}
+                    <div className="w-full xl:w-[420px] shrink-0 bg-white rounded-[1.5rem] p-3 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[320px] xl:h-full">
                         {/* Background Decoration - Optimized */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50/50 rounded-full translate-x-1/3 -translate-y-1/3 opacity-50" />
 
@@ -320,9 +320,9 @@ const Home = () => {
                             <ChevronRight className="rotate-90 w-5 h-5" />
                         </button>
 
-                        <div className="flex justify-between items-center mb-3 relative z-10 shrink-0">
+                        <div className="flex justify-between items-center mb-2 relative z-10 shrink-0">
                             <div>
-                                <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                                <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
                                     <span className="bg-yellow-400 text-black px-2 py-0.5 rounded-md text-[10px] shadow-sm uppercase tracking-wider">Trending</span>
                                     Picks ⚡
                                 </h2>
@@ -336,7 +336,9 @@ const Home = () => {
                         </div>
 
                         {/* Quick Grid (Vertical Scroll) - Simple Rainbow Cards */}
-                        <div ref={trendingContainerRef} className="flex flex-col overflow-y-auto pr-1 scrollbar-none gap-3 relative z-10 h-full pt-1 scroll-smooth touch-pan-y">
+                        <div ref={trendingContainerRef} className="flex flex-col overflow-y-auto pr-1 scrollbar-none gap-2 relative z-10 h-full pt-1 scroll-smooth touch-pan-y overscroll-contain">
+
+
                             {filteredData.dishes.slice(0, 6).map((dish) => (
                                 <div
                                     key={dish.id}
