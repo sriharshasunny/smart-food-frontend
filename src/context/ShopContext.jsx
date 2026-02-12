@@ -15,7 +15,8 @@ export const ShopProvider = ({ children }) => {
         try {
             const savedCart = localStorage.getItem('cart');
             const parsed = savedCart ? JSON.parse(savedCart) : [];
-            return Array.isArray(parsed) ? parsed : [];
+            // SANITIZE: Ensure valid object and has ID
+            return Array.isArray(parsed) ? parsed.filter(i => i && i.id && typeof i === 'object') : [];
         } catch (e) {
             console.error("Failed to parse cart", e);
             return [];

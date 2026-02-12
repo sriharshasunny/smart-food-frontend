@@ -29,41 +29,51 @@ const Cart = () => {
     // --- Empty Cart State ---
     if (safeCart.length === 0) {
         return (
-            <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-                {/* Background Decor */}
+            <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 relative overflow-hidden">
+                {/* Background Decor - Subtle */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-orange-200/20 rounded-full blur-[100px]" />
-                    <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-blue-200/20 rounded-full blur-[100px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gray-100/50 rounded-full blur-[80px]" />
                 </div>
 
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", bounce: 0.5 }}
-                    className="w-40 h-40 bg-white/40 backdrop-blur-xl rounded-full flex items-center justify-center mb-6 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/50 relative"
+                    className="relative z-10 mb-8"
                 >
-                    <ShoppingBag className="w-16 h-16 text-gray-400" />
-                    <motion.div
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute -right-2 -top-2 bg-orange-100 p-3 rounded-full shadow-sm"
-                    >
-                        <Utensils className="w-6 h-6 text-orange-500" />
-                    </motion.div>
+                    <div className="w-48 h-48 bg-gray-50 rounded-full flex items-center justify-center relative">
+                        <ShoppingBag className="w-20 h-20 text-gray-300" strokeWidth={1.5} />
+
+                        {/* Floating Elements */}
+                        <motion.div
+                            animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute top-6 right-8 bg-white p-3 rounded-2xl shadow-lg border border-gray-100"
+                        >
+                            <span className="text-2xl">🍔</span>
+                        </motion.div>
+                        <motion.div
+                            animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                            className="absolute bottom-6 left-8 bg-white p-3 rounded-2xl shadow-lg border border-gray-100"
+                        >
+                            <span className="text-2xl">🍕</span>
+                        </motion.div>
+                    </div>
                 </motion.div>
 
-                <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight text-center">Your Cart is Empty</h2>
-                <p className="text-gray-500 mb-8 font-medium text-center max-w-sm">
-                    Good food is just a few clicks away. Explore our best restaurants!
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-3 tracking-tight text-center relative z-10">Good food is waiting</h2>
+                <p className="text-gray-500 mb-8 font-medium text-center max-w-md relative z-10">
+                    Your cart is empty. Add something delicious from the menu!
                 </p>
 
-                <Link to="/home">
+                <Link to="/home" className="relative z-10">
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl shadow-xl shadow-gray-200 hover:shadow-2xl transition-all flex items-center gap-2"
+                        className="px-8 py-3.5 bg-orange-500 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all flex items-center gap-2 group"
                     >
-                        Start Ordering <ArrowRight className="w-5 h-5" />
+                        Browse Restaurants <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </motion.button>
                 </Link>
             </div>
