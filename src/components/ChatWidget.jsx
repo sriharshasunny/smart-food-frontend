@@ -1,42 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, ShoppingBag, Star, MapPin } from 'lucide-react';
+import { API_URL } from '../config';
 
 const ChatWidget = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState([
-        { type: 'text', content: 'Hi! I can help you find food, restaurants, or check your orders. What are you looking for?', sender: 'ai' }
-    ]);
-    const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const messagesEndRef = useRef(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+    // ... (state)
 
     const handleSend = async () => {
-        if (!input.trim()) return;
-
-        const userMessage = input.trim();
-        setMessages(prev => [...prev, { type: 'text', content: userMessage, sender: 'user' }]);
-        setInput('');
-        setLoading(true);
-
+        // ...
         try {
-            // Get User ID from localStorage if available (adjust key as needed)
-            const userStr = localStorage.getItem('user');
-            const user = userStr ? JSON.parse(userStr) : null;
-            const userId = user?._id || user?.id;
-
-            const res = await fetch('http://localhost:5000/api/chat', { // Adjust URL if needed
+            // ...
+            const res = await fetch(`${API_URL}/api/chat`, { // Use API_URL
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage, userId })
             });
+            // ...
 
             const data = await res.json();
 
@@ -179,8 +155,8 @@ const ChatWidget = () => {
                             >
                                 <div
                                     className={`max-w-[85%] p-3 rounded-2xl ${msg.sender === 'user'
-                                            ? 'bg-orange-600 text-white rounded-tr-none'
-                                            : 'bg-gray-800 text-gray-100 rounded-tl-none border border-gray-700'
+                                        ? 'bg-orange-600 text-white rounded-tr-none'
+                                        : 'bg-gray-800 text-gray-100 rounded-tl-none border border-gray-700'
                                         }`}
                                 >
                                     {renderContent(msg)}

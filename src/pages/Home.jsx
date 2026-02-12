@@ -335,7 +335,7 @@ const Home = () => {
                         </div>
 
                         {/* Quick Grid (Vertical Scroll) - Simple Rainbow Cards */}
-                        <div ref={trendingContainerRef} className="flex flex-col overflow-y-auto pr-1 scrollbar-none gap-3 relative z-10 h-full pt-1 scroll-smooth">
+                        <div ref={trendingContainerRef} className="flex flex-col overflow-y-auto pr-1 scrollbar-none gap-3 relative z-10 h-full pt-1 scroll-smooth touch-pan-y">
                             {filteredData.dishes.slice(0, 6).map((dish) => (
                                 <div
                                     key={dish.id}
