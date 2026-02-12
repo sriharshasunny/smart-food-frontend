@@ -204,6 +204,20 @@ const Home = () => {
         addToCart(food);
     }, [addToCart]);
 
+    // --- Scroll Logic ---
+    const restaurantContainerRef = React.useRef(null);
+    const trendingContainerRef = React.useRef(null);
+
+    const scrollContainer = (ref, direction) => {
+        if (ref.current) {
+            const scrollAmount = direction === 'horizontal' ? 300 : 200; // Adjust scroll distance
+            if (direction === 'left') ref.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            if (direction === 'right') ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            if (direction === 'up') ref.current.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+            if (direction === 'down') ref.current.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
             {/* Reduced Top Padding for more content space */}
@@ -223,6 +237,20 @@ const Home = () => {
                     <div className="flex-1 min-w-0 bg-white rounded-[2rem] p-4 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-full group transition-transform duration-300 transform-gpu">
                         {/* Background Blob */}
                         <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
+
+                        {/* Scroll Buttons (Restaurant - Horizontal) */}
+                        <button
+                            onClick={() => scrollContainer(restaurantContainerRef, 'left')}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                        >
+                            <ChevronRight className="rotate-180 w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => scrollContainer(restaurantContainerRef, 'right')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
 
                         <div className="relative z-10 flex flex-row items-center justify-between mb-2 pt-1 px-1 shrink-0 gap-2 h-10">
                             {/* Toggle Switcher - Compact */}
@@ -255,7 +283,7 @@ const Home = () => {
 
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
-                            <div className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1">
+                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth">
                                 {viewMode === 'restaurants' ? (
                                     filteredData.restaurants.map((restaurant) => (
                                         <RestaurantCard key={restaurant.id} restaurant={restaurant} />
@@ -277,6 +305,20 @@ const Home = () => {
                         {/* Background Decoration - Optimized */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50/50 rounded-full translate-x-1/3 -translate-y-1/3 opacity-50" />
 
+                        {/* Scroll Buttons (Trending - Vertical) */}
+                        <button
+                            onClick={() => scrollContainer(trendingContainerRef, 'up')}
+                            className="absolute right-4 top-14 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        >
+                            <ChevronRight className="-rotate-90 w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => scrollContainer(trendingContainerRef, 'down')}
+                            className="absolute right-4 bottom-4 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        >
+                            <ChevronRight className="rotate-90 w-5 h-5" />
+                        </button>
+
                         <div className="flex justify-between items-center mb-3 relative z-10 shrink-0">
                             <div>
                                 <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
@@ -293,7 +335,7 @@ const Home = () => {
                         </div>
 
                         {/* Quick Grid (Vertical Scroll) - Simple Rainbow Cards */}
-                        <div className="flex flex-col overflow-y-auto pr-1 scrollbar-none gap-3 relative z-10 h-full pt-1">
+                        <div ref={trendingContainerRef} className="flex flex-col overflow-y-auto pr-1 scrollbar-none gap-3 relative z-10 h-full pt-1 scroll-smooth">
                             {filteredData.dishes.slice(0, 6).map((dish) => (
                                 <div
                                     key={dish.id}

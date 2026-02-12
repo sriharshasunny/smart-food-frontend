@@ -1,165 +1,223 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const supabase = require('../utils/supabase');
+const supabase = require('../utils/supabase'); // Assuming this is where your supabase client is
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-exports.askChatbot = async (req, res) => {
+exports.processChatRequest = async (req, res) => {
     try {
-        const { userId, message } = req.body;
-        console.log("Chat Request:", { userId, message });
+        const { message, userId } = req.body;
 
         if (!message) {
-            return res.status(400).json({ message: "Message is required" });
+            return res.status(400).json({ error: "Message is required" });
         }
 
-        // 1. Gather Context (RAG)
-        let contextData = {};
+        // 1. Construct the Prompt (The "Brain")
+        const prompt = `
+            You are an AI assistant for a student food delivery platform.
+            Your job is ONLY to:
+            1. Understand the user's message.
+            2. Extract the correct intent.
+            3. Extract structured filters.
+            4. Return ONLY valid JSON.
 
-        // A. User Details & Cart
-        if (userId) {
-            // Fetch User, Cart (with food), Wishlist (with food)
-            // Supabase deep-select syntax
-            const { data: user } = await supabase
-                .from('users')
-                .select(`
-                    name, 
-                    email, 
-                    cart_items (
-                        quantity,
-                        notes,
-                        foods ( name )
-                    ),
-                    wishlist_items (
-                        foods ( name )
-                    )
-                `)
-                .eq('id', userId)
-                .single();
+            You must NOT:
+            - Generate SQL queries.
+            - Access any database.
+            - Modify data.
+            - Explain anything.
+            - Add extra text outside JSON.
 
-            if (user) {
-                contextData.user = {
-                    name: user.name,
-                    email: user.email,
-                    cart: user.cart_items?.map(item => ({
-                        item: item.foods?.name || "Unknown Item",
-                        quantity: item.quantity,
-                        notes: item.notes
-                    })) || [],
-                    wishlist: user.wishlist_items?.map(item => item.foods?.name || "Unknown Item") || []
-                };
+            Supported intents:
+            - search_food
+            - search_restaurant
+            - get_orders
+            - get_offers
+            - trending_items
+            - open_now
+
+            For search_food intent, extract these possible filters:
+            - food_name (string or null)
+            - price_max (number or null)
+            - price_min (number or null)
+            - veg (true/false/null)
+            - location (string or null)
+            - rating_min (number or null)
+            - open_now (true/false/null)
+
+            For search_restaurant intent, extract:
+            - restaurant_name (string or null)
+            - location (string or null)
+            - rating_min (number or null)
+            - open_now (true/false/null)
+            
+            For get_orders intent, extract:
+             - limit (number, default 5)
+
+            Rules:
+            - If a value is not present, return null.
+            - price_max should be extracted from phrases like "under 200", "below 300".
+            - price_min should be extracted from phrases like "above 100", "more than 150".
+            - veg should be true if user says "veg", false if "non-veg".
+            - rating_min from phrases like "above 4 rating".
+            - open_now true if user says "open now" or "late night".
+
+            Return strictly this JSON format:
+            {
+              "intent": "",
+              "filters": {}
             }
 
-            // B. Recent Orders
-            const { data: recentOrders } = await supabase
-                .from('orders')
-                .select(`
-                    id, 
-                    order_status, 
-                    total_amount, 
-                    created_at,
-                    order_items ( name )
-                `)
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(5);
-
-            if (recentOrders) {
-                contextData.orders = recentOrders.map(order => ({
-                    id: order.id,
-                    status: order.order_status,
-                    total: order.total_amount,
-                    date: order.created_at,
-                    items: order.order_items?.map(i => i.name) || [],
-                    invoice: `http://localhost:5173/orders/${order.id}/invoice`
-                }));
-            }
-        }
-
-        // C. Top Restaurants (General Knowledge)
-        const { data: topRestaurants } = await supabase
-            .from('restaurants')
-            .select('name, cuisine, rating, delivery_time, price_for_two, address')
-            .order('rating', { ascending: false })
-            .limit(5);
-
-        contextData.topRestaurants = topRestaurants || [];
-
-        // D. Food Menu (All Items for now, limit to 50)
-        const { data: foodMenu } = await supabase
-            .from('foods')
-            .select(`
-                name, 
-                price, 
-                description, 
-                is_veg, 
-                rating, 
-                restaurants ( name )
-            `)
-            .order('rating', { ascending: false })
-            .limit(50);
-
-        contextData.menu = foodMenu?.map(item => ({
-            item: item.name,
-            price: item.price,
-            veg: item.is_veg,
-            rating: item.rating,
-            restaurant: item.restaurants?.name || "Unknown",
-            desc: item.description
-        })) || [];
-
-        // E. Context Prompts
-        const systemInstruction = `
-            You are "FoodieBot", the AI assistant for SmartFood Delivery.
-            Your role is to help users with their food delivery needs, check order status, and recommend restaurants.
-            
-            Use the provided JSON context to answer the user's question.
-            
-            CONTEXT:
-            ${JSON.stringify(contextData, null, 2)}
-            
-            GUIDELINES:
-            - Be friendly, concise, and helpful.
-            - If asking about order status, look at the 'orders' context.
-            - You can provide the invoice link from the 'orders' context if requested.
-            - If asking about wishlist, look at 'user.wishlist'.
-            - If asking for recommendations, look at 'menu' first (suggest specific dishes), then 'topRestaurants'.
-            - When suggesting food, mention the Restaurant Name and Price.
-            - If asking about specific food items, provide details from 'menu' context.
-            - If the user asks something you don't know (not in context), gently say you can't help with that specific detail but offer general help.
-            - Do not expose raw IDs or technical JSON structure to the user.
-            - Format your response in clean Markdown (bold for names, lists for items).
-            - Note: The current time is ${new Date().toLocaleString()}.
+            User Message: "${message}"
         `;
 
-        console.log(`[ChatBot] Context prepared. Menu Items: ${contextData.menu?.length || 0}`);
+        // 2. Get AI Response
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
 
-        // 2. Call Gemini
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            console.error("[ChatBot] Missing GEMINI_API_KEY");
-            return res.status(500).json({ message: "Server misconfiguration: Missing API Key" });
-        }
-
-        const modelName = "gemini-pro"; // Reverting to stable model for testing
-        const model = genAI.getGenerativeModel({ model: modelName });
-
+        // 3. Parse JSON safely
+        let structuredData;
         try {
-            console.log(`[ChatBot] Sending request to ${modelName}...`);
-            const result = await model.generateContent([
-                systemInstruction,
-                `User: ${message} `
-            ]);
-            const responseText = result.response.text();
-            console.log("[ChatBot] Success!");
-            res.json({ reply: responseText });
-        } catch (apiError) {
-            console.error("[ChatBot] Gemini Error:", apiError.message);
-            // Fallback logic could go here, but omitted for brevity in refactor
-            res.status(500).json({ message: "AI Service Error", error: apiError.message });
+            // Remove markdown code blocks if present
+            const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            structuredData = JSON.parse(cleanJson);
+        } catch (e) {
+            console.error("AI JSON Parse Error:", responseText);
+            return res.status(500).json({ error: "Failed to understand query", raw: responseText });
         }
+
+        console.log("AI Intent:", structuredData);
+
+        // 4. Execute Logic based on Intent
+        let dbResult = null;
+        switch (structuredData.intent) {
+            case 'search_food':
+                dbResult = await searchFood(structuredData.filters);
+                break;
+            case 'search_restaurant':
+                dbResult = await searchRestaurants(structuredData.filters);
+                break;
+            case 'get_orders':
+                dbResult = await getOrders(userId, structuredData.filters);
+                break;
+            case 'get_offers':
+                dbResult = await getOffers();
+                break;
+            case 'trending_items':
+                dbResult = await getTrendingItems();
+                break;
+            case 'open_now':
+                dbResult = await searchRestaurants({ open_now: true });
+                break;
+            default:
+                return res.json({
+                    type: 'text',
+                    message: "I'm not sure how to help with that yet. Try asking for food, restaurants, or your orders!"
+                });
+        }
+
+        // 5. Return Result
+        res.json({
+            type: structuredData.intent,
+            data: dbResult,
+            ai_summary: structuredData // Optional: for debugging
+        });
 
     } catch (error) {
-        console.error("Chatbot Final Error:", error);
-        res.status(500).json({ message: "Error processing chat request", error: error.message });
+        console.error("Chat Controller Error:", error);
+        res.status(500).json({ error: error.message });
     }
 };
+
+// --- Helper Functions (Database Logic) ---
+
+async function searchFood(filters) {
+    let query = supabase.from('foods').select('*, restaurant:restaurants(*)');
+
+    if (filters.food_name) {
+        query = query.ilike('name', `%${filters.food_name}%`);
+    }
+    if (filters.price_max) {
+        query = query.lte('price', filters.price_max);
+    }
+    if (filters.price_min) {
+        query = query.gte('price', filters.price_min);
+    }
+    if (filters.veg !== null) {
+        query = query.eq('is_veg', filters.veg);
+    }
+    if (filters.rating_min) {
+        query = query.gte('rating', filters.rating_min);
+    }
+    // Note: 'location' and 'open_now' might need joins with restaurant table if not denormalized
+
+    // Limit results
+    query = query.limit(10);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+}
+
+async function searchRestaurants(filters) {
+    let query = supabase.from('restaurants').select('*');
+
+    if (filters.restaurant_name) {
+        query = query.ilike('name', `%${filters.restaurant_name}%`);
+    }
+    if (filters.location) {
+        query = query.ilike('address', `%${filters.location}%`); // Simple fuzzy match
+    }
+    if (filters.rating_min) {
+        query = query.gte('rating', filters.rating_min);
+    }
+    // open_now logic depends on how you store hours. 
+    // Assuming simple boolean for now or omitted.
+
+    query = query.limit(5);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+}
+
+async function getOrders(userId, filters) {
+    if (!userId) return { message: "Please log in to see your orders." };
+
+    let query = supabase
+        .from('orders')
+        .select('*, items:order_items(*, food:foods(*))')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(filters.limit || 5);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+}
+
+async function getOffers() {
+    // Assuming 'discount_price' exists or 'original_price' > 'price'
+    // Or you have an 'is_offer' flag. 
+    // Let's assume looking for items with a discount field > 0
+    // Adjust based on your schema. For now, just random foods.
+
+    const { data, error } = await supabase
+        .from('foods')
+        .select('*, restaurant:restaurants(*)')
+        .limit(5); // Placeholder logic
+
+    if (error) throw error;
+    return data;
+}
+
+async function getTrendingItems() {
+    const { data, error } = await supabase
+        .from('foods')
+        .select('*, restaurant:restaurants(*)')
+        .order('rating', { ascending: false })
+        .limit(5);
+
+    if (error) throw error;
+    return data;
+}

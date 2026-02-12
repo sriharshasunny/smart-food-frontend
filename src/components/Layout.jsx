@@ -3,7 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 
-import Chatbot from './Chatbot';
+
 
 const Layout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -22,7 +22,7 @@ const Layout = ({ children }) => {
                 <main className="flex-grow p-4 md:p-6 lg:p-8">
                     {children}
                 </main>
-                <Chatbot />
+
                 <Footer />
             </div>
         </div>

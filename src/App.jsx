@@ -4,7 +4,7 @@ import { LazyMotion, domAnimation } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ShopProvider } from './context/ShopContext';
-const Chatbot = lazy(() => import('./components/Chatbot'));
+const ChatWidget = lazy(() => import('./components/ChatWidget'));
 import ScrollToTop from './components/ScrollToTop';
 import SmoothScroll from './components/SmoothScroll';
 
@@ -84,7 +84,7 @@ function App() {
                 </Routes>
               </Suspense>
               <Suspense fallback={null}>
-                <Chatbot />
+                <ChatWidget />
               </Suspense>
             </Router>
           </LazyMotion>

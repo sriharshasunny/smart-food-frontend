@@ -8,7 +8,7 @@ import ScrollToTop from '../components/ScrollToTop';
 import SmoothScroll from '../components/SmoothScroll';
 import Layout from '../components/Layout';
 
-const Chatbot = lazy(() => import('../components/Chatbot'));
+const ChatWidget = lazy(() => import('../components/ChatWidget'));
 
 // Lazy Load Pages
 const Home = lazy(() => import('../pages/Home'));
@@ -64,7 +64,7 @@ const AppCustomer = () => {
                                 </Routes>
                             </Suspense>
                             <Suspense fallback={null}>
-                                <Chatbot />
+                                <ChatWidget />
                             </Suspense>
                         </Router>
                     </LazyMotion>
