@@ -221,7 +221,7 @@ const Home = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-10 font-sans text-gray-900">
             {/* Minimal Padding for Full Screen Feel */}
-            <div className="w-full px-1 sm:px-2 pt-0 space-y-1 mx-auto">
+            <div className="w-full px-1 sm:px-2 pt-0 space-y-3.5 mx-auto">
 
                 {/* Hero Banner (Offers) WITH Location Widget Embedded */}
                 <ErrorBoundary key="hero">
