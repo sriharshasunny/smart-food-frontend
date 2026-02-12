@@ -1,3 +1,5 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageCircle, X, Send, ShoppingBag, Star, MapPin } from 'lucide-react';
 import { API_URL } from '../config';
 
 const ChatWidget = () => {
