@@ -221,7 +221,7 @@ const Home = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
             {/* Reduced Top Padding for more content space */}
-            <div className="w-full px-4 md:px-10 lg:px-12 pt-4 space-y-4 md:space-y-8 max-w-[1600px] mx-auto">
+            <div className="w-full px-2 md:px-6 lg:px-8 pt-4 space-y-4 md:space-y-8 max-w-[1920px] mx-auto">
 
                 {/* Hero Banner (Offers) WITH Location Widget Embedded */}
                 <ErrorBoundary key="hero">
@@ -231,10 +231,11 @@ const Home = () => {
                 {/* --- Content Sections --- */}
 
                 {/* Split Top Section: Restaurants (Large Left) + Quick Recs (Small Right) */}
-                <div className="flex flex-col xl:flex-row gap-3 md:gap-4 mb-0 h-auto xl:h-[400px]">
+                <div className="flex flex-col xl:flex-row gap-4 md:gap-6 mb-0 h-auto xl:h-[450px]">
 
-                    {/* Left: Top Content (Restaurants OR Recommendations Layout) */}
-                    <div className="flex-1 min-w-0 bg-white rounded-[2rem] p-4 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-full group transition-transform duration-300 transform-gpu">
+                    {/* Left: Top Content (Restaurants) */}
+                    <div className="flex-1 min-w-0 bg-white rounded-[2rem] p-4 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[350px] xl:h-full group transition-transform duration-300 transform-gpu">
+                        {/* ... (rest of Left content same) ... */}
                         {/* Background Blob */}
                         <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
 
@@ -283,7 +284,7 @@ const Home = () => {
 
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
-                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth">
+                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-6 pt-2 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x">
                                 {viewMode === 'restaurants' ? (
                                     filteredData.restaurants.map((restaurant) => (
                                         <RestaurantCard key={restaurant.id} restaurant={restaurant} />
@@ -301,7 +302,7 @@ const Home = () => {
 
 
                     {/* Right: Quick Recommendations (Adjusted Width - 410px) */}
-                    <div className="w-full xl:w-[410px] shrink-0 bg-white rounded-[2rem] p-4 border border-yellow-100 shadow-sm relative overflow-hidden group hidden xl:flex flex-col h-full">
+                    <div className="w-full xl:w-[410px] shrink-0 bg-white rounded-[2rem] p-4 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[300px] xl:h-full">
                         {/* Background Decoration - Optimized */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50/50 rounded-full translate-x-1/3 -translate-y-1/3 opacity-50" />
 
