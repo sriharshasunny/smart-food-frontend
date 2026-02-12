@@ -231,10 +231,10 @@ const Home = () => {
                 {/* --- Content Sections --- */}
 
                 {/* Split Top Section: Restaurants (Large Left) + Quick Recs (Small Right) */}
-                <div className="flex flex-col xl:flex-row gap-2 h-auto xl:h-[360px]">
+                <div className="flex flex-col xl:flex-row gap-2 h-auto xl:h-[390px]">
 
                     {/* Left: Top Content (Restaurants) */}
-                    <div className="flex-1 min-w-0 bg-white rounded-[1.25rem] p-2 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[300px] xl:h-full group transition-transform duration-300 transform-gpu">
+                    <div className="flex-1 min-w-0 bg-white rounded-[1.25rem] p-2 border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[330px] xl:h-full group transition-transform duration-300 transform-gpu">
                         {/* ... (rest of Left content same) ... */}
                         {/* Background Blob */}
                         <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50/50 rounded-full -translate-x-1/3 -translate-y-1/3 opacity-50" />
@@ -302,7 +302,7 @@ const Home = () => {
 
 
                     {/* Right: Quick Recommendations (Adjusted Width - Flexible on mobile) */}
-                    <div className="w-full xl:w-[420px] shrink-0 bg-white rounded-[1.25rem] p-2 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[300px] xl:h-full">
+                    <div className="w-full xl:w-[420px] shrink-0 bg-white rounded-[1.25rem] p-2 border border-yellow-100 shadow-sm relative overflow-hidden group flex flex-col h-[330px] xl:h-full">
                         {/* Background Decoration - Optimized */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-50/50 rounded-full translate-x-1/3 -translate-y-1/3 opacity-50" />
 
