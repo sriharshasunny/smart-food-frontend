@@ -241,13 +241,13 @@ const Home = () => {
                         {/* Scroll Buttons (Restaurant - Horizontal) */}
                         <button
                             onClick={() => scrollContainer(restaurantContainerRef, 'left')}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/80 hover:bg-black hover:text-white text-gray-700 rounded-full shadow-lg backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0 active:scale-95 border border-gray-100"
                         >
                             <ChevronRight className="rotate-180 w-5 h-5" />
                         </button>
                         <button
                             onClick={() => scrollContainer(restaurantContainerRef, 'right')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/80 hover:bg-black hover:text-white text-gray-700 rounded-full shadow-lg backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 active:scale-95 border border-gray-100"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
@@ -308,13 +308,13 @@ const Home = () => {
                         {/* Scroll Buttons (Trending - Vertical) */}
                         <button
                             onClick={() => scrollContainer(trendingContainerRef, 'up')}
-                            className="absolute right-4 top-14 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute right-4 top-14 z-20 w-8 h-8 bg-white/80 hover:bg-orange-500 hover:text-white text-gray-700 rounded-full shadow-lg backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 active:scale-95 border border-gray-100"
                         >
                             <ChevronRight className="-rotate-90 w-5 h-5" />
                         </button>
                         <button
                             onClick={() => scrollContainer(trendingContainerRef, 'down')}
-                            className="absolute right-4 bottom-4 z-20 w-8 h-8 bg-white/50 hover:bg-white text-gray-600 rounded-full shadow-sm backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute right-4 bottom-4 z-20 w-8 h-8 bg-white/80 hover:bg-orange-500 hover:text-white text-gray-700 rounded-full shadow-lg backdrop-blur-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 active:scale-95 border border-gray-100"
                         >
                             <ChevronRight className="rotate-90 w-5 h-5" />
                         </button>
