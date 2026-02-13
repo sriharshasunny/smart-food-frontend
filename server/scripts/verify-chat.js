@@ -1,4 +1,5 @@
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 async function verifyChat() {
@@ -6,6 +7,7 @@ async function verifyChat() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         console.error("❌ ERROR: GEMINI_API_KEY is missing from .env");
+        console.error("Looking at:", path.join(__dirname, '../.env'));
         process.exit(1);
     }
     console.log("✅ API Key found.");
@@ -13,7 +15,7 @@ async function verifyChat() {
     try {
         console.log("Initializing Gemini Client...");
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
         console.log("Sending test prompt...");
         const result = await model.generateContent("Hello, are you working?");

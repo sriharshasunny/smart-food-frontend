@@ -1,4 +1,6 @@
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 async function listModels() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -16,8 +18,10 @@ async function listModels() {
         if (data.error) {
             console.error("API Error:", data.error);
         } else {
-            console.log("Available Models:");
-            data.models.forEach(m => console.log(`- ${m.name}`));
+            console.log("Saving model list to models_list_raw.txt...");
+            const list = data.models.map(m => `- ${m.name}`).join('\n');
+            fs.writeFileSync(path.join(__dirname, '../models_list_raw.txt'), list);
+            console.log("Done.");
         }
     } catch (e) {
         console.error("Fetch Error:", e);
