@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight, Sparkles, Minimize2 } from 'lucide-react';
 import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
+import { optimizeImage } from '../utils/imageOptimizer'; // Import image optimizer
 
 // Typewriter Component for AI Responses
 const Typewriter = ({ text, onComplete }) => {
@@ -22,7 +23,7 @@ const Typewriter = ({ text, onComplete }) => {
                 clearInterval(intervalId);
                 if (onComplete) onComplete();
             }
-        }, 15); // Adjust speed here (lower = faster)
+        }, 10); // Faster typing speed
 
         return () => clearInterval(intervalId);
     }, [text]);
@@ -42,13 +43,19 @@ const ChatWidget = () => {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
+    const scrollContainerRef = useRef(null); // Ref for scroll container
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
     };
 
+    // Scroll only on new messages, not on every render
     useEffect(() => {
-        scrollToBottom();
+        if (isOpen) {
+            scrollToBottom();
+        }
     }, [messages, isOpen]);
 
     const handleSend = async () => {
@@ -86,11 +93,10 @@ const ChatWidget = () => {
 
     const handleAddToCart = (food) => {
         addToCart(food);
-        // Optional: show toast or small feedback
     };
 
     const handleViewRestaurant = (restaurantId) => {
-        setIsOpen(false); // Close chat to view
+        setIsOpen(false);
         navigate(`/restaurant/${restaurantId}`);
     };
 
@@ -115,8 +121,14 @@ const ChatWidget = () => {
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Top Picks For You</p>
                     {foods.map((food, i) => (
                         <div key={i} className="group flex gap-3 bg-gray-800/50 hover:bg-gray-800 p-2.5 rounded-xl border border-gray-700 hover:border-orange-500/50 transition-all duration-300">
-                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                                <img src={food.image_url || 'https://via.placeholder.com/60'} alt={food.name} className="w-full h-full object-cover" />
+                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-700">
+                                {/* Use optimizeImage and try multiple image property names */}
+                                <img
+                                    src={optimizeImage(food.image || food.imageUrl || food.image_url, 100)}
+                                    alt={food.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80'; }} // Fallback
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             </div>
 
@@ -131,7 +143,7 @@ const ChatWidget = () => {
                                     <span className="text-emerald-400 font-bold text-sm">₹{food.price}</span>
                                     <button
                                         onClick={() => handleAddToCart(food)}
-                                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+                                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 active:scale-95"
                                     >
                                         Add <ShoppingBag size={10} />
                                     </button>
@@ -139,7 +151,6 @@ const ChatWidget = () => {
                             </div>
                         </div>
                     ))}
-                    {/* Add a subtle "View More" hint or action if needed */}
                 </div>
             );
         }
@@ -235,31 +246,34 @@ const ChatWidget = () => {
                 )}
             </button>
 
-            {/* Chat Window */}
+            {/* Chat Window - Lowered Position and Fixed Height */}
             {isOpen && (
-                <div className="fixed bottom-24 right-6 z-50 w-[350px] sm:w-[380px] h-[600px] max-h-[80vh] flex flex-col overflow-hidden rounded-3xl shadow-2xl shadow-black/50 animate-fade-in-up font-sans border border-gray-700/50 backdrop-blur-xl bg-gray-900/90">
+                <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[90vw] sm:w-[380px] h-[550px] max-h-[70vh] flex flex-col overflow-hidden rounded-3xl shadow-2xl shadow-black/50 animate-fade-in-up font-sans border border-gray-700/50 backdrop-blur-xl bg-gray-900/95">
 
                     {/* Header */}
-                    <div className="px-5 py-4 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700/50 flex items-center justify-between shadow-sm">
+                    <div className="px-5 py-3 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700/50 flex items-center justify-between shadow-sm shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="relative">
-                                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-inner">
-                                    <Sparkles size={18} className="text-white" />
+                                <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-inner">
+                                    <Sparkles size={16} className="text-white" />
                                 </div>
-                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-gray-900 rounded-full"></span>
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-gray-900 rounded-full"></span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-white text-base tracking-tight">Smart Assistant</h3>
-                                <p className="text-[11px] text-emerald-400 font-medium tracking-wide flex items-center gap-1">
+                                <h3 className="font-bold text-white text-sm tracking-tight">Smart Assistant</h3>
+                                <p className="text-[10px] text-emerald-400 font-medium tracking-wide flex items-center gap-1">
                                     <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
                                     ONLINE
                                 </p>
                             </div>
                         </div>
+                        <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-gray-700 rounded-full transition-colors text-gray-400 hover:text-white">
+                            <Minimize2 size={16} />
+                        </button>
                     </div>
 
-                    {/* Messages Area */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-b from-gray-900/50 to-black/20 hide-scrollbar scrollbar-none">
+                    {/* Messages Area - Fixed Scrolling */}
+                    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-b from-gray-900/50 to-black/20 hide-scrollbar scrollbar-none scroll-smooth">
                         {messages.map((msg, idx) => (
                             <div
                                 key={idx}
@@ -292,7 +306,7 @@ const ChatWidget = () => {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-3 bg-gray-800/90 border-t border-white/5 backdrop-blur-lg">
+                    <div className="p-3 bg-gray-800/90 border-t border-white/5 backdrop-blur-lg shrink-0">
                         <div className="relative flex items-center gap-2 bg-gray-900/80 p-1.5 rounded-2xl border border-gray-700/50 focus-within:border-orange-500/50 focus-within:ring-1 focus-within:ring-orange-500/20 transition-all">
                             <input
                                 type="text"
