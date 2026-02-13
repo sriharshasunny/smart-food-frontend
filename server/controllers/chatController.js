@@ -157,7 +157,15 @@ exports.processChatRequest = async (req, res) => {
 
     } catch (error) {
         console.error("Chat Controller Error:", error);
-        res.status(500).json({ error: error.message });
+
+        // Handle Quota/Rate Limits gracefully
+        if (error.message.includes('429') || error.message.includes('Quota')) {
+            return res.status(429).json({
+                message: "I'm receiving too many requests right now (Daily Quota Exceeded). Please try again later or use a different API Key."
+            });
+        }
+
+        res.status(500).json({ message: "I'm having trouble thinking right now. Please try again." });
     }
 };
 
