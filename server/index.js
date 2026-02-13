@@ -31,6 +31,12 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/food', foodRoutes);
 
+// Health Check
+app.get('/', (req, res) => {
+    res.send('Smart Food Backend is Running!');
+});
+console.log('Chat Routes Registered at /api/chat');
+
 // --- AUTH ROUTES (Inline Refactor) ---
 
 // Register
