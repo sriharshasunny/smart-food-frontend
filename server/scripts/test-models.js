@@ -1,31 +1,35 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 require('dotenv').config({ path: '../.env' });
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-async function listModels() {
-    try {
-        console.log("Using Key:", process.env.GEMINI_API_KEY ? "Present" : "Missing");
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        // There isn't a direct "list models" in the simplified SDK that I recall offhand without checking docs, 
-        // but let's try a simple generation to see if it works isolated.
-
-        console.log("Testing gemini-1.5-flash...");
-        const result1 = await model.generateContent("Hello");
-        console.log("gemini-1.5-flash Success:", result1.response.text());
-
-    } catch (error) {
-        console.error("gemini-1.5-flash Failed:", error.message);
+async function checkModel(modelName) {
+    console.log(`\nTesting model: ${modelName}...`);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        console.error("❌ ERROR: GEMINI_API_KEY is missing from .env");
+        return false;
     }
 
     try {
-        console.log("Testing gemini-pro...");
-        const model2 = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const result2 = await model2.generateContent("Hello");
-        console.log("gemini-pro Success:", result2.response.text());
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent("Hello! Just checking my quota.");
+        console.log(`✅ Success with ${modelName}! Response: ${result.response.text()}`);
+        return true;
     } catch (error) {
-        console.error("gemini-pro Failed:", error.message);
+        console.error(`❌ Failed with ${modelName}:`);
+        console.error(error.message);
+        return false;
     }
 }
 
-listModels();
+async function runTests() {
+    console.log("Starting verification for key ending in: ..." + process.env.GEMINI_API_KEY.slice(-4));
+
+    // Test standard flash first (preferred)
+    await checkModel("gemini-1.5-flash");
+
+    // Test 2.0 (fallback)
+    await checkModel("gemini-2.0-flash");
+}
+
+runTests();

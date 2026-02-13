@@ -1,9 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require('../utils/supabase'); // Assuming this is where your supabase client is
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
 exports.processChatRequest = async (req, res) => {
     try {
         const { message, userId } = req.body;
@@ -11,6 +8,20 @@ exports.processChatRequest = async (req, res) => {
         if (!message) {
             return res.status(400).json({ error: "Message is required" });
         }
+
+        // Initialize Gemini AI only when needed and check for key
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            console.error("GEMINI_API_KEY is missing in environment variables.");
+            return res.json({
+                type: 'text',
+                message: "I'm currently undergoing maintenance (API Key missing). Please tell the developer to check the server logs!",
+                sender: 'ai'
+            });
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // 1. Construct the Prompt (The "Brain")
         const prompt = `
