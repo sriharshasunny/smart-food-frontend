@@ -16,6 +16,9 @@ const Home = () => {
     const navigate = useNavigate();
 
     // Data State
+    const { addToCart, searchQuery, setSearchQuery } = useShop(); // Use Global Search
+    const navigate = useNavigate();
+
     // Data State
     const [dishes, setDishes] = useState([]);
     const [realRestaurants, setRealRestaurants] = useState([]); // Store real restaurants
@@ -46,7 +49,7 @@ const Home = () => {
         fetchData();
     }, []);
 
-    const [searchQuery, setSearchQuery] = useState('');
+    // const [searchQuery, setSearchQuery] = useState(''); // REMOVED local state
     const [activeCategory, setActiveCategory] = useState('All');
     const [subFilters, setSubFilters] = useState({
         rating45Plus: false,
@@ -122,6 +125,23 @@ const Home = () => {
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // --- Auto-Scroll on Search ---
+    React.useEffect(() => {
+        if (searchQuery && filterRef.current) {
+            // Scroll a bit above the filters
+            const offset = 100;
+            const elementPosition = filterRef.current.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
+            // Also switch to 'recs' view if searching? No, filter logic handles both.
+        }
+    }, [searchQuery]);
+
 
     // --- Filtering Logic ---
     const filteredData = useMemo(() => {
@@ -417,6 +437,20 @@ const Home = () => {
                         />
                     </div>
 
+                    {/* NEW: Secondary Search Bar Below FilterBar */}
+                    <div className="mt-4 mb-2 relative w-full max-w-xl mx-auto px-2">
+                        <div className="relative flex items-center bg-white rounded-full border border-gray-200 shadow-sm focus-within:shadow-md focus-within:border-orange-500 transition-all">
+                            <Search className="absolute left-4 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search dishes, restaurants..."
+                                className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm outline-none bg-transparent placeholder:text-gray-400"
+                            />
+                        </div>
+                    </div>
+
                     {/* B. Sticky Filter Bar (Text Mode) - Slides down when main is gone */}
                     <div className={`fixed top-[64px] left-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-md transition-all duration-300 transform ${showStickyFilters ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
                         <FilterBar
@@ -426,6 +460,7 @@ const Home = () => {
                             setSubFilters={setSubFilters}
                             isSticky={true} // Always Compact Text
                         />
+                        {/* Optional: Add search bar to sticky header too? User said "under filters above to the food cards". Sticky is mostly filters. I'll leave it out for now to avoid clutter, or maybe add it if requested. */}
                     </div>
                 </div>
 

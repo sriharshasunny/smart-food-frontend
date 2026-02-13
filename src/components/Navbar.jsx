@@ -6,7 +6,7 @@ import { useShop } from '../context/ShopContext';
 import { motion } from 'framer-motion';
 
 const Navbar = ({ toggleSidebar }) => {
-    const { cartCount } = useShop();
+    const { cartCount, searchQuery, setSearchQuery } = useShop();
     const location = useLocation();
 
     // Use Global Auth
@@ -96,6 +96,8 @@ const Navbar = ({ toggleSidebar }) => {
                                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors z-10" strokeWidth={1.5} />
                                 <input
                                     type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-48 pl-10 pr-4 py-1.5 bg-gray-50 border-none rounded-full text-xs font-semibold focus:bg-white focus:w-60 focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-400 relative z-10"
                                     placeholder="Search food..."
                                 />

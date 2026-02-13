@@ -226,6 +226,9 @@ export const ShopProvider = ({ children }) => {
     const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
     const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
+    // Global Search State
+    const [searchQuery, setSearchQuery] = useState("");
+
     const value = React.useMemo(() => ({
         cart,
         wishlist,
@@ -236,8 +239,10 @@ export const ShopProvider = ({ children }) => {
         toggleWishlist,
         isInWishlist,
         cartTotal,
-        cartCount
-    }), [cart, wishlist, user]);
+        cartCount,
+        searchQuery,
+        setSearchQuery
+    }), [cart, wishlist, user, searchQuery]);
 
     return (
         <ShopContext.Provider value={value}>
