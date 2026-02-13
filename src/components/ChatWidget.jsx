@@ -135,8 +135,8 @@ const ChatWidget = () => {
                             <div className="flex-1 min-w-0 flex flex-col justify-between">
                                 <div>
                                     <h4 className="font-semibold text-white text-sm truncate">{food.name}</h4>
-                                    <p className="text-xs text-gray-400 truncate hover:text-orange-400 cursor-pointer" onClick={() => handleViewRestaurant(food.restaurant?._id)}>
-                                        {food.restaurant?.name}
+                                    <p className="text-xs text-gray-400 truncate hover:text-orange-400 cursor-pointer" onClick={() => handleViewRestaurant(typeof food.restaurant === 'object' ? food.restaurant?._id : food.restaurant)}>
+                                        {food.restaurant?.name || "View Restaurant"}
                                     </p>
                                 </div>
                                 <div className="flex justify-between items-center mt-1">
