@@ -1,27 +1,51 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, ShoppingBag, Star, MapPin } from 'lucide-react';
 import { API_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 const ChatWidget = () => {
-    // ... (state)
+    const { user } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const [messages, setMessages] = useState([
+        { type: 'text', content: "Hi! I'm SmartBot. How can I help you today?", sender: 'ai' }
+    ]);
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            scrollToBottom();
+        }
+    }, [messages, isOpen]);
 
     const handleSend = async () => {
-        // ...
+        if (!input.trim()) return;
+
+        const userMessage = input;
+        setInput("");
+        setMessages(prev => [...prev, { type: 'text', content: userMessage, sender: 'user' }]);
+        setLoading(true);
+
         try {
-            // ...
-            const res = await fetch(`${API_URL}/api/chat`, { // Use API_URL
+            const userId = user?.id || null;
+
+            const res = await fetch(`${API_URL}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage, userId })
             });
-            // ...
 
             const data = await res.json();
 
             if (res.ok) {
                 setMessages(prev => [...prev, { sender: 'ai', ...data }]);
             } else {
-                setMessages(prev => [...prev, { type: 'text', content: "Sorry, I encountered an error.", sender: 'ai' }]);
+                setMessages(prev => [...prev, { type: 'text', content: data.message || "Sorry, I encountered an error.", sender: 'ai' }]);
             }
 
         } catch (error) {
@@ -118,7 +142,7 @@ const ChatWidget = () => {
             );
         }
 
-        return <p>{JSON.stringify(msg)}</p>; // Fallback
+        return <p>{msg.content || JSON.stringify(msg)}</p>;
     };
 
     return (
