@@ -273,7 +273,11 @@ const ChatWidget = () => {
                     </div>
 
                     {/* Messages Area - Fixed Scrolling */}
-                    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-b from-gray-900/50 to-black/20 hide-scrollbar scrollbar-none scroll-smooth">
+                    <div
+                        ref={scrollContainerRef}
+                        data-lenis-prevent
+                        className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-b from-gray-900/50 to-black/20 hide-scrollbar scrollbar-none overscroll-y-contain"
+                    >
                         {messages.map((msg, idx) => (
                             <div
                                 key={idx}
@@ -281,8 +285,8 @@ const ChatWidget = () => {
                             >
                                 <div
                                     className={`relative max-w-[85%] p-3.5 text-sm shadow-md transition-all duration-200 ${msg.sender === 'user'
-                                            ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white rounded-2xl rounded-tr-sm'
-                                            : 'bg-gray-800/80 text-gray-100 rounded-2xl rounded-tl-sm border border-white/5 backdrop-blur-md'
+                                        ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white rounded-2xl rounded-tr-sm'
+                                        : 'bg-gray-800/80 text-gray-100 rounded-2xl rounded-tl-sm border border-white/5 backdrop-blur-md'
                                         }`}
                                 >
                                     {renderContent(msg, idx === messages.length - 1)}
