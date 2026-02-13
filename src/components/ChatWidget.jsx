@@ -191,7 +191,7 @@ const ChatWidget = () => {
         // Orders
         if (msg.type === 'get_orders') {
             const orders = msg.data || [];
-            if (orders.length === 0) return <p>No recent orders found.</p>;
+            if (!Array.isArray(orders) || orders.length === 0) return <p>No recent orders found.</p>;
 
             return (
                 <div className="flex flex-col gap-3 mt-3 w-full">
@@ -199,23 +199,26 @@ const ChatWidget = () => {
                     {orders.map((order, i) => (
                         <div key={i} className="bg-gray-800/50 p-3 rounded-xl border border-gray-700">
                             <div className="flex justify-between text-xs text-gray-400 mb-2 font-mono">
-                                <span>#{order._id.slice(-6)}</span>
+                                <span>#{order._id ? order._id.slice(-6) : 'ID???'}</span>
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wide ${order.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-orange-500/10 text-orange-400'
                                     }`}>
-                                    {order.status}
+                                    {order.status || 'Unknown'}
                                 </span>
                             </div>
                             <div className="py-2 border-t border-gray-700/50 space-y-1">
-                                {order.items?.slice(0, 2).map((item, j) => (
+                                {(order.items || []).slice(0, 2).map((item, j) => (
                                     <div key={j} className="flex justify-between text-xs text-gray-300">
-                                        <span>{item.quantity}x {item.food?.name}</span>
+                                        <span>{item.quantity}x {item.food?.name || "Unknown Item"}</span>
                                     </div>
                                 ))}
-                                {order.items?.length > 2 && <p className="text-xs text-gray-500 italic">+{order.items.length - 2} more items</p>}
+                                {(order.items || []).length > 2 && <p className="text-xs text-gray-500 italic">+{order.items.length - 2} more items</p>}
+                                {(!order.items || order.items.length === 0) && <p className="text-xs text-gray-500 italic">No items details available.</p>}
                             </div>
                             <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700/50">
-                                <span className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</span>
-                                <span className="text-sm font-bold text-white">₹{order.total_amount}</span>
+                                <span className="text-xs text-gray-400">
+                                    {order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}
+                                </span>
+                                <span className="text-sm font-bold text-white">₹{order.total_amount || 0}</span>
                             </div>
                         </div>
                     ))}
