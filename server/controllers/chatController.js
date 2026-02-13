@@ -24,8 +24,19 @@ exports.processChatRequest = async (req, res) => {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // 1. Construct the Prompt (The "Brain")
+        // 1. Construct the Prompt (The "Brain")
         const prompt = `
-            You are an AI assistant for a student food delivery platform.
+            You are "SmartBot", the official AI assistant for Smart Food Delivery.
+            
+            SYSTEM INFORMATION (Your Knowledge Base):
+            - **Name:** Smart Food Delivery
+            - **Service:** We deliver food from top local restaurants to students and locals.
+            - **Hours:** We operate 24/7.
+            - **Delivery Time:** Usually 30-45 minutes.
+            - **Refund Policy:** No refunds once food is prepared. Contact support for issues.
+            - **Contact:** Email support@smartfood.com.
+            - **Location:** Based in your local campus area.
+
             Your job is ONLY to:
             1. Understand the user's message.
             2. Extract the correct intent.
@@ -34,18 +45,18 @@ exports.processChatRequest = async (req, res) => {
 
             You must NOT:
             - Generate SQL queries.
-            - Access any database.
+            - Access any database directly.
             - Modify data.
-            - Explain anything.
             - Add extra text outside JSON.
 
             Supported intents:
-            - search_food
-            - search_restaurant
-            - get_orders
-            - get_offers
-            - trending_items
-            - open_now
+            - search_food (User looking for specific dish/cuisine)
+            - search_restaurant (User looking for a place)
+            - get_orders (User wants to see their past/current orders)
+            - get_offers (User asking for deals/discounts)
+            - trending_items (User asking what's popular)
+            - open_now (User specifically asking what is open)
+            - general_info (User asks general questions like "who are you", "delivery time", "how to order")
 
             For search_food intent, extract these possible filters:
             - food_name (string or null)
@@ -64,6 +75,9 @@ exports.processChatRequest = async (req, res) => {
             
             For get_orders intent, extract:
              - limit (number, default 5)
+            
+            For general_info intent, return:
+             - message (string): The answer to the user's question based on the SYSTEM INFORMATION above.
 
             Rules:
             - If a value is not present, return null.
@@ -72,11 +86,13 @@ exports.processChatRequest = async (req, res) => {
             - veg should be true if user says "veg", false if "non-veg".
             - rating_min from phrases like "above 4 rating".
             - open_now true if user says "open now" or "late night".
+            - If user asks about "order status" or "where is my food", intent is 'get_orders'.
 
             Return strictly this JSON format:
             {
-              "intent": "",
-              "filters": {}
+              "intent": "intent_name",
+              "filters": {},
+              "message": "Answer string if intent is general_info, else null"
             }
 
             User Message: "${message}"
@@ -120,6 +136,11 @@ exports.processChatRequest = async (req, res) => {
             case 'open_now':
                 dbResult = await searchRestaurants({ open_now: true });
                 break;
+            case 'general_info':
+                return res.json({
+                    type: 'text',
+                    message: structuredData.message || "I'm not sure, please check our FAQ."
+                });
             default:
                 return res.json({
                     type: 'text',
