@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Food Delivery - System Diagrams</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            logLevel: 'error',
+            flowchart: { htmlLabels: true, curve: 'basis' }
+        });
+    </script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .diagram-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h2 {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+
+        .mermaid {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>System Diagrams (All 5 Views)</h1>
+
+        <div class="diagram-card">
+            <h2>1. System Architecture</h2>
+            <div class="mermaid">
+                graph LR
+                subgraph Frontend
+                React[React Frontend]
+                Admin[Admin Portal]
+                end
+                subgraph Backend
+                API[Express API]
+                end
+                subgraph Database
+                DB[(Supabase DB)]
+                Auth[Supabase Auth]
+                end
+                subgraph External
+                Gemini[Gemini AI]
+                Resend[Resend Email]
+                Dodo[Dodo Payments]
+                end
+                React --> API
+                Admin --> API
+                API --> DB
+                API --> Auth
+                API --> Gemini
+                API --> Resend
+                API --> Dodo
+                React --> Auth
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <h2>2. Detailed AI & Data Flow</h2>
+            <p>Logic verified from <code>chatController.js</code>.</p>
+            <div class="mermaid">
+                graph LR
+                User((User))
+
+                subgraph Frontend_View [User Frontend]
+                Chat[ChatBot UI]
+                Recos[Recommendations]
+                end
+
+                subgraph Backend_Server [Backend API]
+                Controller[Chat Controller]
+                QueryBuilder[Query Builder]
+                end
+
+                subgraph Intelligence [AI Service]
+                Gemini[Gemini AI]
+                end
+
+                subgraph Data_Layer [Database]
+                DB[(Supabase)]
+                end
+
+                %% Flow Steps
+                User --> Chat
+                User --> Recos
+
+                %% 1. Request
+                Chat -- "1. Send Message" --> Controller
+
+                %% 2. AI Analysis
+                Controller -- "2. Analyze Context" --> Gemini
+                Gemini -- "3. Return Intent & Filters (JSON)" --> Controller
+
+                %% 3. Query Construction (The Logic)
+                Controller -- "4. Pass Filters" --> QueryBuilder
+                QueryBuilder -- "5. Build Supabase Query" --> DB
+
+                %% 4. Execution
+                DB -- "6. Return Matched Food" --> QueryBuilder
+                QueryBuilder -- "7. Format Data" --> Controller
+
+                %% 5. Response
+                Controller -- "8. Send Response" --> Chat
+                Controller -- "8. Send Suggestions" --> Recos
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <h2>3. Use Case Features</h2>
+            <div class="mermaid">
+                usecaseDiagram
+                actor User
+                actor Admin
+                usecase "Login" as UC1
+                usecase "Browse Food" as UC2
+                usecase "Chat with AI" as UC3
+                usecase "View Recommendations" as UC_Rec
+                usecase "Place Order" as UC4
+                usecase "Pay" as UC5
+                usecase "Manage Menu" as UC6
+                usecase "View Orders" as UC7
+
+                User --> UC1
+                User --> UC2
+                User --> UC3
+                User --> UC_Rec
+                User --> UC4
+                UC4 --> UC5
+                Admin --> UC1
+                Admin --> UC6
+                Admin --> UC7
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <h2>4. Order Sequence</h2>
+            <div class="mermaid">
+                sequenceDiagram
+                actor User
+                participant App
+                participant API
+                participant DB
+                participant Pay
+                User->>App: Checkout
+                App->>API: Get Payment Link
+                API->>DB: Save Order
+                API->>Pay: Create Session
+                Pay-->>API: Session ID
+                API-->>App: Link
+                App->>User: Redirect
+                User->>Pay: Pay
+                Pay-->>User: Success
+                User->>App: Success Page
+                App->>API: Verify
+                API->>DB: Update Status
+                API-->>App: Confirmed
+            </div>
+        </div>
+
+        <div class="diagram-card">
+            <h2>5. Data Class Diagram (Database Schema)</h2>
+            <p>Entity relationships based on Supabase tables.</p>
+            <div class="mermaid">
+                classDiagram
+                class User {
+                +UUID id
+                +String email
+                }
+                class Restaurant {
+                +UUID id
+                +String name
+                +String cuisine
+                +Float rating
+                }
+                class Food {
+                +UUID id
+                +String name
+                +Float price
+                +Boolean is_veg
+                }
+                class Order {
+                +UUID id
+                +Float total
+                +String status
+                }
+                class OrderItem {
+                +UUID id
+                +Integer qty
+                }
+
+                User "1" --> "*" Order : places
+                Restaurant "1" --> "*" Food : offers
+                Order "1" --> "*" OrderItem : has
+                Food "1" --> "*" OrderItem : is
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

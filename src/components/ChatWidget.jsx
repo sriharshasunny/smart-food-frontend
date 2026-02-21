@@ -68,11 +68,15 @@ const ChatWidget = () => {
 
         try {
             const userId = user?.id || null;
+            const history = messages.slice(-6).map(m => ({
+                sender: m.sender,
+                content: m.content || m.message || ''
+            }));
 
             const res = await fetch(`${API_URL}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage, userId })
+                body: JSON.stringify({ message: userMessage, userId, history })
             });
 
             const data = await res.json();
@@ -114,43 +118,57 @@ const ChatWidget = () => {
         // Food Search / Trending / Offers
         if (['search_food', 'get_offers', 'trending_items'].includes(msg.type)) {
             const foods = msg.data || [];
-            if (foods.length === 0) return <p>No food items found matching your criteria.</p>;
 
             return (
-                <div className="flex flex-col gap-3 mt-3 w-full">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Top Picks For You</p>
-                    {foods.map((food, i) => (
-                        <div key={i} className="group flex gap-3 bg-gray-800/50 hover:bg-gray-800 p-2.5 rounded-xl border border-gray-700 hover:border-orange-500/50 transition-all duration-300">
-                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-700">
-                                {/* Use optimizeImage and try multiple image property names */}
-                                <img
-                                    src={optimizeImage(food.image || food.imageUrl || food.image_url, 100)}
-                                    alt={food.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80'; }} // Fallback
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            </div>
-
-                            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                <div>
-                                    <h4 className="font-semibold text-white text-sm truncate">{food.name}</h4>
-                                    <p className="text-xs text-gray-400 truncate hover:text-orange-400 cursor-pointer" onClick={() => handleViewRestaurant(typeof food.restaurant === 'object' ? food.restaurant?._id : food.restaurant)}>
-                                        {food.restaurant?.name || "View Restaurant"}
-                                    </p>
-                                </div>
-                                <div className="flex justify-between items-center mt-1">
-                                    <span className="text-emerald-400 font-bold text-sm">₹{food.price}</span>
-                                    <button
-                                        onClick={() => handleAddToCart(food)}
-                                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 active:scale-95"
-                                    >
-                                        Add <ShoppingBag size={10} />
-                                    </button>
-                                </div>
-                            </div>
+                <div className="flex flex-col w-full">
+                    {msg.message && (
+                        <div className="mb-3 text-[15px]">
+                            {msg.sender === 'ai' && isLatest ? (
+                                <Typewriter text={msg.message} onComplete={scrollToBottom} />
+                            ) : (
+                                <p className="leading-relaxed">{msg.message}</p>
+                            )}
                         </div>
-                    ))}
+                    )}
+                    {foods.length === 0 ? (
+                        <p>No food items found matching your criteria.</p>
+                    ) : (
+                        <div className="flex flex-col gap-3 mt-1 w-full">
+                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Top Picks For You</p>
+                            {foods.map((food, i) => (
+                                <div key={i} className="group flex gap-3 bg-gray-800/50 hover:bg-gray-800 p-2.5 rounded-xl border border-gray-700 hover:border-orange-500/50 transition-all duration-300">
+                                    <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-700">
+                                        {/* Use optimizeImage and try multiple image property names */}
+                                        <img
+                                            src={optimizeImage(food.image || food.imageUrl || food.image_url, 100)}
+                                            alt={food.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80'; }} // Fallback
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="font-semibold text-white text-sm truncate">{food.name}</h4>
+                                            <p className="text-xs text-gray-400 truncate hover:text-orange-400 cursor-pointer" onClick={() => handleViewRestaurant(typeof food.restaurant === 'object' ? food.restaurant?._id : food.restaurant)}>
+                                                {food.restaurant?.name || "View Restaurant"}
+                                            </p>
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className="text-emerald-400 font-bold text-sm">₹{food.price}</span>
+                                            <button
+                                                onClick={() => handleAddToCart(food)}
+                                                className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 active:scale-95"
+                                            >
+                                                Add <ShoppingBag size={10} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -158,32 +176,46 @@ const ChatWidget = () => {
         // Restaurant Search
         if (['search_restaurant', 'open_now'].includes(msg.type)) {
             const restaurants = msg.data || [];
-            if (restaurants.length === 0) return <p>No restaurants found.</p>;
 
             return (
-                <div className="flex flex-col gap-3 mt-3 w-full">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Restaurants Nearby</p>
-                    {restaurants.map((rest, i) => (
-                        <div key={i} className="bg-gray-800/50 hover:bg-gray-800 p-3 rounded-xl border border-gray-700 transition-all">
-                            <div className="flex justify-between items-start">
-                                <h4 className="font-semibold text-white text-sm">{rest.name}</h4>
-                                <div className="flex items-center text-xs text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded">
-                                    <Star size={10} className="fill-current mr-1" />
-                                    {rest.rating}
-                                </div>
-                            </div>
-                            <div className="flex items-center text-xs text-gray-400 mt-1 mb-3">
-                                <MapPin size={10} className="mr-1" />
-                                <span className="truncate max-w-[180px]">{rest.address}</span>
-                            </div>
-                            <button
-                                onClick={() => handleViewRestaurant(rest._id)}
-                                className="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-2 group"
-                            >
-                                View Menu <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
+                <div className="flex flex-col w-full">
+                    {msg.message && (
+                        <div className="mb-3 text-[15px]">
+                            {msg.sender === 'ai' && isLatest ? (
+                                <Typewriter text={msg.message} onComplete={scrollToBottom} />
+                            ) : (
+                                <p className="leading-relaxed">{msg.message}</p>
+                            )}
                         </div>
-                    ))}
+                    )}
+                    {restaurants.length === 0 ? (
+                        <p>No restaurants found.</p>
+                    ) : (
+                        <div className="flex flex-col gap-3 mt-1 w-full">
+                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Restaurants Nearby</p>
+                            {restaurants.map((rest, i) => (
+                                <div key={i} className="bg-gray-800/50 hover:bg-gray-800 p-3 rounded-xl border border-gray-700 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-semibold text-white text-sm">{rest.name}</h4>
+                                        <div className="flex items-center text-xs text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded">
+                                            <Star size={10} className="fill-current mr-1" />
+                                            {rest.rating}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center text-xs text-gray-400 mt-1 mb-3">
+                                        <MapPin size={10} className="mr-1" />
+                                        <span className="truncate max-w-[180px]">{rest.address}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleViewRestaurant(rest._id)}
+                                        className="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-2 group"
+                                    >
+                                        View Menu <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -191,37 +223,51 @@ const ChatWidget = () => {
         // Orders
         if (msg.type === 'get_orders') {
             const orders = msg.data || [];
-            if (!Array.isArray(orders) || orders.length === 0) return <p>No recent orders found.</p>;
 
             return (
-                <div className="flex flex-col gap-3 mt-3 w-full">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Recent Orders</p>
-                    {orders.map((order, i) => (
-                        <div key={i} className="bg-gray-800/50 p-3 rounded-xl border border-gray-700">
-                            <div className="flex justify-between text-xs text-gray-400 mb-2 font-mono">
-                                <span>#{order._id ? order._id.slice(-6) : 'ID???'}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wide ${order.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-orange-500/10 text-orange-400'
-                                    }`}>
-                                    {order.status || 'Unknown'}
-                                </span>
-                            </div>
-                            <div className="py-2 border-t border-gray-700/50 space-y-1">
-                                {(order.items || []).slice(0, 2).map((item, j) => (
-                                    <div key={j} className="flex justify-between text-xs text-gray-300">
-                                        <span>{item.quantity}x {item.food?.name || "Unknown Item"}</span>
-                                    </div>
-                                ))}
-                                {(order.items || []).length > 2 && <p className="text-xs text-gray-500 italic">+{order.items.length - 2} more items</p>}
-                                {(!order.items || order.items.length === 0) && <p className="text-xs text-gray-500 italic">No items details available.</p>}
-                            </div>
-                            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700/50">
-                                <span className="text-xs text-gray-400">
-                                    {order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}
-                                </span>
-                                <span className="text-sm font-bold text-white">₹{order.total_amount || 0}</span>
-                            </div>
+                <div className="flex flex-col w-full">
+                    {msg.message && (
+                        <div className="mb-3 text-[15px]">
+                            {msg.sender === 'ai' && isLatest ? (
+                                <Typewriter text={msg.message} onComplete={scrollToBottom} />
+                            ) : (
+                                <p className="leading-relaxed">{msg.message}</p>
+                            )}
                         </div>
-                    ))}
+                    )}
+                    {(!Array.isArray(orders) || orders.length === 0) ? (
+                        <p>No recent orders found.</p>
+                    ) : (
+                        <div className="flex flex-col gap-3 mt-1 w-full">
+                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Recent Orders</p>
+                            {orders.map((order, i) => (
+                                <div key={i} className="bg-gray-800/50 p-3 rounded-xl border border-gray-700">
+                                    <div className="flex justify-between text-xs text-gray-400 mb-2 font-mono">
+                                        <span>#{order._id ? order._id.slice(-6) : 'ID???'}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wide ${order.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-orange-500/10 text-orange-400'
+                                            }`}>
+                                            {order.status || 'Unknown'}
+                                        </span>
+                                    </div>
+                                    <div className="py-2 border-t border-gray-700/50 space-y-1">
+                                        {(order.items || []).slice(0, 2).map((item, j) => (
+                                            <div key={j} className="flex justify-between text-xs text-gray-300">
+                                                <span>{item.quantity}x {item.food?.name || "Unknown Item"}</span>
+                                            </div>
+                                        ))}
+                                        {(order.items || []).length > 2 && <p className="text-xs text-gray-500 italic">+{order.items.length - 2} more items</p>}
+                                        {(!order.items || order.items.length === 0) && <p className="text-xs text-gray-500 italic">No items details available.</p>}
+                                    </div>
+                                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700/50">
+                                        <span className="text-xs text-gray-400">
+                                            {order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}
+                                        </span>
+                                        <span className="text-sm font-bold text-white">₹{order.total_amount || 0}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }

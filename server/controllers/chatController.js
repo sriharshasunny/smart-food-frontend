@@ -3,7 +3,7 @@ const supabase = require('../utils/supabase'); // Assuming this is where your su
 
 exports.processChatRequest = async (req, res) => {
     try {
-        const { message, userId } = req.body;
+        const { message, userId, history = [] } = req.body;
 
         if (!message) {
             return res.status(400).json({ error: "Message is required" });
@@ -23,7 +23,11 @@ exports.processChatRequest = async (req, res) => {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-        // 1. Construct the Prompt (The "Brain")
+        // Format conversation history for Gemini context
+        const conversationContext = history.length > 0
+            ? history.map(msg => `${msg.sender === 'user' ? 'User' : 'SmartBot'}: ${msg.content || msg.message || ''}`).join('\n')
+            : "No previous conversation.";
+
         // 1. Construct the Prompt (The "Brain")
         const prompt = `
             You are "SmartBot", the official AI assistant for Smart Food Delivery.
@@ -87,15 +91,20 @@ exports.processChatRequest = async (req, res) => {
             - rating_min from phrases like "above 4 rating".
             - open_now true if user says "open now" or "late night".
             - If user asks about "order status" or "where is my food", intent is 'get_orders'.
+            - Pay attention to CONVERSATION CONTEXT to understand follow-up questions (e.g., if user said "burgers" in previous message, and now says "any veg ones", they mean veg burgers).
 
-            Return strictly this JSON format:
+            Return strictly this JSON format EVERY TIME:
             {
+              "reply": "A friendly, conversational, professional text response addressing the user directly. (REQUIRED for all intents, e.g., 'Sure, here are some tasty veg burgers for you!' or 'Here is your recent order history.')",
               "intent": "intent_name",
               "filters": {},
               "message": "Answer string if intent is general_info, else null"
             }
 
-            User Message: "${message}"
+            --- CONVERSATION CONTEXT (History) ---
+            ${conversationContext}
+
+            Current User Message: "${message}"
         `;
 
         // 2. Get AI Response
@@ -152,6 +161,7 @@ exports.processChatRequest = async (req, res) => {
         res.json({
             type: structuredData.intent,
             data: dbResult,
+            message: structuredData.reply || structuredData.message || "Here's what I found!",
             ai_summary: structuredData // Optional: for debugging
         });
 

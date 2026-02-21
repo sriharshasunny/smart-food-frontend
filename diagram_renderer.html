@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Renderer</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: white;
+        }
+
+        .diagram-container {
+            margin-bottom: 50px;
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="arch" class="diagram-container">
+        <h2>Architecture Diagram</h2>
+        <div class="mermaid">
+            graph TD
+            subgraph "Client Side"
+            A[User Browser]
+            B[Admin Browser]
+            end
+
+            subgraph "Frontend Layer"
+            C[React Application (Vite)]
+            CN[Admin Portal]
+            A --> C
+            B --> CN
+            end
+
+            subgraph "Backend Layer"
+            D[Express.js Server]
+            Auth[Auth Middleware]
+            API[REST API Routes]
+            D --> Auth
+            D --> API
+            end
+
+            subgraph "Data Layer"
+            E[Supabase (PostgreSQL)]
+            F[Firebase Auth (Identity)]
+            end
+
+            subgraph "External Services"
+            G[Google Gemini AI]
+            H[Resend (Email Service)]
+            I[Dodo Payments]
+            end
+
+            %% Connections
+            C -->|HTTP/REST| D
+            CN -->|HTTP/REST| D
+
+            API -->|Query/Update| E
+            API -->|Verify Token| F
+
+            API -->|Generate Content| G
+            API -->|Send Notifications| H
+            API -->|Process Payments| I
+
+            %% Client Interactions with External for Auth (Hybrid)
+            C -->|Authenticate| F
+            F -->|Return Token| C
+            C -->|Send Token| D
+        </div>
+    </div>
+
+    <div id="usecase" class="diagram-container">
+        <h2>Use Case Diagram</h2>
+        <div class="mermaid">
+            usecaseDiagram
+            actor "Registered User" as U
+            actor "Admin" as A
+            actor "System Services" as S
+
+            package "Smart Food Delivery App" {
+            usecase "Browse Menu" as UC1
+            usecase "Search Food" as UC2
+            usecase "Filter by Category" as UC3
+            usecase "Add to Cart" as UC4
+            usecase "Place Order" as UC5
+            usecase "Make Payment" as UC6
+            usecase "Login / Register" as UC7
+            usecase "Track Order Status" as UC8
+
+            usecase "Manage Menu Items" as UC9
+            usecase "View All Orders" as UC10
+            usecase "Update Order Status" as UC11
+            }
+
+            U --> UC1
+            U --> UC2
+            U --> UC3
+            U --> UC4
+            U --> UC5
+            U --> UC7
+            U --> UC8
+
+            %% Include relationships
+            UC5 ..> UC6 : includes
+            UC5 ..> UC7 : requires
+
+            %% Admin Interactions
+            A --> UC9
+            A --> UC10
+            A --> UC11
+            A --> UC7
+
+            %% System Interactions (backend processing)
+            S --> UC6 : Verifies Payment
+            S --> UC5 : Sends Order Email
+        </div>
+    </div>
+
+</body>
+
+</html>
