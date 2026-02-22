@@ -78,6 +78,7 @@ exports.processChatRequest = async (req, res) => {
             - rating_min (number or null)
             - open_now (true/false/null)
             - limit (number or null): The maximum number of items the user requested (e.g., "top 3", "show me 2").
+            - item_limit (number or null): The maximum number of food items to show per restaurant (e.g., "top 5 items").
             
             For get_orders intent, extract:
              - limit (number or null): Number of past orders to retrieve (default limit in DB is 5).
@@ -215,7 +216,7 @@ async function searchFood(filters) {
 }
 
 async function searchRestaurants(filters) {
-    let query = supabase.from('restaurants').select('*');
+    let query = supabase.from('restaurants').select('*, foods(*)');
 
     if (filters.restaurant_name) {
         query = query.ilike('name', `%${filters.restaurant_name}%`);
@@ -234,6 +235,16 @@ async function searchRestaurants(filters) {
 
     const { data, error } = await query;
     if (error) throw error;
+
+    // Sort and limit foods per restaurant
+    if (data) {
+        data.forEach(rest => {
+            if (rest.foods && Array.isArray(rest.foods)) {
+                rest.foods = rest.foods.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, filters.item_limit || 3);
+            }
+        });
+    }
+
     return data;
 }
 

@@ -232,6 +232,24 @@ const ChatWidget = () => {
                                         <MapPin size={10} className="mr-1" />
                                         <span className="truncate max-w-[180px]">{rest.address}</span>
                                     </div>
+
+                                    {/* Nested Food Items Display */}
+                                    {rest.foods && rest.foods.length > 0 && (
+                                        <div className="mt-2 mb-3 bg-gray-900/30 p-2 rounded-lg border border-gray-700/50">
+                                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1.5">Top Items Menu</p>
+                                            <div className="space-y-1.5">
+                                                {rest.foods.map((food, j) => (
+                                                    <div key={j} className="flex justify-between items-center text-xs">
+                                                        <span className="text-gray-300 truncate pr-2 flex-1 relative group cursor-pointer">
+                                                            ★ {food.name}
+                                                        </span>
+                                                        <span className="text-gray-400 font-medium shrink-0">₹{food.price}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <button
                                         onClick={() => handleViewRestaurant(rest._id || rest.id)}
                                         className="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-2 group"
@@ -262,7 +280,7 @@ const ChatWidget = () => {
                         </div>
                     )}
                     {(!Array.isArray(orders) || orders.length === 0) ? (
-                        !msg.message && <p>No recent orders found.</p>
+                        <p className="text-gray-400 text-sm mt-2 italic">Oops! No recent orders found in your history.</p>
                     ) : (
                         <div className="flex flex-col gap-3 mt-1 w-full">
                             <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Recent Orders</p>
