@@ -1,725 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, ArrowDown, MapPin, Truck, Smartphone, Star, Clock } from 'lucide-react';
+import { ChevronRight, ArrowDown, MapPin, Zap, Truck, ShieldCheck, Utensils, Smartphone, Star, Clock } from 'lucide-react';
 
 const LandingPage = () => {
     const navigate = useNavigate();
-    const canvasRef = useRef(null);
-    const scrollRef = useRef(null);
-
-    // --- NEW DELTA-TIME PHYSICS ENGINE (v2.2 - Robust Edition) ---
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Safety: Ensure Context
-        const ctx = canvas.getContext('2d', { alpha: true });
-        if (!ctx) return;
-
-        let animationFrameId;
-
-        // Assets
-        // Assets - Curated High-Quality Food Emojis
-        const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥩', '🥑', '🥞', '🥨', '🍗', '🌭', '🥪'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱', '🍜', '🍤'];
-        const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Order Now!", "Zoom! ✨"];
-
-        // State Targets
-        let width = window.innerWidth;
-        let height = window.innerHeight;
-        let isMobile = width < 768; // New Flag
-        let centerX = width * 0.75;
-        let centerY = height * 0.5;
-        let scale = Math.min(width, height) * 0.0013;
-
-        // Entity: UFO
-        const ufo = {
-            pos: { x: -100, y: 100 },
-            vel: { x: 0, y: 0 },
-            target: { x: 0, y: 0 },
-            state: 'IDLE', // IDLE, WARP_TO_SUN, RESPAWNING
-            rotation: 0,
-            opacity: 1,
-            scale: 1,
-            trail: [],
-            msgIndex: 0,
-            msgTimer: 0,
-            showMsg: true,
-            idleTimer: 0,
-            floatOffset: 0
-        };
-
-        // Inputs - Smoothed for 3D feel
-        let targetMouse = { x: 0, y: 0 };
-        let mouse = { x: 0, y: 0 }; // Current smoothed pos
-
-        const handleInteraction = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const logicX = clientX - rect.left;
-            const logicY = clientY - rect.top;
-
-            // Parallax Input
-            if (width > 0 && height > 0) {
-                targetMouse.x = (clientX / width) - 0.5;
-                targetMouse.y = (clientY / height) - 0.5;
-            }
-
-            const dist = Math.hypot(logicX - ufo.pos.x, logicY - ufo.pos.y);
-            if (dist < 100 && ufo.state === 'IDLE') {
-                ufo.state = 'WARP_TO_SUN';
-            }
-        };
-
-        const resize = () => {
-            if (!canvas) return;
-            width = window.innerWidth;
-            height = window.innerHeight;
-
-            // OPTIMIZATION: Max Speed on Mobile (Cap DPR at 1.0)
-            const mobileView = width < 768;
-            const dpr = mobileView ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.5);
-
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            // Force CSS dimensions
-            canvas.style.width = width + 'px';
-            canvas.style.height = height + 'px';
-
-            ctx.scale(dpr, dpr);
-
-            if (width >= 768) {
-                isMobile = false;
-                centerX = width * 0.75;
-                centerY = height * 0.5;
-                scale = Math.min(width, height) * 0.0013;
-            } else {
-                isMobile = true;
-                centerX = width * 0.5;
-                centerY = height * 0.75; // Lower 3/4th of screen for mobile
-                scale = Math.min(width, height) * 0.001;
-            }
-            if (ufo.state === 'IDLE') {
-                ufo.target.x = width * (isMobile ? 0.5 : 0.2);
-            }
-        };
-
-
-        // Entities: Stars (Optimized Count - Higher Density for "3D Texture")
-        // Mobile Optimization: Significantly reduce counts
-        const starCount = isMobile ? 40 : 100;
-        const stars = Array.from({ length: starCount }, () => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            z: Math.random() * 2 + 0.5, // Deeper Z range
-            size: Math.random() * 1.5 + 0.5,
-            baseOpacity: Math.random() * 0.6 + 0.4,
-            phase: Math.random() * Math.PI * 2,
-            speed: 50 + Math.random() * 80 // MUCHO FASTER
-        }));
-
-        // Entities: Shooting Stars (More Frequent)
-        let shootingStars = [];
-        const spawnShootingStar = () => {
-            // Reduced spawn rate on mobile
-            if (Math.random() < (isMobile ? 0.005 : 0.015)) {
-                shootingStars.push({
-                    x: Math.random() * width,
-                    y: Math.random() * (height * 0.5),
-                    vx: -200 - Math.random() * 200, // Faster
-                    vy: 50 + Math.random() * 80,
-                    life: 1.0,
-                    length: 80 + Math.random() * 60
-                });
-            }
-        };
-
-        // Entities: Nebula Clouds (Faster)
-        const nebulas = Array.from({ length: 3 }, (_, i) => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            radius: 300 + Math.random() * 200,
-            color: i === 0 ? 'rgba(76, 29, 149, 0.1)' : i === 1 ? 'rgba(236, 72, 153, 0.08)' : 'rgba(59, 130, 246, 0.08)',
-            vx: (Math.random() - 0.5) * 15, // Faster drift
-            vy: (Math.random() - 0.5) * 15
-        }));
-
-        // Entities: Space Dust (High Density for "Texture")
-        const dustCount = isMobile ? 15 : 60;
-        const dust = Array.from({ length: dustCount }, () => ({
-            x: Math.random() * 2000,
-            y: Math.random() * 1000,
-            size: Math.random() * 1.2 + 0.2,
-            depth: Math.random() * 3 + 1 // More depth layers
-        }));
-
-        // Entities: Orbiting Food (Satellites)
-        // 3 items orbiting tightly
-        const orbitingFood = Array.from({ length: 3 }, (_, i) => ({
-            emoji: FOOD_EMOJIS[i % 5],
-            angle: (i / 3) * Math.PI * 2,
-            radius: 80 + (i % 2) * 20,
-            speed: 0.5 + (i % 2) * 0.2,
-            size: 30
-        }));
-
-        // Entities: Food Meteorites
-        // Desktop Only: Top-to-Bottom Fall
-        let foodMeteorites = [];
-        let meteoriteTimer = 0;
-        const spawnMeteorite = () => {
-            if (isMobile) return; // Disable on Mobile
-
-            // Spawn 1 item at a time
-            const count = 1;
-            for (let i = 0; i < count; i++) {
-                // Start at Top
-                const startX = Math.random() * width;
-                const startY = -60;
-
-                // End at Bottom (with some variance)
-                const endX = startX + (Math.random() - 0.5) * 400; // Slight angle
-                const endY = height + 60;
-
-                const angle = Math.atan2(endY - startY, endX - startX);
-                const speed = 200 + Math.random() * 100; // Fast fall
-
-                foodMeteorites.push({
-                    x: startX,
-                    y: startY,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
-                    rot: 0,
-                    rotSpeed: (Math.random() - 0.5) * 3,
-                    size: 40 + Math.random() * 20,
-                    trail: []
-                });
-            }
-        };
-
-        // Entities: Emitted Food (Mobile & Laptop)
-        let emittedFoods = [];
-        const spawnFoodBurst = () => {
-            // Burst Settings: Mobile = 5 items, Laptop = 3-4 items
-            const count = isMobile ? 5 : Math.floor(Math.random() * 2) + 3;
-
-            for (let i = 0; i < count; i++) {
-                // Radial spread
-                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-                // Faster speed on desktop to cover more screen
-                const speed = (isMobile ? 60 : 80) + Math.random() * 40;
-
-                emittedFoods.push({
-                    x: centerX, y: centerY,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
-                    life: 1.2, // Slightly longer life
-                    scale: 0.5,
-                    rot: Math.random() * Math.PI,
-                    rotSpeed: (Math.random() - 0.5) * 2
-                });
-            }
-        };
-
-
-        // Timing
-        let lastTime = 0;
-        let coreIndex = 0;
-        let coreTimer = 0;
-
-        // --- GAME LOOP ---
-        const loop = (timestamp) => {
-            try {
-                if (!lastTime) lastTime = timestamp;
-                // Robust dt: clamp between 0.01 and 0.1
-                const dt = Math.max(0.01, Math.min((timestamp - lastTime) / 1000, 0.1));
-                lastTime = timestamp;
-
-                if (!width || !height || width === 0) {
-                    resize();
-                    if (!width) return requestAnimationFrame(loop);
-                }
-
-                // 0. SMOOTH INPUT (Lerp)
-                // factor 0.1 gives a nice weight/delay to the movement
-                mouse.x += (targetMouse.x - mouse.x) * 0.1;
-                mouse.y += (targetMouse.y - mouse.y) * 0.1;
-
-                // 1. UPDATE PHYSICS (Safeguarded)
-                coreTimer += dt;
-
-                // Update central food: Mobile every 2.0s, Desktop every 3.0s
-                const switchTime = isMobile ? 2.0 : 3.0;
-
-                if (coreTimer > switchTime) {
-                    coreIndex = (coreIndex + 1) % CORE_ITEMS.length;
-                    coreTimer = 0;
-                    spawnFoodBurst(); // Trigger burst on change (Both views)
-                }
-
-                // Update Orbiting Food (Desktop Only)
-                if (!isMobile) {
-                    orbitingFood.forEach(o => {
-                        o.angle += o.speed * dt;
-                    });
-                }
-
-                // Update Food Meteorites
-                meteoriteTimer += dt;
-                // Realistic Timing: Occasional (every 10-15s)
-                if (meteoriteTimer > 10.0 + Math.random() * 5.0) {
-                    spawnMeteorite();
-                    meteoriteTimer = 0;
-                }
-                for (let i = foodMeteorites.length - 1; i >= 0; i--) {
-                    const m = foodMeteorites[i];
-                    m.x += m.vx * dt;
-                    m.y += m.vy * dt;
-                    m.rot += m.rotSpeed * dt;
-
-                    // Trail
-                    m.trail.push({ x: m.x, y: m.y, life: 0.5 });
-                    for (let j = m.trail.length - 1; j >= 0; j--) {
-                        m.trail[j].life -= dt;
-                        if (m.trail[j].life <= 0) m.trail.splice(j, 1);
-                    }
-
-                    if (m.x < -100 || m.x > width + 100 || m.y < -100 || m.y > height + 100) {
-                        foodMeteorites.splice(i, 1);
-                    }
-                }
-
-                // Update Emitted Food
-                for (let i = emittedFoods.length - 1; i >= 0; i--) {
-                    const f = emittedFoods[i];
-                    f.x += f.vx * dt;
-                    f.y += f.vy * dt;
-                    f.life -= 0.5 * dt; // 2 seconds life
-                    f.scale += 0.5 * dt; // Grow slightly
-                    f.rot += f.rotSpeed * dt;
-                    if (f.life <= 0) emittedFoods.splice(i, 1);
-                }
-
-                // UFO Logic
-                ufo.floatOffset += dt * 2;
-                if (ufo.state === 'IDLE') {
-                    ufo.idleTimer += dt;
-                    ufo.msgTimer += dt;
-                    if (ufo.msgTimer > 3) {
-                        ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length;
-                        ufo.msgTimer = 0;
-                        ufo.showMsg = true;
-                    }
-
-                    // Mobile: Roam actively with Zig-Zag and Flybys
-                    const roamChance = isMobile ? 2.0 : 1.0;
-                    if (Math.random() < roamChance * dt) {
-                        if (isMobile) {
-                            // Mobile Logic: 60% Bottom Zone, 40% Full Flyby
-                            if (Math.random() < 0.6) {
-                                // Bottom Zone (Safe)
-                                ufo.target.x = Math.random() * width;
-                                ufo.target.y = height * 0.65 + Math.random() * (height * 0.25);
-                            } else {
-                                // Flyby (Zig-Zag)
-                                ufo.target.x = Math.random() * width;
-                                ufo.target.y = Math.random() * height;
-                            }
-
-                            // AVOID CENTER (Food)
-                            const distToCenter = Math.hypot(ufo.target.x - centerX, ufo.target.y - centerY);
-                            if (distToCenter < 150) {
-                                // Push away from center
-                                ufo.target.x += (ufo.target.x < centerX ? -150 : 150);
-                            }
-                        } else {
-                            // Desktop Standard
-                            ufo.target.x = Math.random() * width;
-                            ufo.target.y = Math.random() * (height * 0.6);
-                        }
-                    }
-
-                    const dx = ufo.target.x - ufo.pos.x;
-                    const dy = ufo.target.y - ufo.pos.y;
-
-                    // Add Zig-Zag Sine Wave to velocity on Mobile
-                    let zigzag = 0;
-                    if (isMobile) {
-                        zigzag = Math.sin(timestamp * 0.005) * 50;
-                    }
-
-                    ufo.vel.x += (dx + zigzag) * 0.5 * dt;
-                    ufo.vel.y += dy * 0.5 * dt;
-                    const friction = Math.pow(0.1, dt);
-                    ufo.vel.x *= friction;
-                    ufo.vel.y *= friction;
-
-                    ufo.rotation = ufo.vel.x * 0.05 + Math.sin(ufo.floatOffset) * 0.05;
-
-                    // Depth Effect: Smoothly scale up to 1 if just spawned
-                    if (ufo.scale < 1) {
-                        ufo.scale += (1 - ufo.scale) * dt * 2;
-                    }
-                    ufo.opacity = Math.min(1, ufo.opacity + dt);
-
-                } else if (ufo.state === 'WARP_TO_SUN') {
-                    const dx = centerX - ufo.pos.x;
-                    const dy = centerY - ufo.pos.y;
-                    const dist = Math.hypot(dx, dy);
-
-                    ufo.vel.x += dx * 0.5 * dt;
-                    ufo.vel.y += dy * 0.5 * dt;
-                    const warpFriction = Math.pow(0.01, dt);
-                    ufo.vel.x *= warpFriction;
-                    ufo.vel.y *= warpFriction;
-
-                    ufo.scale = Math.pow(Math.max(0, dist / 600), 1.5);
-                    ufo.rotation += 8 * dt;
-
-                    if (dist < 20 || ufo.scale < 0.05) {
-                        ufo.state = 'RESPAWNING';
-                        ufo.idleTimer = 4;
-                        ufo.opacity = 0;
-                        ufo.pos.x = -1000;
-                        ufo.scale = 0;
-                    }
-                } else if (ufo.state === 'RESPAWNING') {
-                    ufo.idleTimer -= dt;
-                    if (ufo.idleTimer <= 0) {
-                        ufo.state = 'IDLE';
-                        // "Come from space" Effect
-                        // Spawn at random X, restricted Y
-                        ufo.pos.x = Math.random() * width;
-                        if (isMobile) {
-                            ufo.pos.y = height * 0.7 + (Math.random() - 0.5) * 100;
-                        } else {
-                            ufo.pos.y = Math.random() * height * 0.5;
-                        }
-
-                        // Start small (far away) and transparent
-                        ufo.scale = 0.1;
-                        ufo.opacity = 0;
-
-                        ufo.vel.x = 0;
-                        ufo.vel.y = 0;
-                        ufo.rotation = 0;
-                        ufo.target.x = ufo.pos.x; // Start by hovering
-                        ufo.target.y = ufo.pos.y;
-                    }
-                }
-
-                ufo.pos.x += ufo.vel.x * dt * 8;
-                ufo.pos.y += ufo.vel.y * dt * 8;
-
-                if (ufo.opacity > 0.1 && (Math.abs(ufo.vel.x) > 0.1 || Math.abs(ufo.vel.y) > 0.1)) {
-                    const vLen = Math.hypot(ufo.vel.x, ufo.vel.y) || 1;
-                    const vxNorm = ufo.vel.x / vLen;
-                    const vyNorm = ufo.vel.y / vLen;
-                    const offset = 20 * ufo.scale;
-                    ufo.trail.push({
-                        x: ufo.pos.x - vxNorm * offset,
-                        y: ufo.pos.y - vyNorm * offset,
-                        vx: -vxNorm * 50 + (Math.random() - 0.5) * 20,
-                        vy: -vyNorm * 50 + (Math.random() - 0.5) * 20,
-                        life: 1.0,
-                        size: Math.random() * 6 + 4
-                    });
-                }
-                for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                    const p = ufo.trail[i];
-                    p.life -= 4.0 * dt;
-                    p.x += p.vx * dt;
-                    p.y += p.vy * dt;
-                    p.size *= 0.95;
-                    if (p.life <= 0) ufo.trail.splice(i, 1);
-                }
-
-                spawnShootingStar();
-                for (let i = shootingStars.length - 1; i >= 0; i--) {
-                    const s = shootingStars[i];
-                    s.x += s.vx * dt;
-                    s.y += s.vy * dt;
-                    s.life -= 1.0 * dt;
-                    if (s.life <= 0) shootingStars.splice(i, 1);
-                }
-
-                nebulas.forEach(n => {
-                    n.x += n.vx * dt; n.y += n.vy * dt;
-                    if (n.x < -n.radius) n.x = width + n.radius;
-                    if (n.x > width + n.radius) n.x = -n.radius;
-                });
-
-
-                // 2. DRAW
-                // Standard Clear
-                ctx.clearRect(0, 0, width, height);
-
-                // Draw Nebula using STANDARD blend mode to avoid invisibility issues
-                ctx.globalCompositeOperation = 'source-over';
-                nebulas.forEach(n => {
-                    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.radius);
-                    g.addColorStop(0, n.color);
-                    g.addColorStop(1, 'transparent');
-                    ctx.fillStyle = g;
-                    ctx.beginPath(); ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2); ctx.fill();
-                });
-
-                // 0. SMOOTH INPUT (Lerp) - Improved Responsiveness for Parallax
-                // factor 0.1 gives a nice weight/delay to the movement
-                mouse.x += (targetMouse.x - mouse.x) * 0.1;
-                mouse.y += (targetMouse.y - mouse.y) * 0.1;
-
-                // 1. UPDATE PHYSICS (Safeguarded)
-                coreTimer += dt;
-
-                // ... (existing core updates)
-
-                // Stars
-                // Mobile: 3D Radial Warp | Desktop: Vertical Scroll with Parallax
-                ctx.fillStyle = "white";
-                stars.forEach(s => {
-                    if (isMobile) {
-                        // 3D Radial Move
-                        const dx = s.x - centerX;
-                        const dy = s.y - centerY;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        const angle = Math.atan2(dy, dx);
-                        const speed = s.speed * (dist / 100) * dt * 2.5; // Faster near edges
-
-                        s.x += Math.cos(angle) * speed;
-                        s.y += Math.sin(angle) * speed;
-
-                        // Reset if out of bounds
-                        if (s.x < 0 || s.x > width || s.y < 0 || s.y > height) {
-                            s.x = Math.random() * width;
-                            s.y = Math.random() * height;
-                            if (Math.hypot(s.x - centerX, s.y - centerY) < 50) s.x += 100;
-                        }
-                    } else {
-                        // Vertical Scroll (Desktop) with ENHANCED PARALLAX
-                        // Depth factor: Closer stars (high z) move faster with mouse
-                        const parallaxX = mouse.x * 120 * s.z; // Stronger parallax
-                        const parallaxY = mouse.y * 120 * s.z;
-
-                        s.y += s.speed * dt * s.z * 0.5; // Speed based on depth
-
-                        let renderX = s.x + parallaxX;
-                        let renderY = s.y + parallaxY;
-
-                        // Wrap around logic need to use base coordinates
-                        if (s.y > height) { s.y = -50; s.x = Math.random() * width; }
-
-                        // Render
-                        const opacity = s.baseOpacity + Math.sin(timestamp * 0.005 + s.phase) * 0.2;
-                        if (opacity > 0.05) {
-                            ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
-                            ctx.beginPath();
-                            // Size also affected by depth even more
-                            const pSize = s.size * s.z * 0.8;
-                            ctx.arc(renderX % width, renderY % height, pSize, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                    }
-                });
-                ctx.globalAlpha = 1;
-
-                // Dust with ENHANCED DEPTH
-                ctx.fillStyle = "rgba(200, 200, 255, 0.4)";
-                dust.forEach(d => {
-                    const px = d.x + (mouse.x * 150 * d.depth); // Increased multiplier
-                    const py = d.y + (mouse.y * 150 * d.depth);
-                    const wx = (px % width + width) % width;
-                    const wy = (py % height + height) % height;
-                    const size = d.size * d.depth; // Scale size by depth
-                    ctx.beginPath(); ctx.arc(wx, wy, size, 0, Math.PI * 2); ctx.fill();
-                });
-
-                // Shooting Stars
-                shootingStars.forEach(s => {
-                    ctx.strokeStyle = `rgba(255, 255, 255, ${s.life})`;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * 0.1, s.y - s.vy * 0.1); ctx.stroke();
-                });
-
-                // UFO Trail
-                ufo.trail.forEach(t => {
-                    ctx.beginPath(); ctx.arc(t.x, t.y, t.size * ufo.scale, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(0, 255, 255, ${t.life * 0.6})`; ctx.fill();
-                });
-
-                // UFO
-                if (ufo.opacity > 0) {
-                    ctx.save();
-                    ctx.translate(ufo.pos.x, ufo.pos.y);
-                    ctx.rotate(ufo.rotation);
-                    ctx.scale(ufo.scale, ufo.scale);
-
-                    // No Shadow, just stroke
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(0, 255, 255, 0.5)"; ctx.lineWidth = 3; ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(0, 255, 255, 0.15)"; ctx.lineWidth = 8; ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
-
-                    ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                    ctx.fillText("🛸", 0, 0);
-
-                    if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) {
-                        ctx.rotate(-ufo.rotation);
-                        const msg = UFO_MESSAGES[ufo.msgIndex];
-                        ctx.font = "bold 12px sans-serif";
-
-                        const metrics = ctx.measureText(msg);
-                        const pad = 12;
-                        const boxW = metrics.width + pad * 2;
-
-                        // Sci-Fi HUD Bubble (Offset x=45 to clear UFO radius)
-                        const offsetX = 45;
-                        ctx.fillStyle = "rgba(0, 15, 30, 0.85)"; // Dark transparent background
-                        ctx.strokeStyle = "rgba(0, 255, 255, 0.6)"; // Cyan border
-                        ctx.lineWidth = 1.5;
-
-                        ctx.beginPath();
-                        ctx.roundRect(offsetX, -30, boxW, 34, 4);
-                        ctx.fill();
-                        ctx.stroke();
-
-                        // Connector Line (Triangle pointing to UFO)
-                        ctx.beginPath();
-                        ctx.moveTo(offsetX, -5);
-                        ctx.lineTo(30, 0); // Point touches UFO edge radius ~30
-                        ctx.lineTo(offsetX, 5);
-                        ctx.fillStyle = "rgba(0, 255, 255, 0.6)";
-                        ctx.fill();
-
-                        // Glow Text
-                        ctx.shadowColor = "rgba(0, 255, 255, 0.8)";
-                        ctx.shadowBlur = 4;
-                        ctx.fillStyle = "#0ff"; // Cyan text
-                        ctx.font = "bold 13px 'Courier New', monospace";
-                        ctx.fillText(msg, offsetX + boxW / 2, -30 + 17); // Center text in box
-                        ctx.shadowBlur = 0; // Reset shadow
-                    }
-                    ctx.restore();
-                }
-
-                // Sun
-                const sunSize = 90 * scale * 2.0;
-                const glow = ctx.createRadialGradient(centerX, centerY, sunSize * 0.1, centerX, centerY, sunSize * 2.5);
-                glow.addColorStop(0, 'rgba(255, 120, 50, 0.6)');
-                glow.addColorStop(0.5, 'rgba(100, 50, 255, 0.2)');
-                glow.addColorStop(1, 'transparent');
-                ctx.fillStyle = glow;
-                ctx.beginPath(); ctx.arc(centerX, centerY, sunSize * 2.5, 0, Math.PI * 2); ctx.fill();
-
-                // Core Emoji
-                const pulse = 1 + Math.sin(timestamp * 0.003) * 0.03;
-                // Mobile: Huge Pulse, Desktop: Normal
-                const finalScale = isMobile ? pulse * 1.5 : pulse;
-
-                // Draw Emitted Food (Behind Core)
-                emittedFoods.forEach(f => {
-                    ctx.save();
-                    ctx.translate(f.x, f.y);
-                    ctx.rotate(f.rotation + f.rot);
-                    ctx.scale(f.scale * (isMobile ? 1.5 : 1), f.scale * (isMobile ? 1.5 : 1));
-                    ctx.globalAlpha = f.life;
-                    ctx.font = "30px Arial";
-                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                    ctx.fillText(f.emoji, 0, 0);
-                    ctx.restore();
-                });
-
-                ctx.save(); ctx.translate(centerX, centerY); ctx.scale(finalScale, finalScale);
-                ctx.font = `${sunSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                if (CORE_ITEMS[coreIndex]) {
-                    ctx.fillText(CORE_ITEMS[coreIndex], 0, 0);
-                }
-                ctx.restore();
-
-                // Draw Orbiting Food (Satellites) - Desktop Only
-                if (!isMobile) {
-                    orbitingFood.forEach(o => {
-                        const ox = centerX + Math.cos(o.angle) * (o.radius * 1.2);
-                        const oy = centerY + Math.sin(o.angle) * (o.radius * 1.2);
-
-                        ctx.save();
-                        ctx.translate(ox, oy);
-                        ctx.rotate(o.angle * 2);
-                        ctx.font = `${o.size}px Arial`;
-                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                        ctx.fillText(o.emoji, 0, 0);
-                        ctx.restore();
-                    });
-                }
-
-                // Draw Food Meteorites
-                // Draw Food Meteorites (Realistic Burn Effect)
-                foodMeteorites.forEach(m => {
-                    // Trail - Tapered and Fading
-                    ctx.save();
-                    ctx.lineCap = 'round';
-                    m.trail.forEach((t, i) => {
-                        const progress = i / m.trail.length;
-                        ctx.beginPath();
-                        if (i === 0) ctx.moveTo(t.x, t.y);
-                        else ctx.lineTo(t.x, t.y);
-                        // Hot Orange/Red Trail
-                        ctx.strokeStyle = `rgba(255, ${Math.floor(100 + progress * 155)}, 50, ${t.life * 0.5})`;
-                        ctx.lineWidth = m.size * (0.2 + progress * 0.6); // Tapering
-                        ctx.stroke();
-                    });
-                    ctx.restore();
-
-                    // Meteor Head with Glow
-                    ctx.save();
-                    ctx.translate(m.x, m.y);
-                    ctx.rotate(m.rot);
-
-                    // Atmospheric Burn Glow (Optimized: Scale based on mobile)
-                    if (!isMobile) {
-                        ctx.shadowBlur = 20;
-                        ctx.shadowColor = 'rgba(255, 100, 0, 0.6)';
-                    }
-
-                    ctx.font = `${m.size}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(m.emoji, 0, 0);
-                    ctx.restore();
-                });
-            } catch (err) {
-                console.error("Animation Loop Error", err);
-            }
-            animationFrameId = requestAnimationFrame(loop);
-        };
-
-        // Resize & Start
-        let resizeTimeout;
-        const debouncedResize = () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(resize, 100); };
-        window.addEventListener('resize', debouncedResize);
-        window.addEventListener('mousedown', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
-        window.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            if (width > 0 && height > 0) {
-                targetMouse.x = ((e.clientX - rect.left) / width) - 0.5;
-                targetMouse.y = ((e.clientY - rect.top) / height) - 0.5;
-            }
-        });
-
-        // Init
-        resize();
-        animationFrameId = requestAnimationFrame(loop);
-
-        return () => {
-            window.removeEventListener('resize', debouncedResize);
-            window.removeEventListener('mousedown', handleInteraction);
-            window.removeEventListener('touchstart', handleInteraction);
-            cancelAnimationFrame(animationFrameId);
-        };
-    }, []);
 
     const scrollToContent = () => {
         document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
@@ -737,93 +22,129 @@ const LandingPage = () => {
     );
 
     return (
-        // Added 'relative' z-index context to container to ensure canvas (absolute) sits correctly under content but over background
-        <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-[#020205] to-black selection:bg-orange-500 selection:text-white">
-
-            {/* CANVASES */}
-            <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
-
-            {/* Desktop Only 3D Cubes - REMOVED for Speed */}
-            {/* Extended empty space for future effects if needed */}
+        <div className="min-h-screen text-gray-900 font-sans overflow-x-hidden bg-gray-50 selection:bg-orange-500 selection:text-white">
 
             {/* NAVBAR */}
-            <nav className="fixed w-full z-50 top-6 px-4 pointer-events-none">
-                <div className="max-w-fit mx-auto pointer-events-auto">
-                    <motion.div layout transition={{ duration: 0.3, ease: "easeInOut" }} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
+            <nav className="fixed w-full z-50 top-4 px-4">
+                <div className="max-w-7xl mx-auto">
+                    <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
-                            <Rocket className="w-5 h-5 text-orange-500" />
-                            <span className="font-black text-lg tracking-tight">FoodVerse</span>
+                            <div className="bg-orange-500 p-1.5 rounded-lg">
+                                <Utensils className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="font-black text-xl tracking-tight text-gray-900">FoodVerse</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => navigate('/login')} className="px-5 py-2 text-xs font-bold hover:text-white text-gray-300 transition-colors">
-                                Login
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => navigate('/login')} className="hidden sm:block px-5 py-2 text-sm font-bold hover:text-orange-500 text-gray-600 transition-colors">
+                                Log In
                             </button>
-                            <button onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white text-xs font-black rounded-full hover:scale-105 transition-transform shadow-lg">
-                                SIGN UP
+                            <button onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-gray-900 text-white text-sm font-black rounded-full hover:bg-orange-500 transition-colors shadow-md">
+                                Sign Up
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
-            </nav >
+            </nav>
 
-            <main className="relative z-10 flex flex-col w-full pointer-events-none">
+            <main className="relative z-10 flex flex-col w-full">
 
                 {/* HERO SECTION */}
-                <section className="min-h-screen flex flex-col justify-center px-6 max-w-7xl mx-auto w-full">
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 mt-12 md:mt-0 order-1 pointer-events-auto">
-                            <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
-                                    <Zap className="w-3 h-3 fill-orange-400" /> Premium Delivery v3.0
+                <section className="min-h-screen flex flex-col justify-center px-6 max-w-7xl mx-auto w-full pt-20">
+                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center h-full">
+
+                        {/* Text Content */}
+                        <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 order-2 lg:order-1 z-10">
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 border border-orange-200 text-orange-600 text-[11px] font-black uppercase tracking-widest mb-6 shadow-sm">
+                                    <Zap className="w-3.5 h-3.5 fill-current" /> Lightning Fast Delivery
                                 </div>
-                                <h1 className="text-5xl sm:text-7xl md:text-8xl font-black leading-[0.95] tracking-tighter mb-8 drop-shadow-xl">
-                                    Taste The<br />
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-rose-500 to-purple-600">
-                                        Infinite.
+                                <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[1.05] tracking-tight mb-6 text-gray-900 drop-shadow-sm">
+                                    Cravings satisfied,<br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">
+                                        faster than ever.
                                     </span>
                                 </h1>
-                                <p className="text-lg md:text-xl text-gray-400/80 max-w-lg mx-auto md:mx-0 leading-relaxed mb-10 font-medium">
-                                    Hyper-speed drone delivery. The galaxy's finest kitchens, now at your command.
+                                <p className="text-lg md:text-xl text-gray-500 max-w-md mx-auto lg:mx-0 leading-relaxed mb-8 font-medium">
+                                    The best local restaurants and global cuisines, delivered right to your door with real-time tracking.
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center md:justify-start">
-                                    <button onClick={() => navigate('/login')} className="px-10 py-4 bg-white text-black font-black rounded-full hover:scale-105 transition-transform shadow-xl flex items-center justify-center gap-2 min-w-[180px]">
-                                        Order Now <ChevronRight className="w-5 h-5" />
+                                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center lg:justify-start">
+                                    <button onClick={() => navigate('/home')} className="px-8 py-4 bg-orange-500 text-white font-black rounded-2xl hover:bg-orange-600 hover:-translate-y-1 transition-all shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 min-w-[180px]">
+                                        Explore Menu <ChevronRight className="w-5 h-5" />
                                     </button>
-                                    <button onClick={scrollToContent} className="px-10 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-full backdrop-blur-sm transition-colors flex items-center justify-center gap-2 min-w-[180px]">
-                                        Explore <ArrowDown className="w-4 h-4" />
+                                    <button onClick={scrollToContent} className="px-8 py-4 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 min-w-[180px]">
+                                        How it works <ArrowDown className="w-4 h-4" />
                                     </button>
                                 </div>
                             </motion.div>
                         </div>
-                        <div className="h-[40vh] md:h-auto w-full order-2 pointer-events-none" />
+
+                        {/* Image Graphic - CSS Floating Animation */}
+                        <div className="relative h-[40vh] min-h-[400px] lg:h-[600px] w-full order-1 lg:order-2 flex items-center justify-center">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8 }}
+                                className="relative w-full max-w-lg aspect-square"
+                            >
+                                {/* Decorative Blobs */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-full blur-3xl opacity-20 animate-pulse" />
+
+                                {/* Floating Image Container */}
+                                <div className="absolute inset-0 flex items-center justify-center animate-[float_6s_ease-in-out_infinite]">
+                                    <img
+                                        src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1080&auto=format&fit=crop"
+                                        alt="Delicious Food"
+                                        className="w-[85%] h-[85%] object-cover rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-8 border-white"
+                                    />
+
+                                    {/* Floating Badges */}
+                                    <div className="absolute -right-4 top-1/4 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-3 animate-[float_4s_ease-in-out_infinite_reverse]">
+                                        <div className="bg-green-100 p-2 rounded-full"><Clock className="w-5 h-5 text-green-600" /></div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase">Delivery</p>
+                                            <p className="text-sm font-black text-gray-900">Under 30m</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="absolute -left-4 bottom-1/4 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-3 animate-[float_5s_ease-in-out_infinite]">
+                                        <div className="bg-yellow-100 p-2 rounded-full"><Star className="w-5 h-5 text-yellow-600" /></div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase">Rating</p>
+                                            <p className="text-sm font-black text-gray-900">4.9 / 5.0</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
                     </div>
                 </section>
 
                 {/* SCROLLING INFO */}
-                <div id="about" className="relative w-full bg-black/60 pt-20 pb-32 border-t border-white/5 pointer-events-auto">
+                <div id="about" className="relative w-full bg-white pt-24 pb-32 border-t border-gray-100">
                     <section className="px-6 max-w-7xl mx-auto space-y-32">
+
                         {/* FEATURES GRID */}
                         <div>
                             <ScrollReveal>
                                 <div className="text-center mb-16">
-                                    <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">Galactic Capabilities</h2>
-                                    <p className="text-gray-400 max-w-2xl mx-auto">Engineered for the modern space traveler.</p>
+                                    <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight text-gray-900">Why Choose FoodVerse?</h2>
+                                    <p className="text-gray-500 max-w-2xl mx-auto font-medium">We blend cutting-edge technology with the finest culinary experiences.</p>
                                 </div>
                             </ScrollReveal>
                             <div className="grid md:grid-cols-3 gap-6">
                                 {[
-                                    { title: "Hyper-Local", desc: "Precision landing at your pod.", icon: <MapPin className="w-8 h-8 text-rose-500" /> },
-                                    { title: "Warp Speed", desc: "Hot food, defying physics.", icon: <Zap className="w-8 h-8 text-yellow-400" /> },
-                                    { title: "Live Telemetry", desc: "Real-time pilot tracking.", icon: <Truck className="w-8 h-8 text-blue-400" /> },
-                                    { title: "Quantum Pay", desc: "Encrypted & instant.", icon: <ShieldCheck className="w-8 h-8 text-green-400" /> },
-                                    { title: "Cosmic Menu", desc: "Dishes from 500+ sectors.", icon: <Utensils className="w-8 h-8 text-purple-400" /> },
-                                    { title: "Command Center", desc: "Full control via app.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
+                                    { title: "Hyper-Local", desc: "Discover hidden gems in your neighborhood.", icon: <MapPin className="w-8 h-8 text-rose-500" /> },
+                                    { title: "Lightning Fast", desc: "Optimized routing ensures piping hot food.", icon: <Zap className="w-8 h-8 text-yellow-500" /> },
+                                    { title: "Live Tracking", desc: "Watch your order travel in real-time.", icon: <Truck className="w-8 h-8 text-blue-500" /> },
+                                    { title: "Secure Payments", desc: "Encrypted transactions for peace of mind.", icon: <ShieldCheck className="w-8 h-8 text-green-500" /> },
+                                    { title: "Endless Choices", desc: "Thousands of restaurants to explore.", icon: <Utensils className="w-8 h-8 text-purple-500" /> },
+                                    { title: "Easy App", desc: "Order with a single tap on your phone.", icon: <Smartphone className="w-8 h-8 text-orange-500" /> }
                                 ].map((item, i) => (
                                     <ScrollReveal key={i} delay={i * 0.05}>
-                                        <div className="group p-8 rounded-[2rem] bg-white/[0.05] backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all hover:-translate-y-2 hover:bg-white/10 text-center h-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-                                            <div className="mb-6 inline-block opacity-90 group-hover:opacity-100 transition-opacity p-4 bg-white/5 rounded-2xl shadow-lg ring-1 ring-white/10">{item.icon}</div>
-                                            <h3 className="text-xl font-bold mb-3 text-white/90">{item.title}</h3>
-                                            <p className="text-gray-400 text-sm font-medium leading-relaxed">{item.desc}</p>
+                                        <div className="group p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:border-orange-200 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-orange-500/10 hover:bg-white text-center h-full">
+                                            <div className="mb-6 inline-block p-4 bg-white rounded-2xl shadow-sm group-hover:scale-110 transition-transform">{item.icon}</div>
+                                            <h3 className="text-xl font-bold mb-3 text-gray-900">{item.title}</h3>
+                                            <p className="text-gray-500 text-sm font-medium leading-relaxed">{item.desc}</p>
                                         </div>
                                     </ScrollReveal>
                                 ))}
@@ -832,59 +153,36 @@ const LandingPage = () => {
 
                         {/* STATS */}
                         <ScrollReveal>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-white/5 bg-white/[0.02] rounded-[3rem]">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-gray-100 bg-gray-50 rounded-[3rem]">
                                 {[
-                                    { label: "Active Pilots", val: "12,000+" },
-                                    { label: "Sectors Served", val: "540" },
-                                    { label: "Avg Delivery", val: "12 min" },
-                                    { label: "Happy Aliens", val: "2.5 M+" }
+                                    { label: "Delivery Partners", val: "12k+" },
+                                    { label: "Restaurants", val: "500+" },
+                                    { label: "Avg Delivery", val: "24 min" },
+                                    { label: "Happy Customers", val: "2M+" }
                                 ].map((stat, i) => (
                                     <div key={i} className="text-center">
-                                        <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.val}</div>
+                                        <div className="text-3xl md:text-5xl font-black text-gray-900 mb-2">{stat.val}</div>
                                         <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">{stat.label}</div>
                                     </div>
                                 ))}
                             </div>
                         </ScrollReveal>
 
-                        {/* WHY US */}
-                        <div className="grid md:grid-cols-2 gap-16 items-center">
-                            <ScrollReveal>
-                                <div className="space-y-6">
-                                    <div className="inline-block px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">Our Mission</div>
-                                    <h2 className="text-4xl md:text-5xl font-black leading-tight">Food that travels<br />across dimensions.</h2>
-                                    <p className="text-gray-400 text-lg leading-relaxed">
-                                        We don't just deliver food; we bridge culinary worlds. From the spicy nebulas of Sector 7 to the comfort synthesisers of Earth, we bring it all to your doorstep.
-                                    </p>
-                                    <ul className="space-y-4 pt-4">
-                                        {[
-                                            "Freshness locked in stasis fields",
-                                            "Zero-G prepared delicacies",
-                                            "Drone pilots with elite certification"
-                                        ].map((pt, i) => (
-                                            <li key={i} className="flex items-center gap-3 text-gray-300 font-medium">
-                                                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center"><Star className="w-3 h-3 text-green-400" /></div>
-                                                {pt}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </ScrollReveal>
-                            <ScrollReveal delay={0.2}>
-                                <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-white/10 bg-gradient-to-br from-orange-500/10 to-purple-600/10 flex items-center justify-center group">
-                                    <div className="absolute inset-0 bg-black/40" />
-                                    <div className="relative text-center p-8 bg-black/30 backdrop-blur-xl rounded-3xl border border-white/10 max-w-xs transform group-hover:-translate-y-2 transition-transform">
-                                        <Clock className="w-10 h-10 text-orange-400 mx-auto mb-4" />
-                                        <h3 className="text-2xl font-bold mb-2">24/7 Service</h3>
-                                        <p className="text-sm text-gray-300">Our drones never sleep. Late night cravings or early morning fuel, we are online.</p>
-                                    </div>
-                                </div>
-                            </ScrollReveal>
-                        </div>
                     </section>
                 </div>
+
+                {/* FOOTER CTA */}
+                <div className="bg-gray-900 text-white py-20 px-6 text-center">
+                    <ScrollReveal>
+                        <h2 className="text-3xl md:text-5xl font-black mb-6">Ready to order?</h2>
+                        <p className="text-gray-400 mb-10 max-w-xl mx-auto">Join thousands of others who are enjoying faster, fresher deliveries every day.</p>
+                        <button onClick={() => navigate('/home')} className="px-10 py-4 bg-orange-500 text-white font-black rounded-full hover:bg-orange-600 hover:scale-105 transition-all shadow-xl shadow-orange-500/20">
+                            Get Started Now
+                        </button>
+                    </ScrollReveal>
+                </div>
             </main>
-        </div >
+        </div>
     );
 };
 
