@@ -68,8 +68,8 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
 
                     {/* Rating and Time */}
                     <div className="flex items-center gap-3 mb-3 text-xs text-gray-500 font-medium">
-                        <div className="flex items-center gap-1 bg-yellow-50 px-1.5 py-0.5 rounded text-yellow-700">
-                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                        <div className="flex items-center gap-1 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 px-2 py-0.5 rounded text-white shadow-sm shadow-orange-500/20 font-bold border border-orange-300/30 text-[10px]">
+                            <Star className="w-3 h-3 fill-white text-white" />
                             <span>{food.rating || 4.2}</span>
                         </div>
                         <span>•</span>
@@ -119,9 +119,9 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
                     </div>
                 )}
 
-                {/* Rating Badge */}
-                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 bg-green-600/95 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[11px] font-black shadow-lg">
-                    {food.rating || 4.2} <Star className="w-3 h-3 text-white fill-current" />
+                {/* Rating Badge - Premium Liquid Gold Style */}
+                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 px-2.5 py-1.5 rounded-lg text-white text-[11px] font-black shadow-lg shadow-orange-500/30 border border-white/20 backdrop-blur-md">
+                    {food.rating || 4.2} <Star className="w-3 h-3 fill-white/90 text-white/90" />
                 </div>
 
                 <button
