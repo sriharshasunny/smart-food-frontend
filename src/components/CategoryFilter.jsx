@@ -42,7 +42,7 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
     // DEFAULT MODE: Image Circles
     return (
         <div className="w-full overflow-x-auto pb-4 hide-scrollbar pt-2">
-            <div className="flex gap-6 px-4 sm:px-0 pr-8">
+            <div className="flex gap-6 px-4 sm:px-0">
                 {/* All Option */}
                 <button
                     onClick={() => onSelectCategory('All')}
