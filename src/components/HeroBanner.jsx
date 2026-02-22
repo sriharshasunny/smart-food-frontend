@@ -131,8 +131,7 @@ const HeroBanner = ({ topRightContent }) => {
     return (
         <div className="relative w-full h-[260px] sm:h-[380px] md:h-[480px] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto group select-none content-visibility-auto contain-paint">
 
-            {/* Optimized Canvas Particles Layer */}
-            <HeroParticles />
+            {/* Optimized Canvas Particles Layer Removed for Performance */}
 
             {/* Carousel Container */}
             <div className="relative h-full w-full bg-gray-900">
