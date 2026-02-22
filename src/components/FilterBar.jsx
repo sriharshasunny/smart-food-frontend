@@ -31,59 +31,62 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                     />
                 </div>
 
-                {/* 2. Secondary Filters (Right Side) */}
-                <div className="flex-shrink-0 flex items-center gap-3">
+                {/* 2. Secondary Filters (Right Side Column) */}
+                <div className="flex-shrink-0 flex flex-col items-stretch gap-2 justify-center ml-2 border-l border-gray-100 pl-4 py-2">
 
                     {/* Top Rated */}
                     <motion.button
-                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1.5
+                        className={`w-full px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center justify-between gap-2 border
                             ${subFilters.rating45Plus
-                                ? 'bg-gradient-to-br from-black to-gray-800 text-white shadow-lg shadow-black/20 ring-1 ring-black/5 scale-105'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400 hover:shadow-md'
+                                ? 'bg-gradient-to-br from-black to-gray-800 text-white shadow-md shadow-black/20 ring-1 ring-black/5'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:shadow-sm'
                             }`}
                     >
-                        <span>★</span> Top Rated
+                        <span>Top Rated</span> <span className={subFilters.rating45Plus ? 'text-yellow-400' : 'text-gray-400'}>★</span>
                     </motion.button>
 
                     {/* Veg Only */}
                     <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.02 }}
                         onClick={() => toggleSubFilter('vegOnly')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1.5
+                        className={`w-full px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center justify-between gap-2 border
                             ${subFilters.vegOnly
-                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-green-500/20 ring-1 ring-green-500/20 scale-105'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300 hover:text-green-600 hover:shadow-md'
+                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-md shadow-green-500/20 ring-1 ring-green-500/20'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:text-green-600 hover:shadow-sm'
                             }`}
                     >
-                        <span className={subFilters.vegOnly ? 'text-white' : 'text-green-600'}>☘</span> Veg Only
+                        <span>Veg Only</span> <span className={subFilters.vegOnly ? 'text-white' : 'text-green-600'}>☘</span>
                     </motion.button>
 
                     {/* Budget Filter */}
                     <div className="relative">
                         <motion.button
-                            whileTap={{ scale: 0.95 }}
-                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ scale: 1.02 }}
                             onClick={() => setShowPriceSlider(!showPriceSlider)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2
+                            className={`w-full px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center justify-between gap-2 border
                                 ${subFilters.maxPrice < 1000
-                                    ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/20 ring-1 ring-orange-500/20 scale-105'
-                                    : 'bg-white text-gray-600 border border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-md'
+                                    ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/20 ring-1 ring-orange-500/20'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-sm'
                                 }`}
                         >
-                            <span>{subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}</span>
-                            {subFilters.maxPrice < 1000 && (
-                                <X size={12} onClick={(e) => { e.stopPropagation(); setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); }} />
-                            )}
+                            <span className="flex items-center gap-1">
+                                {subFilters.maxPrice < 1000 && (
+                                    <X size={10} className="mr-1 opacity-70 hover:opacity-100" onClick={(e) => { e.stopPropagation(); setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); }} />
+                                )}
+                                {subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}
+                            </span>
+                            <span className={subFilters.maxPrice < 1000 ? 'text-white' : 'text-orange-500'}>₹</span>
                         </motion.button>
 
                         <AnimatePresence>
                             {showPriceSlider && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 top-full mt-3 bg-white p-5 rounded-2xl shadow-xl border border-gray-100 z-50 w-72 origin-top-right"
+                                    initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                                    exit={{ opacity: 0, x: 10, scale: 0.95 }}
+                                    className="absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-white p-4 rounded-xl shadow-xl border border-gray-200 z-[100] w-64 origin-right"
                                 >
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-sm font-bold text-gray-800">Max Price</span>
