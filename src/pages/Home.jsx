@@ -112,18 +112,20 @@ const Home = () => {
     React.useEffect(() => {
         const observerOptions = {
             root: null,
-            rootMargin: '-100px 0px 0px 0px', // Trigger when target is 100px from top
+            rootMargin: '-75px 0px 0px 0px', // Trigger exactly when the element goes under the ~70px navbar
             threshold: 0
         };
 
         const observerCallback = (entries) => {
             const [entry] = entries;
-            // When the invisible tracker above the filter bar scrolls OUT of the top bounding box, component is sticky
-            setShowStickyFilters(!entry.isIntersecting);
+            // Show sticky filter ONLY if it's not intersecting AND it scrolled UP out of view (top < 75)
+            // This prevents it from showing when it's off-screen at the bottom of the page initially
+            const isScrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 75;
+            setShowStickyFilters(isScrolledPast);
         };
 
         const observer = new IntersectionObserver(observerCallback, observerOptions);
-        const currentTarget = observerTargetRef.current;
+        const currentTarget = filterRef.current; // Observe the actual filter bar container
 
         if (currentTarget) {
             observer.observe(currentTarget);
@@ -435,9 +437,6 @@ const Home = () => {
 
                 {/* 3. Filter Stack (MAIN + STICKY) */}
                 <div className="relative">
-                    {/* Invisible tracker for Observer */}
-                    <div ref={observerTargetRef} className="absolute -top-10 w-full h-1 pointer-events-none" />
-
                     {/* A. Main Filters (Visual Glossy Mode) - Scrolls away */}
                     <div ref={filterRef} className="w-full z-10 relative">
                         <FilterBar
