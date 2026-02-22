@@ -156,155 +156,176 @@ const Profile = () => {
     };
 
     return (
-        <div className="min-h-screen w-full bg-black text-white font-sans relative overflow-x-hidden flex items-center justify-center p-4">
+        <div className="min-h-screen w-full bg-gray-50 text-gray-800 font-sans relative flex items-center justify-center p-4 sm:p-6 lg:p-8">
 
-            {/* 1. Fast CSS Background (No Canvas, No heavy blobs) */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black z-0" />
+            {/* Main Content Wrapper */}
+            <div className="w-full max-w-5xl">
 
-            {/* 2. Static CSS Stars (Twinkling) - Zero JS Overhead */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-                {stars.map((star) => (
-                    <div
-                        key={star.id}
-                        className="absolute bg-white rounded-full animate-pulse"
-                        style={{
-                            top: star.top,
-                            left: star.left,
-                            width: star.size,
-                            height: star.size,
-                            opacity: Math.random() * 0.7 + 0.3,
-                            animationDuration: `${star.delay + 2}s`
-                        }}
-                    />
-                ))}
-            </div>
-
-            {/* Main Card */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative z-10 w-full max-w-5xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
-            >
-                {/* Left Panel: Avatar & Info */}
-                <div className="md:w-1/3 bg-gradient-to-br from-gray-900 to-black p-8 flex flex-col items-center justify-center text-center relative border-r border-white/5">
-                    <button onClick={() => navigate(-1)} className="absolute top-6 left-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-gray-300 hover:text-white">
+                {/* Header / Back Button section */}
+                <div className="flex items-center gap-4 mb-6">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2.5 bg-white text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-full shadow-sm border border-gray-100 transition-all active:scale-95 flex items-center justify-center"
+                    >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
-
-                    <div className="relative mb-6">
-                        <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-orange-500 to-rose-600 shadow-lg shadow-orange-500/20">
-                            <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-5xl font-black text-white">
-                                {formData.name?.[0]?.toUpperCase() || 'U'}
-                            </div>
-                        </div>
-                        <div className="absolute bottom-1 right-1 bg-white text-black p-2 rounded-full border-4 border-black shadow-lg">
-                            <Camera className="w-4 h-4" />
-                        </div>
-                    </div>
-
-                    <h2 className="text-2xl font-bold text-white mb-1">{formData.name || 'User'}</h2>
-                    <p className="text-gray-400 text-sm mb-8 break-all">{formData.email}</p>
-
-                    <button
-                        onClick={logout}
-                        className="w-full py-3 bg-red-500/10 border border-red-500/50 text-red-400 font-bold rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                    </button>
+                    <h1 className="text-2xl font-black text-gray-900 tracking-tight">Account Settings</h1>
                 </div>
 
-                {/* Right Panel: Form */}
-                <div className="md:w-2/3 p-8 md:p-10 bg-black/20">
-                    <div className="mb-6 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-orange-400" />
-                        <h1 className="text-2xl font-bold">Edit Profile</h1>
-                    </div>
+                {/* Main Card */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="w-full bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden flex flex-col md:flex-row relative z-10"
+                >
+                    {/* Left Panel: Avatar & Info */}
+                    <div className="md:w-1/3 bg-gradient-to-br from-white to-gray-50 p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-100 relative">
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Full Name</label>
-                                <div className="relative">
-                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl font-medium text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all text-sm"
-                                        placeholder="Your Name"
-                                    />
+                        {/* Decorative Background Element */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-bl-full opacity-50 pointer-events-none" />
+
+                        <div className="relative mb-6 group">
+                            <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-orange-400 to-orange-600 shadow-xl shadow-orange-500/20 transition-transform duration-300 group-hover:scale-105">
+                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-5xl font-black text-orange-500 overflow-hidden relative">
+                                    <span className="relative z-10">{formData.name?.[0]?.toUpperCase() || 'U'}</span>
+                                    {/* Subtle internal gradient for depth */}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/5" />
                                 </div>
                             </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Email</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        readOnly
-                                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/5 rounded-xl font-medium text-gray-500 cursor-not-allowed text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Phone</label>
-                            <div className="relative">
-                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl font-medium text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all text-sm"
-                                    placeholder="+1 234 567 890"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-3">Delivery Address</label>
-                            <div className="relative">
-                                <MapPin className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
-                                <textarea
-                                    name="address"
-                                    value={formData.address}
-                                    onChange={handleChange}
-                                    rows="3"
-                                    className="w-full pl-10 pr-32 py-3 bg-white/5 border border-white/10 rounded-xl font-medium text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all resize-none text-sm leading-relaxed"
-                                    placeholder="Enter your address..."
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleGetLocation}
-                                    disabled={loadingLocation}
-                                    className="absolute right-2 bottom-2 bg-gradient-to-r from-orange-500 to-rose-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 hover:opacity-90 transition-opacity disabled:opacity-50"
-                                >
-                                    <MapPin className="w-3 h-3" />
-                                    {loadingLocation ? 'Locating...' : 'Locate Me'}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                className="w-full py-3.5 bg-white text-black font-extrabold rounded-xl hover:bg-gray-200 shadow-lg shadow-white/5 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Save className="w-4 h-4" />
-                                Save Changes
+                            <button className="absolute bottom-1 right-1 bg-white text-gray-700 hover:text-orange-600 p-2.5 rounded-full border-2 border-white shadow-lg shadow-gray-200 transition-all hover:scale-110 active:scale-95 cursor-pointer z-20">
+                                <Camera className="w-4 h-4" />
                             </button>
                         </div>
-                    </form>
-                </div>
-            </motion.div>
+
+                        <h2 className="text-2xl font-bold text-gray-900 mb-1">{formData.name || 'User'}</h2>
+                        <p className="text-gray-500 text-sm mb-8 font-medium truncate w-full px-4">{formData.email}</p>
+
+                        <button
+                            onClick={logout}
+                            className="w-full py-3.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group shadow-sm hover:shadow-md hover:shadow-red-500/20"
+                        >
+                            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            Sign Out
+                        </button>
+                    </div>
+
+                    {/* Right Panel: Form */}
+                    <div className="md:w-2/3 p-8 md:p-10 bg-white">
+                        <div className="mb-8 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
+                                    <User className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">Personal Information</h3>
+                                    <p className="text-xs text-gray-500 font-medium mt-0.5">Manage your details & delivery addresses</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Name Input */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-700 ml-1">Full Name</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-focus-within:bg-orange-50 transition-colors">
+                                            <User className="w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            className="w-full pl-14 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all text-sm shadow-sm"
+                                            placeholder="John Doe"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Email Input (Readonly) */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-700 ml-1">Email <span className="text-gray-400 font-normal ml-1">(Read-only)</span></label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                            <Mail className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            readOnly
+                                            className="w-full pl-14 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium text-gray-500 cursor-not-allowed text-sm shadow-inner"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Phone Input */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-700 ml-1">Phone Number</label>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-focus-within:bg-orange-50 transition-colors">
+                                        <Phone className="w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className="w-full pl-14 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all text-sm shadow-sm"
+                                        placeholder="+1 234 567 8900"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Address Input */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="text-xs font-bold text-gray-700">Delivery Address</label>
+                                    <button
+                                        type="button"
+                                        onClick={handleGetLocation}
+                                        disabled={loadingLocation}
+                                        className="text-[10px] font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-md transition-colors flex items-center gap-1 disabled:opacity-50"
+                                    >
+                                        <MapPin className="w-3 h-3" />
+                                        {loadingLocation ? 'Locating...' : 'Auto Detect'}
+                                    </button>
+                                </div>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-4 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-focus-within:bg-orange-50 transition-colors">
+                                        <MapPin className="w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                                    </div>
+                                    <textarea
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        rows="3"
+                                        className="w-full pl-14 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all resize-none text-sm leading-relaxed shadow-sm block"
+                                        placeholder="123 Main Street, Apt 4B, City, Country"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4">
+                                <button
+                                    type="submit"
+                                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-sm tracking-wide rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    Save Profile Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </motion.div>
+
+                {/* Decorative Elements outside card */}
+                <div className="fixed top-20 right-20 w-64 h-64 bg-orange-400 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none" />
+                <div className="fixed bottom-20 left-20 w-64 h-64 bg-rose-400 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none" />
+            </div>
         </div>
     );
 };

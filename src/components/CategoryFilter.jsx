@@ -79,11 +79,11 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
                             <div className={`absolute inset-0 rounded-full blur-xl transition-opacity duration-500 ${activeCategory === cat.name ? 'bg-orange-200/50 opacity-100' : 'bg-gray-100/0 opacity-0 group-hover:opacity-50'
                                 }`} />
 
-                            {/* The Image (No border crop, let it float) */}
+                            {/* The Image (No border crop, let it float or fill depending on aspect) */}
                             <img
                                 src={cat.image}
                                 alt={cat.name}
-                                className={`w-24 h-24 max-w-none object-contain drop-shadow-lg transition-transform duration-500 ${activeCategory === cat.name ? 'scale-110 drop-shadow-2xl' : 'grayscale-[20%] group-hover:grayscale-0 group-hover:scale-110'
+                                className={`w-24 h-24 max-w-none object-cover aspect-square drop-shadow-lg transition-transform duration-500 rounded-full ${activeCategory === cat.name ? 'scale-110 drop-shadow-2xl' : 'grayscale-[20%] group-hover:grayscale-0 group-hover:scale-110'
                                     }`}
                             />
                         </div>
