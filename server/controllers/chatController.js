@@ -80,7 +80,8 @@ exports.processChatRequest = async (req, res) => {
             - limit (number or null): The maximum number of items the user requested (e.g., "top 3", "show me 2").
             
             For get_orders intent, extract:
-             - limit (number, default 5)
+             - limit (number or null): Number of past orders to retrieve (default limit in DB is 5).
+             - item_limit (number or null): Limit of items per order (e.g. "top 5 items").
             
             For general_info intent, return:
              - message (string): The answer to the user's question based on the SYSTEM INFORMATION above.
@@ -241,12 +242,21 @@ async function getOrders(userId, filters) {
 
     let query = supabase
         .from('orders')
-        .select('*, items:order_items(*, food:foods(*))')
+        .select('*, items:order_items(*, food:foods(*, restaurant:restaurants(*)))')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(filters.limit || 5);
 
     const { data, error } = await query;
+
+    // Process item_limit if requested
+    if (data && filters.item_limit) {
+        data.forEach(order => {
+            if (order.items && order.items.length > filters.item_limit) {
+                order.items = order.items.slice(0, filters.item_limit);
+            }
+        });
+    }
     if (error) throw error;
     return data;
 }

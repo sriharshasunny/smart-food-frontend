@@ -275,13 +275,21 @@ const ChatWidget = () => {
                                             {order.status || 'Unknown'}
                                         </span>
                                     </div>
-                                    <div className="py-2 border-t border-gray-700/50 space-y-1">
-                                        {(order.items || []).slice(0, 2).map((item, j) => (
-                                            <div key={j} className="flex justify-between text-xs text-gray-300">
-                                                <span>{item.quantity}x {item.food?.name || "Unknown Item"}</span>
+                                    <div className="py-2 border-t border-gray-700/50 space-y-2">
+                                        {(order.items || []).slice(0, 3).map((item, j) => (
+                                            <div key={j} className="flex flex-col gap-0.5">
+                                                <div className="flex justify-between text-xs text-gray-300">
+                                                    <span className="font-medium text-white">{item.quantity}x {item.food?.name || "Unknown Item"}</span>
+                                                    <span className="text-gray-400">₹{(item.food?.price || 0) * item.quantity}</span>
+                                                </div>
+                                                <div className="text-[10px] text-gray-500 flex items-center gap-1 cursor-pointer hover:text-orange-400 transition-colors"
+                                                    onClick={() => item.food?.restaurant?._id && handleViewRestaurant(item.food.restaurant._id)}>
+                                                    <MapPin size={8} />
+                                                    {item.food?.restaurant?.name || "Unknown Restaurant"}
+                                                </div>
                                             </div>
                                         ))}
-                                        {(order.items || []).length > 2 && <p className="text-xs text-gray-500 italic">+{order.items.length - 2} more items</p>}
+                                        {(order.items || []).length > 3 && <p className="text-xs text-gray-500 italic mt-1">+{order.items.length - 3} more items</p>}
                                         {(!order.items || order.items.length === 0) && <p className="text-xs text-gray-500 italic">No items details available.</p>}
                                     </div>
                                     <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700/50">
