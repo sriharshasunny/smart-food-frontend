@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight, Sparkles, Minimize2 } from 'lucide-react';
+import { MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
 import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
@@ -37,6 +37,7 @@ const ChatWidget = () => {
     const navigate = useNavigate();
 
     const [isOpen, setIsOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [messages, setMessages] = useState(() => {
         const saved = localStorage.getItem('smartbot_chat_history');
         if (saved) {
@@ -347,9 +348,9 @@ const ChatWidget = () => {
                 )}
             </button>
 
-            {/* Chat Window - Lowered Position and Fixed Height */}
+            {/* Chat Window - Lowered Position and Adjustable Height */}
             {isOpen && (
-                <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[90vw] sm:w-[380px] h-[550px] max-h-[70vh] flex flex-col overflow-hidden rounded-3xl shadow-2xl shadow-black/50 animate-fade-in-up font-sans border border-gray-700/50 backdrop-blur-xl bg-gray-900/95">
+                <div className={`fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col overflow-hidden rounded-3xl shadow-2xl shadow-black/50 animate-fade-in-up font-sans border border-gray-700/50 backdrop-blur-xl bg-gray-900/95 transition-all duration-300 ${isExpanded ? 'w-[95vw] sm:w-[600px] h-[80vh] max-h-[800px]' : 'w-[90vw] sm:w-[380px] h-[550px] max-h-[70vh]'}`}>
 
                     {/* Header */}
                     <div className="px-5 py-3 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700/50 flex items-center justify-between shadow-sm shrink-0">
@@ -368,9 +369,14 @@ const ChatWidget = () => {
                                 </p>
                             </div>
                         </div>
-                        <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-gray-700 rounded-full transition-colors text-gray-400 hover:text-white">
-                            <Minimize2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                            <button onClick={() => setIsExpanded(!isExpanded)} className="p-1.5 hover:bg-gray-700 rounded-full transition-colors text-gray-400 hover:text-white" title={isExpanded ? "Shrink" : "Expand"}>
+                                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                            </button>
+                            <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-gray-700 rounded-full transition-colors text-gray-400 hover:text-white" title="Close">
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Messages Area - Fixed Scrolling */}
