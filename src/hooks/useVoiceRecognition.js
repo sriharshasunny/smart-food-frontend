@@ -3,8 +3,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const useVoiceRecognition = (onCommand, onInterimResult) => {
     const [isListening, setIsListening] = useState(false);
     const [supported, setSupported] = useState(false);
-    const [transcript, setTranscript] = useState("");
+    const [transcript, setTranscript] = useState('');
+
     const recognitionRef = useRef(null);
+    const onCommandRef = useRef(onCommand);
+    const onInterimResultRef = useRef(onInterimResult);
+
+    useEffect(() => {
+        onCommandRef.current = onCommand;
+        onInterimResultRef.current = onInterimResult;
+    }, [onCommand, onInterimResult]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -31,29 +39,25 @@ const useVoiceRecognition = (onCommand, onInterimResult) => {
                     const currentTranscript = (finalTranscript + interimTranscript).trim();
                     setTranscript(currentTranscript);
 
-                    if (onInterimResult) {
-                        onInterimResult(currentTranscript);
+                    if (onInterimResultRef.current) {
+                        onInterimResultRef.current(currentTranscript);
                     }
 
-                    // Check for submit commands indicating the user is done
                     const lowerTranscript = currentTranscript.toLowerCase();
                     if (lowerTranscript.endsWith('enter') || lowerTranscript.endsWith(' search') || lowerTranscript.endsWith(' send')) {
-                        // Clean the command word from the string
                         const cleanText = currentTranscript.replace(/enter$|search$|send$/i, '').trim();
 
-                        // Fire the command callback
-                        if (onCommand) {
-                            onCommand(cleanText);
+                        if (onCommandRef.current) {
+                            onCommandRef.current(cleanText);
                         }
 
-                        // Stop listening automatically
                         recog.stop();
                         setIsListening(false);
                     }
                 };
 
                 recog.onerror = (event) => {
-                    console.error("Speech recognition error", event.error);
+                    console.error('Speech recognition error', event.error);
                     setIsListening(false);
                 };
 
@@ -64,16 +68,16 @@ const useVoiceRecognition = (onCommand, onInterimResult) => {
                 recognitionRef.current = recog;
             }
         }
-    }, [onCommand, onInterimResult]);
+    }, []);
 
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {
             try {
-                setTranscript(""); // Clear previous
+                setTranscript('');
                 recognitionRef.current.start();
                 setIsListening(true);
             } catch (err) {
-                console.error("Error starting speech recognition", err);
+                console.error('Error starting speech recognition', err);
             }
         }
     }, [isListening]);
