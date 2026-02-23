@@ -10,9 +10,10 @@ const Navbar = ({ toggleSidebar }) => {
     const { cartCount, searchQuery, setSearchQuery } = useShop();
     const location = useLocation();
 
-    const { isListening, supported, startListening, stopListening } = useVoiceRecognition((text) => {
-        setSearchQuery(text);
-    });
+    const { isListening, supported, startListening, stopListening } = useVoiceRecognition(
+        (finalCommandText) => setSearchQuery(finalCommandText),
+        (interimText) => setSearchQuery(interimText)
+    );
 
     // Use Global Auth
     const { user } = useAuth();
@@ -110,8 +111,8 @@ const Navbar = ({ toggleSidebar }) => {
                                     <button
                                         onClick={isListening ? stopListening : startListening}
                                         className={`absolute right-1 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full transition-all flex items-center justify-center z-20 ${isListening
-                                                ? 'bg-red-50 text-red-500 animate-pulse scale-110'
-                                                : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50 hover:scale-110'
+                                            ? 'bg-red-50 text-red-500 animate-pulse scale-110'
+                                            : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50 hover:scale-110'
                                             }`}
                                         title={isListening ? "Stop listening" : "Search with voice"}
                                     >

@@ -30,9 +30,10 @@ const RestaurantList = () => {
     const [sortBy, setSortBy] = useState("rating");
     const [vegOnly, setVegOnly] = useState(false);
 
-    const { isListening, supported, startListening, stopListening } = useVoiceRecognition((text) => {
-        setSearchQuery(text);
-    });
+    const { isListening, supported, startListening, stopListening } = useVoiceRecognition(
+        (finalCommandText) => setSearchQuery(finalCommandText),
+        (interimText) => setSearchQuery(interimText)
+    );
 
     const filteredRestaurants = useMemo(() => {
         let result = [...restaurants];
@@ -106,8 +107,8 @@ const RestaurantList = () => {
                             <button
                                 onClick={isListening ? stopListening : startListening}
                                 className={`absolute right-1.5 p-1 rounded-full transition-all flex items-center justify-center ${isListening
-                                        ? 'bg-red-50 text-red-500 animate-pulse'
-                                        : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+                                    ? 'bg-red-50 text-red-500 animate-pulse'
+                                    : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
                                     }`}
                                 title={isListening ? "Stop listening" : "Search with voice"}
                             >

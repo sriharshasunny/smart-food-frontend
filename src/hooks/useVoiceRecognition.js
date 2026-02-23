@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-const useVoiceRecognition = (onResult) => {
+const useVoiceRecognition = (onCommand, onInterimResult) => {
     const [isListening, setIsListening] = useState(false);
     const [supported, setSupported] = useState(false);
-    const [recognition, setRecognition] = useState(null);
+    const [transcript, setTranscript] = useState("");
+    const recognitionRef = useRef(null);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -11,16 +12,44 @@ const useVoiceRecognition = (onResult) => {
             if (SpeechRecognition) {
                 setSupported(true);
                 const recog = new SpeechRecognition();
-                recog.continuous = false;
-                recog.interimResults = false;
+                recog.continuous = true;
+                recog.interimResults = true;
                 recog.lang = 'en-US';
 
                 recog.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    if (onResult) {
-                        onResult(transcript);
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
                     }
-                    setIsListening(false);
+
+                    const currentTranscript = (finalTranscript + interimTranscript).trim();
+                    setTranscript(currentTranscript);
+
+                    if (onInterimResult) {
+                        onInterimResult(currentTranscript);
+                    }
+
+                    // Check for submit commands indicating the user is done
+                    const lowerTranscript = currentTranscript.toLowerCase();
+                    if (lowerTranscript.endsWith('enter') || lowerTranscript.endsWith(' search') || lowerTranscript.endsWith(' send')) {
+                        // Clean the command word from the string
+                        const cleanText = currentTranscript.replace(/enter$|search$|send$/i, '').trim();
+
+                        // Fire the command callback
+                        if (onCommand) {
+                            onCommand(cleanText);
+                        }
+
+                        // Stop listening automatically
+                        recog.stop();
+                        setIsListening(false);
+                    }
                 };
 
                 recog.onerror = (event) => {
@@ -32,30 +61,31 @@ const useVoiceRecognition = (onResult) => {
                     setIsListening(false);
                 };
 
-                setRecognition(recog);
+                recognitionRef.current = recog;
             }
         }
-    }, [onResult]);
+    }, [onCommand, onInterimResult]);
 
     const startListening = useCallback(() => {
-        if (recognition && !isListening) {
+        if (recognitionRef.current && !isListening) {
             try {
-                recognition.start();
+                setTranscript(""); // Clear previous
+                recognitionRef.current.start();
                 setIsListening(true);
             } catch (err) {
                 console.error("Error starting speech recognition", err);
             }
         }
-    }, [recognition, isListening]);
+    }, [isListening]);
 
     const stopListening = useCallback(() => {
-        if (recognition && isListening) {
-            recognition.stop();
+        if (recognitionRef.current && isListening) {
+            recognitionRef.current.stop();
             setIsListening(false);
         }
-    }, [recognition, isListening]);
+    }, [isListening]);
 
-    return { isListening, supported, startListening, stopListening };
+    return { isListening, supported, startListening, stopListening, transcript, setTranscript };
 };
 
 export default useVoiceRecognition;

@@ -16,9 +16,10 @@ const Home = () => {
     const { addToCart, searchQuery, setSearchQuery } = useShop(); // Use Global Search
     const navigate = useNavigate();
 
-    const { isListening, supported, startListening, stopListening } = useVoiceRecognition((text) => {
-        setSearchQuery(text);
-    });
+    const { isListening, supported, startListening, stopListening } = useVoiceRecognition(
+        (finalCommandText) => setSearchQuery(finalCommandText), // On Command Match ("Enter")
+        (interimText) => setSearchQuery(interimText)            // Live updates as they speak
+    );
 
     // Data State
     const [dishes, setDishes] = useState([]);
@@ -468,8 +469,8 @@ const Home = () => {
                                 <button
                                     onClick={isListening ? stopListening : startListening}
                                     className={`absolute right-2 p-1.5 rounded-full transition-all flex items-center justify-center ${isListening
-                                            ? 'bg-red-50 text-red-500 animate-pulse'
-                                            : 'bg-gray-50 text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+                                        ? 'bg-red-50 text-red-500 animate-pulse'
+                                        : 'bg-gray-50 text-gray-400 hover:text-orange-500 hover:bg-orange-50'
                                         }`}
                                     title={isListening ? "Stop listening" : "Search with voice"}
                                 >
