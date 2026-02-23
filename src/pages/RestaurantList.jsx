@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import RestaurantCard from '../components/RestaurantCard';
-import { Filter, Search, MapPin } from 'lucide-react';
+import { Filter, Search, MapPin, Mic, MicOff } from 'lucide-react';
 import { API_URL } from '../config';
+import useVoiceRecognition from '../hooks/useVoiceRecognition';
 
 const RestaurantList = () => {
     const [restaurants, setRestaurants] = useState([]);
@@ -28,6 +29,10 @@ const RestaurantList = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("rating");
     const [vegOnly, setVegOnly] = useState(false);
+
+    const { isListening, supported, startListening, stopListening } = useVoiceRecognition((text) => {
+        setSearchQuery(text);
+    });
 
     const filteredRestaurants = useMemo(() => {
         let result = [...restaurants];
@@ -88,15 +93,32 @@ const RestaurantList = () => {
 
                 <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
                     {/* Search Bar */}
-                    <div className="relative flex-1 sm:flex-none">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <div className={`relative flex-1 sm:flex-none flex items-center bg-white rounded-full border transition-all ${isListening ? 'border-orange-500 shadow-orange-500/20 shadow-md' : 'border-gray-200 focus-within:border-orange-500 hover:bg-gray-50'}`}>
+                        <Search className="absolute left-3 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search name or cuisine..."
+                            placeholder={isListening ? "Listening..." : "Search name or cuisine..."}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full sm:w-64 pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                            className={`w-full sm:w-64 pl-9 ${supported ? 'pr-9' : 'pr-4'} py-2 bg-transparent text-gray-700 text-xs font-semibold outline-none transition-all placeholder:text-gray-400`}
                         />
+                        {supported && (
+                            <button
+                                onClick={isListening ? stopListening : startListening}
+                                className={`absolute right-1.5 p-1 rounded-full transition-all flex items-center justify-center ${isListening
+                                        ? 'bg-red-50 text-red-500 animate-pulse'
+                                        : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+                                    }`}
+                                title={isListening ? "Stop listening" : "Search with voice"}
+                            >
+                                {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+                                {isListening && (
+                                    <span className="absolute flex h-full w-full">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-20"></span>
+                                    </span>
+                                )}
+                            </button>
+                        )}
                     </div>
                     <div className="flex gap-2">
                         <button
