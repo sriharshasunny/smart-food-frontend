@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight, Sparkles, Minimize2, Maximize2, Mic, MicOff } from 'lucide-react';
+import { MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
 import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { optimizeImage } from '../utils/imageOptimizer'; // Import image optimizer
-import useVoiceRecognition from '../hooks/useVoiceRecognition';
 
 // Typewriter Component for AI Responses
 const Typewriter = ({ text, onComplete }) => {
@@ -57,23 +56,6 @@ const ChatWidget = () => {
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null); // Ref for scroll container
-
-    const handleVoiceCommand = useCallback((finalCommand) => {
-        // If the user says a trigger word, we want to immediately send what they were saying
-        if (finalCommand.trim()) {
-            // Update input and trigger send
-            setInput(finalCommand);
-            // We use a small timeout to ensure state settles before handleSend reads it,
-            // or we could just call handleSend directly. But since handleSend uses state,
-            // we will pass the text explicitly instead.
-            submitMessage(finalCommand);
-        }
-    }, [messages, user]);
-
-    const { isListening, supported, startListening, stopListening } = useVoiceRecognition(
-        handleVoiceCommand,
-        (interimResult) => setInput(interimResult)
-    );
 
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
@@ -446,26 +428,9 @@ const ChatWidget = () => {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder={isListening ? "Listening... (say 'send')" : "Looking for chinese? or burger?"}
+                                placeholder="Looking for chinese? or burger?"
                                 className="flex-1 bg-transparent text-white text-sm px-3 py-2.5 focus:outline-none placeholder-gray-500"
                             />
-                            {supported && (
-                                <button
-                                    onClick={isListening ? stopListening : startListening}
-                                    className={`p-2 rounded-xl transition-all flex items-center justify-center ${isListening
-                                        ? 'bg-red-500/20 text-red-500 animate-pulse border border-red-500/50'
-                                        : 'text-gray-400 hover:text-orange-500 hover:bg-gray-800'
-                                        }`}
-                                    title={isListening ? "Stop listening" : "Say 'send' to submit"}
-                                >
-                                    {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-                                    {isListening && (
-                                        <span className="absolute flex h-full w-full">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-2xl bg-red-400 opacity-20"></span>
-                                        </span>
-                                    )}
-                                </button>
-                            )}
                             <button
                                 onClick={handleSend}
                                 disabled={loading || !input.trim()}

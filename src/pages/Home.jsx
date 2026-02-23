@@ -6,20 +6,14 @@ import FoodCard from '../components/FoodCard';
 import RestaurantCard from '../components/RestaurantCard';
 import { useShop } from '../context/ShopContext';
 import { mockRestaurants, mockDishes, categories } from '../data/mockData';
-import { Search, MapPin, ChevronRight, Sparkles, Mic, MicOff } from 'lucide-react';
+import { Search, MapPin, ChevronRight, Sparkles } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 import { API_URL } from '../config';  // Import Config
-import useVoiceRecognition from '../hooks/useVoiceRecognition';
 
 const Home = () => {
     const { addToCart, searchQuery, setSearchQuery } = useShop(); // Use Global Search
     const navigate = useNavigate();
-
-    const { isListening, supported, startListening, stopListening } = useVoiceRecognition(
-        (finalCommandText) => setSearchQuery(finalCommandText), // On Command Match ("Enter")
-        (interimText) => setSearchQuery(interimText)            // Live updates as they speak
-    );
 
     // Data State
     const [dishes, setDishes] = useState([]);
@@ -456,32 +450,15 @@ const Home = () => {
 
                     {/* NEW: Secondary Search Bar Below FilterBar */}
                     <div className="mt-4 mb-2 relative w-full max-w-xl mx-auto px-2">
-                        <div className={`relative flex items-center bg-white rounded-full border shadow-sm focus-within:shadow-md transition-all ${isListening ? 'border-orange-500 shadow-orange-500/20' : 'border-gray-200 focus-within:border-orange-500'}`}>
+                        <div className="relative flex items-center bg-white rounded-full border shadow-sm focus-within:shadow-md transition-all border-gray-200 focus-within:border-orange-500">
                             <Search className="absolute left-4 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={isListening ? "Listening..." : "Search dishes, restaurants..."}
+                                placeholder="Search dishes, restaurants..."
                                 className="w-full pl-10 pr-12 py-2.5 rounded-full text-sm outline-none bg-transparent placeholder:text-gray-400"
                             />
-                            {supported && (
-                                <button
-                                    onClick={isListening ? stopListening : startListening}
-                                    className={`absolute right-2 p-1.5 rounded-full transition-all flex items-center justify-center ${isListening
-                                        ? 'bg-red-50 text-red-500 animate-pulse'
-                                        : 'bg-gray-50 text-gray-400 hover:text-orange-500 hover:bg-orange-50'
-                                        }`}
-                                    title={isListening ? "Stop listening" : "Search with voice"}
-                                >
-                                    {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-                                    {isListening && (
-                                        <span className="absolute flex h-full w-full">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-20"></span>
-                                        </span>
-                                    )}
-                                </button>
-                            )}
                         </div>
                     </div>
 

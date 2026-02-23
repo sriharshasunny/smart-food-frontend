@@ -1,19 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, User, Heart, Mic, MicOff } from 'lucide-react';
+import { ShoppingBag, Search, Menu, User, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { motion } from 'framer-motion';
-import useVoiceRecognition from '../hooks/useVoiceRecognition';
 
 const Navbar = ({ toggleSidebar }) => {
     const { cartCount, searchQuery, setSearchQuery } = useShop();
     const location = useLocation();
-
-    const { isListening, supported, startListening, stopListening } = useVoiceRecognition(
-        (finalCommandText) => setSearchQuery(finalCommandText),
-        (interimText) => setSearchQuery(interimText)
-    );
 
     // Use Global Auth
     const { user } = useAuth();
@@ -96,29 +90,17 @@ const Navbar = ({ toggleSidebar }) => {
                         {/* Search Bar - Premium/Refined */}
                         <div className="hidden xl:flex items-center relative group">
                             {/* Rainbow Border Container */}
-                            <div className={`absolute inset-0 bg-gradient-to-r ${isListening ? 'from-red-400 via-orange-500 to-red-600' : 'from-orange-400 via-pink-500 to-purple-600'} rounded-full blur-[1px] opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500 animate-gradient-x`} />
+                            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 rounded-full blur-[1px] opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500 animate-gradient-x" />
 
                             <div className="relative flex items-center bg-white rounded-full p-[2px]">
-                                <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors z-10 ${isListening ? 'text-red-500' : 'text-gray-400 group-focus-within:text-orange-500'}`} strokeWidth={1.5} />
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors z-10 text-gray-400 group-focus-within:text-orange-500" strokeWidth={1.5} />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className={`w-48 pl-10 ${supported ? 'pr-8' : 'pr-4'} py-1.5 bg-gray-50 border-none rounded-full text-xs font-semibold focus:bg-white focus:w-60 focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-400 relative z-10`}
-                                    placeholder={isListening ? "Listening..." : "Search food..."}
+                                    className="w-48 pl-10 pr-4 py-1.5 bg-gray-50 border-none rounded-full text-xs font-semibold focus:bg-white focus:w-60 focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-400 relative z-10"
+                                    placeholder="Search food..."
                                 />
-                                {supported && (
-                                    <button
-                                        onClick={isListening ? stopListening : startListening}
-                                        className={`absolute right-1 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full transition-all flex items-center justify-center z-20 ${isListening
-                                            ? 'bg-red-50 text-red-500 animate-pulse scale-110'
-                                            : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50 hover:scale-110'
-                                            }`}
-                                        title={isListening ? "Stop listening" : "Search with voice"}
-                                    >
-                                        {isListening ? <MicOff size={14} /> : <Mic size={14} />}
-                                    </button>
-                                )}
                             </div>
                         </div>
 
