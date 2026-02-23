@@ -1,16 +1,31 @@
 import { useEffect } from 'react';
+import Lenis from 'lenis';
 
 const SmoothScroll = () => {
-    // Optimization: Removed Lenis JS-based scroll hijacking.
-    // Native CSS `scroll-behavior: smooth` is 100x faster, uses purely the GPU, 
-    // and correctly handles 120Hz/90Hz displays without lagging or locking the main thread.
-
     useEffect(() => {
-        // Enforce native native smooth scrolling on the document level globally
-        document.documentElement.style.scrollBehavior = 'smooth';
+        // Initialize Lenis for top-tier professional, lag-free momentum scrolling
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',        // vertical scrolling
+            gestureDirection: 'vertical', // vertical gestures
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,          // Native scrolling on mobile touch devices is usually preferred
+            touchMultiplier: 2,
+            infinite: false,
+        });
+
+        // Use requestAnimationFrame to continuously update the scroll
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+
+        requestAnimationFrame(raf);
 
         return () => {
-            document.documentElement.style.scrollBehavior = 'auto';
+            lenis.destroy();
         };
     }, []);
 
@@ -18,3 +33,4 @@ const SmoothScroll = () => {
 };
 
 export default SmoothScroll;
+
