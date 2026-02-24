@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, Star, MapPin, Truck, Smartphone } from 'lucide-react';
+import { ChevronRight, Utensils, ShieldCheck, Zap, Rocket, Star, MapPin, Truck, Smartphone, Clock } from 'lucide-react';
 
 // --- PREMIUM 3D ASSETS (Photorealistic / High-Res PNGs) ---
 const ASSETS = {
