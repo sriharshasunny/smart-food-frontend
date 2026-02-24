@@ -23,7 +23,7 @@ const LandingPage = () => {
         // Assets - Curated High-Quality Food Emojis
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥩', '🥑', '🥞', '🥨', '🍗', '🌭', '🥪'];
         const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱', '🍜', '🍤'];
-        const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Order Now!", "Zoom! ✨"];
+        const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Incoming Delivery! 📦", "Zoom! ✨"];
 
         // State Targets
         let width = window.innerWidth;
@@ -47,7 +47,8 @@ const LandingPage = () => {
             msgTimer: 0,
             showMsg: true,
             idleTimer: 0,
-            floatOffset: 0
+            floatOffset: 0,
+            dropTimer: 0
         };
 
         // Inputs - Smoothed for 3D feel
@@ -216,8 +217,8 @@ const LandingPage = () => {
                     const f = emittedFoods[i];
                     f.x += f.vx * dt;
                     f.y += f.vy * dt;
-                    f.life -= 0.5 * dt; // 2 seconds life
-                    f.scale += 0.5 * dt; // Grow slightly
+                    f.life -= (f.vy > 0 ? 0.25 : 0.5) * dt; // Drops live longer
+                    f.scale += (f.vy > 0 ? 0 : 0.5) * dt; // Drops size static
                     f.rot += f.rotSpeed * dt;
                     if (f.life <= 0) emittedFoods.splice(i, 1);
                 }
@@ -276,7 +277,7 @@ const LandingPage = () => {
                     ufo.vel.x *= friction;
                     ufo.vel.y *= friction;
 
-                    ufo.rotation = ufo.vel.x * 0.05 + Math.sin(ufo.floatOffset) * 0.05;
+                    ufo.rotation = ufo.vel.x * 0.12 + Math.sin(ufo.floatOffset) * 0.05;
 
                     // Depth Effect: Smoothly scale up to 1 if just spawned
                     if (ufo.scale < 1) {
@@ -332,6 +333,38 @@ const LandingPage = () => {
 
                 ufo.pos.x += ufo.vel.x * dt * 3.5;
                 ufo.pos.y += ufo.vel.y * dt * 3.5;
+
+                // --- NEW: Dynamic Fire Trail ---
+                const speed = Math.hypot(ufo.vel.x, ufo.vel.y);
+                if (ufo.opacity > 0 && (speed > 5 || ufo.state === 'WARP_TO_SUN')) {
+                    ufo.trail.push({ x: ufo.pos.x, y: ufo.pos.y, life: 1 });
+                }
+                for (let i = ufo.trail.length - 1; i >= 0; i--) {
+                    ufo.trail[i].life -= dt * 2.5;
+                    if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
+                }
+                if (ufo.trail.length > 30) ufo.trail.shift();
+
+                // --- NEW: UFO Delivery Drops ---
+                ufo.dropTimer += dt;
+                if (ufo.state === 'IDLE' && ufo.dropTimer > (isMobile ? 12 : 8) && Math.abs(ufo.vel.x) < 2) {
+                    ufo.dropTimer = 0;
+                    emittedFoods.push({
+                        x: ufo.pos.x,
+                        y: ufo.pos.y + 20,
+                        vx: 0,
+                        vy: 150,
+                        scale: 0.6,
+                        emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
+                        life: 1,
+                        rot: 0,
+                        rotSpeed: (Math.random() - 0.5) * 5,
+                        rotation: 0
+                    });
+                    ufo.msgIndex = 3; // "Incoming Delivery!"
+                    ufo.showMsg = true;
+                    ufo.msgTimer = -2; // Keep it on screen longer
+                }
 
                 // Update Shooting Stars
                 if (Math.random() < (isMobile ? 0.005 : 0.01)) spawnShootingStar();
@@ -460,6 +493,43 @@ const LandingPage = () => {
 
                 // UFO
                 if (ufo.opacity > 0) {
+                    // Draw Fire Trail
+                    if (ufo.trail.length > 0) {
+                        ctx.save();
+                        ctx.globalCompositeOperation = "screen";
+                        ctx.lineCap = "round";
+                        ctx.lineJoin = "round";
+
+                        if (ufo.trail.length > 1) {
+                            const newest = ufo.trail[ufo.trail.length - 1];
+                            const oldest = ufo.trail[0];
+                            const grad = ctx.createLinearGradient(newest.x, newest.y, oldest.x, oldest.y);
+                            grad.addColorStop(0, `rgba(0, 255, 255, ${ufo.opacity * 0.8})`);
+                            grad.addColorStop(0.5, `rgba(0, 150, 255, ${ufo.opacity * 0.4})`);
+                            grad.addColorStop(1, "rgba(0, 0, 255, 0)");
+
+                            ctx.beginPath();
+                            ufo.trail.forEach((t, i) => {
+                                if (i === 0) ctx.moveTo(t.x, t.y);
+                                else ctx.lineTo(t.x, t.y);
+                            });
+                            ctx.strokeStyle = grad;
+                            ctx.lineWidth = 16 * ufo.scale;
+                            ctx.stroke();
+
+                            // Core white beam
+                            ctx.beginPath();
+                            ufo.trail.forEach((t, i) => {
+                                if (i === 0) ctx.moveTo(t.x, t.y);
+                                else ctx.lineTo(t.x, t.y);
+                            });
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${ufo.opacity * 0.9})`;
+                            ctx.lineWidth = 6 * ufo.scale;
+                            ctx.stroke();
+                        }
+                        ctx.restore();
+                    }
+
                     ctx.save();
                     ctx.translate(ufo.pos.x, ufo.pos.y);
                     ctx.rotate(ufo.rotation);
@@ -660,7 +730,7 @@ const LandingPage = () => {
 
     return (
         // Added 'relative' z-index context to container to ensure canvas (absolute) sits correctly under content but over background
-        <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-[#020205] to-black selection:bg-orange-500 selection:text-white">
+        <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950 via-[#050510] to-black selection:bg-orange-500 selection:text-white">
 
             {/* CANVASES */}
             <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
@@ -742,10 +812,13 @@ const LandingPage = () => {
                                     { title: "Command Center", desc: "Full control via app.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
                                 ].map((item, i) => (
                                     <ScrollReveal key={i} delay={i * 0.05}>
-                                        <div className="group p-8 rounded-[2rem] bg-white/[0.05] backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all hover:-translate-y-2 hover:bg-white/10 text-center h-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-                                            <div className="mb-6 inline-block opacity-90 group-hover:opacity-100 transition-opacity p-4 bg-white/5 rounded-2xl shadow-lg ring-1 ring-white/10">{item.icon}</div>
-                                            <h3 className="text-xl font-bold mb-3 text-white/90">{item.title}</h3>
-                                            <p className="text-gray-400 text-sm font-medium leading-relaxed">{item.desc}</p>
+                                        <div className="group p-8 rounded-[2rem] bg-gradient-to-b from-white/[0.08] to-transparent backdrop-blur-2xl border border-white/10 hover:border-orange-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(249,115,22,0.15)] text-center h-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="relative z-10">
+                                                <div className="mb-6 inline-flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500 p-4 bg-white/5 rounded-2xl shadow-lg ring-1 ring-white/20 group-hover:ring-orange-500/50">{item.icon}</div>
+                                                <h3 className="text-xl font-bold mb-3 text-white/95 tracking-wide">{item.title}</h3>
+                                                <p className="text-gray-400 text-sm font-medium leading-relaxed group-hover:text-gray-300 transition-colors">{item.desc}</p>
+                                            </div>
                                         </div>
                                     </ScrollReveal>
                                 ))}
