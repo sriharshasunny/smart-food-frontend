@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Rocket, User, Mail, Lock, CheckCircle,
-    AlertCircle, Sparkles, ChevronRight
+    Globe, User, Mail, Lock, CheckCircle,
+    AlertCircle, ChevronRight
 } from 'lucide-react';
 
 const Auth = () => {
@@ -58,30 +58,14 @@ const Auth = () => {
             dr: (Math.random() - 0.5) * 0.005
         }));
 
-        // 3. FOOD ASTEROIDS (FALLING WITH TRAIL)
-        const asteroids = [];
-        const spawnAsteroid = () => {
-            if (asteroids.length < 2 && Math.random() < 0.005) { // Rare spawn
-                asteroids.push({
-                    x: Math.random() * canvas.width,
-                    y: -50,
-                    emoji: foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
-                    size: 30 + Math.random() * 20,
-                    speed: 2 + Math.random() * 2,
-                    angle: Math.PI / 4 + (Math.random() - 0.5) * 0.2, // Diagonal down-right
-                    rotation: 0,
-                    rotSpeed: (Math.random() - 0.5) * 0.1,
-                    trail: []
-                });
-            }
-        };
+        // 3. FOOD ASTEROIDS (REMOVED FOR CLEANER SPACE VIBE)
 
         // 4. UFO ENTITY
         const ufo = {
             x: canvas.width * 0.8,
             y: canvas.height * 0.2,
             vx: 0, vy: 0, rotation: 0,
-            maxSpeed: 4, acceleration: 0.12, friction: 0.98,
+            maxSpeed: 2.5, acceleration: 0.08, friction: 0.98,
             targetX: canvas.width * 0.5, targetY: canvas.height * 0.5,
             opacity: 1, state: 'IDLE', warpTimer: 0,
             message: "Welcome! 👋", messageTimer: 0, showMessage: true,
@@ -156,35 +140,7 @@ const Auth = () => {
                 ctx.globalAlpha = 0.5; ctx.fillText(food.emoji, 0, 0); ctx.restore();
             });
 
-            // Asteroids
-            spawnAsteroid();
-            for (let i = asteroids.length - 1; i >= 0; i--) {
-                const a = asteroids[i];
-                a.x += Math.cos(a.angle) * a.speed;
-                a.y += Math.sin(a.angle) * a.speed;
-                a.rotation += a.rotSpeed;
-
-                // Trail
-                a.trail.push({ x: a.x, y: a.y, size: a.size * 0.4, opacity: 0.6 });
-                if (a.trail.length > 10) a.trail.shift();
-
-                // Draw Trail
-                a.trail.forEach((p, idx) => {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size * (idx / 10), 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 100, 50, ${p.opacity * (idx / 10)})`; // Fiery trail
-                    ctx.fill();
-                });
-
-                // Draw Asteroid
-                ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.rotation);
-                ctx.font = `${a.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                // Fire glow
-                ctx.shadowColor = "rgba(255, 100, 0, 0.5)"; ctx.shadowBlur = 20;
-                ctx.fillText(a.emoji, 0, 0); ctx.restore();
-
-                if (a.y > canvas.height + 50) asteroids.splice(i, 1);
-            }
+            // Asteroids Removed
 
             // UFO
             const ufoPos = updateUFO();
@@ -194,8 +150,8 @@ const Auth = () => {
                     ctx.fillStyle = `rgba(0, 255, 200, ${p.opacity * ufoPos.opacity})`; ctx.fill();
                 });
                 ctx.save(); ctx.globalAlpha = ufoPos.opacity; ctx.translate(ufoPos.x, ufoPos.y); ctx.rotate(ufoPos.rotation);
-                ctx.shadowColor = "rgba(0, 255, 100, 0.8)"; ctx.shadowBlur = 40;
-                ctx.font = "60px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🛸", 0, 0); ctx.restore();
+                ctx.shadowColor = "rgba(0, 255, 100, 0.8)"; ctx.shadowBlur = 20;
+                ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🛸", 0, 0); ctx.restore();
 
                 if (ufo.showMessage && ufoPos.opacity > 0.8) {
                     ctx.save(); ctx.translate(ufoPos.x, ufoPos.y - 50);
@@ -225,42 +181,42 @@ const Auth = () => {
     const handleResetPassword = async (e) => { e.preventDefault(); setLoading(true); try { const res = await fetch(`${API_URL}/api/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: formData.email, otp: formData.otp, newPassword: formData.newPassword }) }); if (res.ok) { setSuccessMsg('Success!'); setTimeout(() => switchMode('login'), 2000); } else setError('Failed'); } catch { setError('Error'); } finally { setLoading(false); } };
 
     return (
-        <div className="min-h-screen text-white flex flex-col items-center pt-[10vh] md:pt-[15vh] relative overflow-hidden font-sans bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950 via-[#050510] to-black">
+        <div className="h-[100dvh] w-full text-white flex flex-col items-center justify-center relative overflow-hidden font-sans bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950 via-[#050510] to-black">
             <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
 
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-lg p-6">
-                <div className="text-center mb-10">
-                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-20 h-20 bg-gradient-to-br from-orange-500 to-rose-600 rounded-3xl mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(249,115,22,0.3)] mb-6 z-20 relative"><Rocket className="w-10 h-10 text-white drop-shadow-md" /></motion.div>
-                    <h1 className="text-4xl md:text-5xl font-black mb-3 tracking-tight drop-shadow-xl text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">{mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Join the Feast' : 'Reset Password'}</h1>
-                    <p className="text-gray-400 font-medium tracking-wide">Enter your credentials to continue the journey</p>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-[420px] px-4 md:px-0 flex flex-col items-center">
+                <div className="text-center mb-6 max-h-[25vh]">
+                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.3)] mb-4 md:mb-5 z-20 relative"><Globe className="w-8 h-8 md:w-10 md:h-10 text-white drop-shadow-md" /></motion.div>
+                    <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight drop-shadow-xl text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">{mode === 'login' ? 'Access Node' : mode === 'register' ? 'Initialize Link' : 'Emergency Override'}</h1>
+                    <p className="text-gray-400 text-sm font-medium tracking-wide">{mode === 'login' ? 'Establish secure neural link to the fleet' : mode === 'register' ? 'Register your coordinates in the system' : 'Transmitting recovery protocols'}</p>
                 </div>
 
-                <motion.div layout transition={{ duration: 0.3, ease: "easeInOut" }} className="bg-gradient-to-b from-white/[0.08] to-transparent backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-[0_0_60px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] relative overflow-hidden min-h-[480px] flex flex-col justify-center">
-                    {mode !== 'forgot' && (<div className="flex bg-black/40 rounded-full p-1.5 mb-10 border border-white/5 relative shadow-inner"><motion.div className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-orange-500 to-rose-600 rounded-full shadow-lg" animate={{ left: mode === 'register' ? 'calc(50% + 3px)' : '4px' }} transition={{ type: "spring", stiffness: 400, damping: 30 }} /><button onClick={() => switchMode('login')} className={`flex-1 py-3.5 text-sm font-bold tracking-wide z-10 relative text-white rounded-full transition-colors`}>Login</button><button onClick={() => switchMode('register')} className={`flex-1 py-3.5 text-sm font-bold tracking-wide z-10 relative text-white rounded-full transition-colors`}>Sign Up</button></div>)}
+                <motion.div layout transition={{ duration: 0.3, ease: "easeInOut" }} className="w-full bg-gradient-to-b from-white/[0.08] to-transparent backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-[0_0_60px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] relative flex flex-col justify-center">
+                    {mode !== 'forgot' && (<div className="flex bg-black/40 rounded-full p-1 border border-white/5 relative shadow-inner mb-6"><motion.div className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-lg" animate={{ left: mode === 'register' ? 'calc(50% + 2px)' : '4px' }} transition={{ type: "spring", stiffness: 400, damping: 30 }} /><button onClick={() => switchMode('login')} className={`flex-1 py-2.5 text-xs md:text-sm font-bold tracking-wide z-10 relative text-white rounded-full transition-colors`}>Authentication</button><button onClick={() => switchMode('register')} className={`flex-1 py-2.5 text-xs md:text-sm font-bold tracking-wide z-10 relative text-white rounded-full transition-colors`}>Registration</button></div>)}
 
                     <AnimatePresence>
-                        {error && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mb-6 flex items-start gap-3 text-red-200 text-sm shadow-[0_0_15px_rgba(239,68,68,0.1)]"><AlertCircle className="w-5 h-5 flex-shrink-0" /> <span className="pt-0.5">{error}</span></motion.div>}
-                        {successMsg && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 mb-6 flex items-start gap-3 text-green-200 text-sm shadow-[0_0_15px_rgba(34,197,94,0.1)]"><CheckCircle className="w-5 h-5 flex-shrink-0" /> <span className="pt-0.5">{successMsg}</span></motion.div>}
+                        {error && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3 mb-4 flex items-start gap-2 text-red-200 text-xs shadow-[0_0_15px_rgba(239,68,68,0.1)]"><AlertCircle className="w-4 h-4 flex-shrink-0" /> <span className="pt-0.5">{error}</span></motion.div>}
+                        {successMsg && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-green-500/10 border border-green-500/30 rounded-2xl p-3 mb-4 flex items-start gap-2 text-green-200 text-xs shadow-[0_0_15px_rgba(34,197,94,0.1)]"><CheckCircle className="w-4 h-4 flex-shrink-0" /> <span className="pt-0.5">{successMsg}</span></motion.div>}
                     </AnimatePresence>
 
                     <AnimatePresence mode="wait">
                         {mode === 'login' && (
-                            <motion.form key="login" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 20, opacity: 0 }} onSubmit={handleLogin} className="space-y-6">
-                                <div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Email Coordinates</label><div className="relative group"><Mail className="absolute left-4 top-4 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-colors" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="pilot@foodverse.com" required /></div></div>
-                                <div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Access Code</label><div className="relative group"><Lock className="absolute left-4 top-4 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-colors" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="••••••••" required /></div></div>
-                                <div className="flex justify-end pt-1"><button type="button" onClick={() => switchMode('forgot')} className="text-xs text-orange-400 hover:text-orange-300 hover:underline underline-offset-4 tracking-wide font-bold transition-all">Emergency Override?</button></div>
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-2xl font-bold tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_4px_20px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_25px_rgba(249,115,22,0.5)] mt-6 text-[15px] group border border-orange-400/30">{loading ? 'Igniting Engines...' : <>Initiate Launch <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}</button>
+                            <motion.form key="login" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 20, opacity: 0 }} onSubmit={handleLogin} className="space-y-4">
+                                <div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Fleet Identity</label><div className="relative group"><Mail className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="pilot@foodverse.com" required /></div></div>
+                                <div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Access Key</label><div className="relative group"><Lock className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="••••••••" required /></div></div>
+                                <div className="flex justify-end pt-1"><button type="button" onClick={() => switchMode('forgot')} className="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline underline-offset-4 tracking-wide font-bold transition-all">Lost Connection?</button></div>
+                                <button type="submit" disabled={loading} className="w-full py-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl font-bold tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_6px_25px_rgba(99,102,241,0.5)] mt-4 text-sm group border border-indigo-400/30">{loading ? 'Establishing Link...' : <>Engage Drive <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}</button>
                             </motion.form>
                         )}
                         {mode === 'register' && (
-                            <motion.form key="register" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} onSubmit={handleRegister} className="space-y-6">
-                                <div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Pilot Designation</label><div className="relative group"><User className="absolute left-4 top-4 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-colors" /><input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="Cmdr. Shepard" required /></div></div>
-                                <div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Email Coordinates</label><div className="relative group"><Mail className="absolute left-4 top-4 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-colors" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="pilot@foodverse.com" required /></div></div>
-                                <div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Security Key</label><div className="relative group"><Lock className="absolute left-4 top-4 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-colors" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="••••••••" required /></div></div>
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-2xl font-bold tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_4px_20px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_25px_rgba(249,115,22,0.5)] mt-6 text-[15px] group border border-orange-400/30">{loading ? 'Preparing Pod...' : <>Join Fleet <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}</button>
+                            <motion.form key="register" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} onSubmit={handleRegister} className="space-y-4">
+                                <div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Pilot Designation</label><div className="relative group"><User className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" /><input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="Cmdr. Shepard" required /></div></div>
+                                <div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Fleet Identity</label><div className="relative group"><Mail className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="pilot@foodverse.com" required /></div></div>
+                                <div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Access Key</label><div className="relative group"><Lock className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" /><input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="••••••••" required /></div></div>
+                                <button type="submit" disabled={loading} className="w-full py-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl font-bold tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_6px_25px_rgba(99,102,241,0.5)] mt-4 text-sm group border border-indigo-400/30">{loading ? 'Preparing Pod...' : <>Join System <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}</button>
                             </motion.form>
                         )}
-                        {mode === 'forgot' && (<motion.form key="forgot" className="space-y-6" onSubmit={step === 1 ? handleSendResetOtp : handleResetPassword}><button type="button" onClick={() => switchMode('login')} className="text-[11px] font-black text-gray-400 hover:text-white mb-6 flex items-center uppercase tracking-[0.15em] transition-colors"><ChevronRight className="w-4 h-4 rotate-180 mr-1" /> Abort Override</button>{step === 1 ? (<div className="space-y-6"><div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Email Coordinates</label><div className="relative group"><Mail className="absolute left-4 top-4 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-colors" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="pilot@foodverse.com" required /></div></div><button type="submit" disabled={loading} className={`w-full py-4 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-2xl font-bold tracking-wide shadow-[0_4px_20px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_25px_rgba(249,115,22,0.5)] border border-orange-400/30 transition-all text-[15px] ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]'}`}>{loading ? 'Transmitting...' : 'Transmit Override Code'}</button></div>) : (<div className="space-y-5"><div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Override Code</label><input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 px-5 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner text-center tracking-widest text-lg font-mono" placeholder="----" required /></div><div className="space-y-2.5"><label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">New Security Key</label><input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 px-5 text-white placeholder-gray-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="New Password" required /></div><button type="submit" disabled={loading} className={`w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-2xl font-bold tracking-wide shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_25px_rgba(16,185,129,0.5)] border border-emerald-400/30 transition-all text-[15px] ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]'}`}>{loading ? 'Re-encrypting...' : 'Lock New Key'}</button></div>)}</motion.form>)}
+                        {mode === 'forgot' && (<motion.form key="forgot" className="space-y-4" onSubmit={step === 1 ? handleSendResetOtp : handleResetPassword}><button type="button" onClick={() => switchMode('login')} className="text-[10px] md:text-[11px] font-black text-gray-400 hover:text-white mb-4 flex items-center uppercase tracking-[0.15em] transition-colors"><ChevronRight className="w-3 h-3 rotate-180 mr-1" /> Abort Sequence</button>{step === 1 ? (<div className="space-y-4"><div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Fleet Identity</label><div className="relative group"><Mail className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" /><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="pilot@foodverse.com" required /></div></div><button type="submit" disabled={loading} className={`w-full py-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl font-bold tracking-wide shadow-[0_4px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_6px_25px_rgba(99,102,241,0.5)] border border-indigo-400/30 transition-all text-sm ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]'}`}>{loading ? 'Transmitting...' : 'Send Protocol'}</button></div>) : (<div className="space-y-4"><div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Recovery Code</label><input type="text" name="otp" value={formData.otp} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 px-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner text-center tracking-widest font-mono" placeholder="----" required /></div><div className="space-y-1.5"><label className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">New Access Key</label><input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className="w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 px-4 text-white text-sm placeholder-gray-600 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/[0.08] focus:outline-none transition-all duration-300 shadow-inner" placeholder="New Key" required /></div><button type="submit" disabled={loading} className={`w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl font-bold tracking-wide shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_25px_rgba(16,185,129,0.5)] border border-emerald-400/30 transition-all text-sm ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]'}`}>{loading ? 'Re-encrypting...' : 'Lock New Key'}</button></div>)}</motion.form>)}
                     </AnimatePresence>
                 </motion.div>
             </motion.div>
