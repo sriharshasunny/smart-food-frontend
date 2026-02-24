@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
-import { ChevronRight, Utensils, Zap, Rocket, Star } from 'lucide-react';
+import { ChevronRight, Utensils, Zap, Rocket, Star, ShieldCheck } from 'lucide-react';
 
 const ASSETS = {
     ufo3D: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Flying%20saucer/3D/flying_saucer_3d.png",
