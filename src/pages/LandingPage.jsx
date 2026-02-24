@@ -15,6 +15,7 @@ const ASSETS = {
 const LandingPage = () => {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
+    const scrollRef = useRef(null);
 
     // --- CURSOR TRACKING (FRAMER MOTION) ---
     // Raw Mouse Values (-1 to 1)
