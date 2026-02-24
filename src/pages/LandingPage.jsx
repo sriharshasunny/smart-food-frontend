@@ -48,9 +48,13 @@ const LandingPage = () => {
     });
 
 
+    // UFO State
+    const [ufoState, setUfoState] = useState('IDLE'); // IDLE, WARPING, RESPAWNING
+    const ufoScale = useSpring(1, { damping: 20, stiffness: 100 });
+    const ufoWarpSpin = useSpring(0, { damping: 30, stiffness: 80 });
+
     // Current Displayed Food
     const [currentFood, setCurrentFood] = useState(ASSETS.burger3D);
-    const [isSplit, setIsSplit] = useState(false);
     const foodKeys = [ASSETS.burger3D, ASSETS.pizza3D, ASSETS.taco3D, ASSETS.fries3D];
 
     useEffect(() => {
@@ -63,6 +67,37 @@ const LandingPage = () => {
         return () => clearInterval(interval);
     }, []);
 
+    // UFO Warp Logic
+    useEffect(() => {
+        if (ufoState === 'WARPING') {
+            const centerX = window.innerWidth * (window.innerWidth < 768 ? 0.5 : 0.75);
+            const centerY = window.innerHeight * (window.innerWidth < 768 ? 0.3 : 0.5);
+
+            // Suck into the "Sun" (the 3D food model)
+            ufoX.set(centerX);
+            ufoY.set(centerY);
+            ufoScale.set(0); // Shrink to nothing
+            ufoWarpSpin.set(1080); // Spin wildly
+
+            const warpTimer = setTimeout(() => {
+                setUfoState('RESPAWNING');
+            }, 1200);
+            return () => clearTimeout(warpTimer);
+        } else if (ufoState === 'RESPAWNING') {
+            // Teleport off-screen and reset
+            ufoX.jump(-200);
+            ufoY.jump(window.innerHeight / 2);
+            ufoScale.jump(0);
+            ufoWarpSpin.jump(0);
+
+            const respawnTimer = setTimeout(() => {
+                setUfoState('IDLE');
+                ufoScale.set(1); // Grow back to normal
+            }, 500);
+            return () => clearTimeout(respawnTimer);
+        }
+    }, [ufoState, ufoX, ufoY, ufoScale, ufoWarpSpin]);
+
     // Global Mouse Tracker Handler
     const handleMouseMove = (e) => {
         const { clientX, clientY } = e;
@@ -71,9 +106,11 @@ const LandingPage = () => {
         mouseX.set((clientX / innerWidth) * 2 - 1);
         mouseY.set((clientY / innerHeight) * 2 - 1);
 
-        // Update UFO Target slightly offset from cursor
-        ufoX.set(clientX + 40);
-        ufoY.set(clientY - 40);
+        if (ufoState === 'IDLE') {
+            // Update UFO Target slightly offset from cursor
+            ufoX.set(clientX + 40);
+            ufoY.set(clientY - 40);
+        }
     };
 
     // --- ULTRA-FAST LITE CANVAS ENGINE (ONLY Stars & Dust) ---
@@ -255,7 +292,10 @@ const LandingPage = () => {
                     translateX: '-50%',
                     translateY: '-50%',
                     rotateX: ufoRotX,
-                    rotateZ: ufoRotZ,
+                    // Combine flying tilt with warp death-spiral
+                    rotateZ: useTransform(() => ufoRotZ.get() + ufoWarpSpin.get()),
+                    scale: ufoScale,
+                    opacity: useTransform(ufoScale, [0, 1], [0, 1])
                 }}
             >
                 <img src={ASSETS.ufo3D} alt="UFO" className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(0,255,200,0.4)]" />
@@ -320,54 +360,29 @@ const LandingPage = () => {
                     <motion.div
                         style={{ rotateX, rotateY }}
                         className="relative z-20 pointer-events-auto cursor-pointer"
-                        onClick={() => setIsSplit(!isSplit)}
+                        onClick={() => {
+                            if (ufoState !== 'WARPING') {
+                                setUfoState('WARPING');
+                            }
+                        }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                     >
                         {/* Huge glow behind the food */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-orange-500 to-purple-600 rounded-full blur-[100px] opacity-40 mix-blend-screen scale-150 animate-pulse" />
 
-                        <div className="relative w-[300px] h-[300px] md:w-[600px] md:h-[600px]">
-                            <AnimatePresence mode="popLayout">
-                                {/* Left Half */}
-                                <motion.img
-                                    key={currentFood + "-left"}
-                                    initial={{ opacity: 0, scale: 0.5, rotateZ: -20 }}
-                                    animate={{
-                                        opacity: 1,
-                                        scale: 1,
-                                        rotateZ: isSplit ? -15 : 0,
-                                        x: isSplit ? -60 : 0,
-                                        y: isSplit ? 20 : 0
-                                    }}
-                                    exit={{ opacity: 0, scale: 1.5, rotateZ: 20 }}
-                                    transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
-                                    src={currentFood}
-                                    style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}
-                                    alt="3D Food Left"
-                                    className="absolute inset-0 w-full h-full object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)]"
-                                />
-
-                                {/* Right Half */}
-                                <motion.img
-                                    key={currentFood + "-right"}
-                                    initial={{ opacity: 0, scale: 0.5, rotateZ: -20 }}
-                                    animate={{
-                                        opacity: 1,
-                                        scale: 1,
-                                        rotateZ: isSplit ? 15 : 0,
-                                        x: isSplit ? 60 : 0,
-                                        y: isSplit ? -20 : 0
-                                    }}
-                                    exit={{ opacity: 0, scale: 1.5, rotateZ: 20 }}
-                                    transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
-                                    src={currentFood}
-                                    style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }}
-                                    alt="3D Food Right"
-                                    className="absolute inset-0 w-full h-full object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)]"
-                                />
-                            </AnimatePresence>
-                        </div>
+                        <AnimatePresence mode="wait">
+                            <motion.img
+                                key={currentFood}
+                                initial={{ opacity: 0, scale: 0.5, rotateZ: -20 }}
+                                animate={{ opacity: 1, scale: 1, rotateZ: 0 }}
+                                exit={{ opacity: 0, scale: 1.5, rotateZ: 20 }}
+                                transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+                                src={currentFood}
+                                alt="3D Food"
+                                className="w-[300px] h-[300px] md:w-[600px] md:h-[600px] object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)]"
+                            />
+                        </AnimatePresence>
 
                         {/* Orbiting Elements (DOM Parallax) */}
                         <motion.div animate={{ rotateZ: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute inset-0 pointer-events-none border border-white/5 rounded-full scale-125 md:scale-[1.8] border-dashed border-spacing-4" />
