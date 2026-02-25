@@ -88,7 +88,7 @@ const RestaurantList = () => {
 
                 <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
                     {/* Search Bar */}
-                    <div className={`relative flex-1 sm:flex-none flex items-center bg-white rounded-full border transition-all ${isListening ? 'border-orange-500 shadow-orange-500/20 shadow-md' : 'border-gray-200 focus-within:border-orange-500 hover:bg-gray-50'}`}>
+                    <div className={`relative flex-1 sm:flex-none flex items-center bg-white rounded-full border transition-all border-gray-200 focus-within:border-orange-500 hover:bg-gray-50`}>
                         <Search className="absolute left-3 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
