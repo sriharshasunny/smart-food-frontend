@@ -8,6 +8,7 @@ import { useShop } from '../context/ShopContext';
 import { mockRestaurants, mockDishes, categories } from '../data/mockData';
 import { Search, MapPin, ChevronRight, Sparkles } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
+import SkeletonCard from '../components/SkeletonCard';
 
 import { API_URL } from '../config';  // Import Config
 
@@ -316,13 +317,19 @@ const Home = () => {
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
                             <div ref={restaurantContainerRef} data-lenis-prevent className="w-full overflow-x-auto overflow-y-hidden pb-4 pt-1 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x overscroll-contain transform-gpu">
-                                {viewMode === 'restaurants' ? (
+                                {loadingData ? (
+                                    Array.from({ length: 4 }).map((_, i) => (
+                                        <div key={`skel-${i}`} className="min-w-[260px] snap-start h-full">
+                                            <SkeletonCard />
+                                        </div>
+                                    ))
+                                ) : viewMode === 'restaurants' ? (
                                     filteredData.restaurants.map((restaurant) => (
                                         <RestaurantCard key={restaurant.id} restaurant={restaurant} />
                                     ))
                                 ) : (
                                     filteredData.dishes.slice(0, 8).map((dish) => (
-                                        <div key={dish.id} className="min-w-[200px] snap-start">
+                                        <div key={dish.id} className="min-w-[200px] snap-start h-full">
                                             <FoodCard food={dish} onAdd={handleAddToCart} />
                                         </div>
                                     ))
@@ -369,55 +376,62 @@ const Home = () => {
                         {/* Quick Grid (Vertical Scroll) - Simple Rainbow Cards */}
                         <div ref={trendingContainerRef} data-lenis-prevent className="flex flex-col overflow-y-auto pr-1 hide-scrollbar gap-2 relative z-10 h-full pt-1 scroll-smooth touch-pan-y overscroll-contain transform-gpu">
 
+                            {loadingData ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={`skel-h-${i}`} className="h-[90px] shrink-0">
+                                        <SkeletonCard variant="horizontal" />
+                                    </div>
+                                ))
+                            ) : (
+                                filteredData.dishes.slice(0, 6).map((dish) => (
+                                    <div
+                                        key={dish.id}
+                                        className="bg-white relative overflow-hidden rounded-[1.25rem] p-2 flex gap-3 transition-transform duration-200 cursor-pointer border border-gray-100 hover:border-orange-200 hover:-translate-y-0.5 group/item items-center shrink-0 shadow-sm"
+                                    >
+                                        {/* Glossy Border Overlay */}
+                                        <div className="absolute inset-0 rounded-[1.25rem] border border-white/50 pointer-events-none z-20" />
+                                        {/* Image with Floating Badge */}
+                                        <div className="h-[4.5rem] w-[4.5rem] rounded-2xl overflow-hidden relative shrink-0 shadow-sm group-hover/item:shadow-md transition-all duration-500">
+                                            <img src={dish.image} alt={dish.name} loading="lazy" className="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-700 ease-out" />
+                                            {/* Rating Badge Overlay */}
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1 pt-4 flex justify-center">
+                                                <div className="flex items-center gap-0.5 text-[8px] font-bold text-white">
+                                                    <span>⭐</span> {dish.rating || 4.5}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                            {filteredData.dishes.slice(0, 6).map((dish) => (
-                                <div
-                                    key={dish.id}
-                                    className="bg-white relative overflow-hidden rounded-[1.25rem] p-2 flex gap-3 transition-transform duration-200 cursor-pointer border border-gray-100 hover:border-orange-200 hover:-translate-y-0.5 group/item items-center shrink-0 shadow-sm"
-                                >
-                                    {/* Glossy Border Overlay */}
-                                    <div className="absolute inset-0 rounded-[1.25rem] border border-white/50 pointer-events-none z-20" />
-                                    {/* Image with Floating Badge */}
-                                    <div className="h-[4.5rem] w-[4.5rem] rounded-2xl overflow-hidden relative shrink-0 shadow-sm group-hover/item:shadow-md transition-all duration-500">
-                                        <img src={dish.image} alt={dish.name} loading="lazy" className="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-700 ease-out" />
-                                        {/* Rating Badge Overlay */}
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1 pt-4 flex justify-center">
-                                            <div className="flex items-center gap-0.5 text-[8px] font-bold text-white">
-                                                <span>⭐</span> {dish.rating || 4.5}
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5 gap-2">
+                                            <div>
+                                                {/* Tag */}
+                                                {dish.price > 300 && <span className="text-[9px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md mb-1 inline-block tracking-wider uppercase">Bestseller</span>}
+
+                                                <h4 className="font-bold text-gray-800 text-[15px] leading-tight line-clamp-1 group-hover/item:text-orange-600 transition-colors">{dish.name}</h4>
+                                                <p className="text-[10px] text-gray-400 font-medium line-clamp-1 mt-0.5">{dish.category} • {dish.isVeg ? 'Veg' : 'Non-Veg'}</p>
+                                            </div>
+
+                                            <div className="flex justify-between items-end">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] text-gray-400 line-through decoration-orange-300/50 decoration-2">₹{Math.round(dish.price * 1.2)}</span>
+                                                    <span className="text-gray-900 font-black text-sm leading-none">₹{dish.price}</span>
+                                                </div>
+
+                                                {/* Premium Add Button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        addToCart(dish);
+                                                    }}
+                                                    className="h-8 px-4 rounded-full bg-gray-50 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 text-gray-600 hover:text-white text-xs font-bold transition-all shadow-sm hover:shadow-orange-200 hover:shadow-lg active:scale-95 flex items-center gap-1 group/btn border border-gray-100 hover:border-transparent"
+                                                >
+                                                    ADD <span className="text-sm font-extrabold group-hover/btn:rotate-90 transition-transform duration-300 ml-0.5">+</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5 gap-2">
-                                        <div>
-                                            {/* Tag */}
-                                            {dish.price > 300 && <span className="text-[9px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md mb-1 inline-block tracking-wider uppercase">Bestseller</span>}
-
-                                            <h4 className="font-bold text-gray-800 text-[15px] leading-tight line-clamp-1 group-hover/item:text-orange-600 transition-colors">{dish.name}</h4>
-                                            <p className="text-[10px] text-gray-400 font-medium line-clamp-1 mt-0.5">{dish.category} • {dish.isVeg ? 'Veg' : 'Non-Veg'}</p>
-                                        </div>
-
-                                        <div className="flex justify-between items-end">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-gray-400 line-through decoration-orange-300/50 decoration-2">₹{Math.round(dish.price * 1.2)}</span>
-                                                <span className="text-gray-900 font-black text-sm leading-none">₹{dish.price}</span>
-                                            </div>
-
-                                            {/* Premium Add Button */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    addToCart(dish);
-                                                }}
-                                                className="h-8 px-4 rounded-full bg-gray-50 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 text-gray-600 hover:text-white text-xs font-bold transition-all shadow-sm hover:shadow-orange-200 hover:shadow-lg active:scale-95 flex items-center gap-1 group/btn border border-gray-100 hover:border-transparent"
-                                            >
-                                                ADD <span className="text-sm font-extrabold group-hover/btn:rotate-90 transition-transform duration-300 ml-0.5">+</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </div> {/* Close Recs + Top Section */}
@@ -479,8 +493,15 @@ const Home = () => {
                 <section className="min-h-[500px] content-visibility-auto contain-layout pt-2">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
-                        {/* Error State for API Failure */}
-                        {realRestaurants.length === 0 && !loadingData && (
+                        {loadingData ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 gap-y-10">
+                                {Array.from({ length: 10 }).map((_, i) => (
+                                    <div key={`skel-g-${i}`} className="h-[320px]">
+                                        <SkeletonCard />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : realRestaurants.length === 0 ? (
                             <div className="w-full text-center py-20 flex flex-col items-center justify-center p-4">
                                 <div className="bg-red-50 p-6 rounded-full mb-6 relative">
                                     <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-20"></div>
@@ -497,9 +518,7 @@ const Home = () => {
                                     Retry Connection
                                 </button>
                             </div>
-                        )}
-
-                        {filteredData.dishes.length > 0 ? (
+                        ) : filteredData.dishes.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 gap-y-10">
                                 {filteredData.dishes.map((dish) => (
                                     <FoodCard
@@ -511,16 +530,13 @@ const Home = () => {
                                 ))}
                             </div>
                         ) : (
-                            // Only show "No items found" if we actually have restaurants properly loaded but filtered out
-                            realRestaurants.length > 0 && (
-                                <div className="text-center py-24 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
-                                    <div className="bg-gray-50 p-6 rounded-full mb-4">
-                                        <Search size={48} className="text-gray-300" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-700">No items found</h3>
-                                    <p className="text-gray-500 mt-2">Try changing your filters or search term.</p>
+                            <div className="text-center py-24 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                                <div className="bg-gray-50 p-6 rounded-full mb-4">
+                                    <Search size={48} className="text-gray-300" />
                                 </div>
-                            )
+                                <h3 className="text-xl font-bold text-gray-700">No items found</h3>
+                                <p className="text-gray-500 mt-2">Try changing your filters or search term.</p>
+                            </div>
                         )}
                     </ErrorBoundary>
                 </section>
