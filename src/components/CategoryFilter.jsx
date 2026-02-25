@@ -4,7 +4,7 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
     // STICKY MODE: Text-only Pills
     if (isSticky) {
         return (
-            <div className="w-full overflow-x-auto pb-0 hide-scrollbar animate-fade-in-down">
+            <div data-lenis-prevent className="w-full overflow-x-auto pb-0 hide-scrollbar animate-fade-in-down">
                 <div className="flex gap-1 px-0 items-center h-full">
                     {/* All Option */}
                     <button
@@ -41,7 +41,7 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
 
     // DEFAULT MODE: Image Circles
     return (
-        <div className="w-full overflow-x-auto pb-4 hide-scrollbar pt-2">
+        <div data-lenis-prevent className="w-full overflow-x-auto pb-4 hide-scrollbar pt-2">
             <div className="flex gap-6 px-4 sm:px-0">
                 {/* All Option */}
                 <button

@@ -36,6 +36,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
                     <img
                         src={optimizeImage(food.image, 200)} // Optimize for thumbnail
                         alt={food.name}
+                        loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover transform"
                     />
@@ -104,6 +105,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
                 <img
                     src={optimizeImage(food.image, 600)} // Optimize for card width
                     alt={food.name}
+                    loading="lazy"
                     decoding="async"
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 />
