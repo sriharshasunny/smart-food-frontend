@@ -120,7 +120,7 @@ const ChatWidget = () => {
 
         } catch (error) {
             console.error("Chat Error:", error);
-            setMessages(prev => [...prev, { type: 'text', content: "Network error. Please try again.", sender: 'ai', timestamp: new Date() }]);
+            setMessages(prev => [...prev, { type: 'text', content: "I'm having a little trouble connecting to my database right now. Could you please try again in a moment?", sender: 'ai', timestamp: new Date() }]);
         } finally {
             setLoading(false);
         }
