@@ -21,7 +21,7 @@ exports.processChatRequest = async (req, res) => {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
         // Format conversation history for Gemini context
         const conversationContext = history && history.length > 0
