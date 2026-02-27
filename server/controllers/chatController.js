@@ -183,7 +183,7 @@ exports.processChatRequest = async (req, res) => {
             });
         }
 
-        res.status(500).json({ message: "I'm having trouble thinking right now. Please try again." });
+        res.status(500).json({ message: "I'm having trouble thinking right now. Please try again.", debug_error: error.message, debug_stack: error.stack });
     }
 };
 
