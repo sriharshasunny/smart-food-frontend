@@ -77,90 +77,110 @@ const imageVariants = {
     exit: { opacity: 0, transition: { duration: 0.8 } }
 };
 
+const SWIPE_CONFIDENCE_THRESHOLD = 10000;
+const swipePower = (offset, velocity) => {
+    return Math.abs(offset) * velocity;
+};
+
 const HeroBanner = ({ topRightContent }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
+    // direction state allows us to know which way to animate the slide
+    const [[page, direction], setPage] = useState([0, 0]);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+    const safeIndex = Math.abs(page % premiumOffers.length);
+    const currentIndex = safeIndex;
+
+    const paginate = (newDirection) => {
+        setIsAutoPlaying(false);
+        setPage([page + newDirection, newDirection]);
+    };
 
     useEffect(() => {
         if (!isAutoPlaying) return;
         const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % premiumOffers.length);
-        }, 6000); // Slightly longer for the cinematic effect
+            setPage([page + 1, 1]);
+        }, 6000);
         return () => clearInterval(timer);
-    }, [isAutoPlaying]);
-
-    const prevSlide = () => {
-        setIsAutoPlaying(false);
-        setCurrentIndex((prev) => (prev - 1 + premiumOffers.length) % premiumOffers.length);
-    };
-
-    const nextSlide = () => {
-        setIsAutoPlaying(false);
-        setCurrentIndex((prev) => (prev + 1) % premiumOffers.length);
-    };
+    }, [isAutoPlaying, page]);
 
     const currentOffer = premiumOffers[currentIndex];
     const IconComponent = currentOffer.icon;
 
     return (
-        <div className="relative w-full h-[260px] sm:h-[380px] md:h-[480px] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto group select-none content-visibility-auto contain-paint">
+        // Removed rounded-corners and mx-auto, set to 60vh minimum to feel huge and premium
+        <div className="relative w-full h-[60vh] min-h-[400px] md:h-[70vh] md:min-h-[550px] overflow-hidden bg-gray-950 group select-none content-visibility-auto contain-paint">
 
             <FloatingOrbs />
 
             {/* Carousel Container leveraging Framer Motion AnimatePresence */}
-            <div className="relative h-full w-full bg-gray-950 pointer-events-none overflow-hidden">
-                <AnimatePresence mode="wait">
+            <div className="relative h-full w-full pointer-events-auto overflow-hidden">
+                <AnimatePresence initial={false} custom={direction}>
                     <motion.div
-                        key={currentIndex}
-                        className="absolute inset-0"
-                        initial="hidden"
-                        animate="show"
-                        exit="exit"
+                        key={page}
+                        custom={direction}
+                        className="absolute inset-0 touch-pan-y" // Allow vertical scrolling
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                        exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                        drag="x" // Enable horizontal dragging only
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.8}
+                        onDragEnd={(e, { offset, velocity }) => {
+                            const swipe = swipePower(offset.x, velocity.x);
+                            if (swipe < -SWIPE_CONFIDENCE_THRESHOLD) {
+                                paginate(1); // Swipe left = next
+                            } else if (swipe > SWIPE_CONFIDENCE_THRESHOLD) {
+                                paginate(-1); // Swipe right = prev
+                            }
+                        }}
                     >
                         {/* Background Image with Ken Burns Effect */}
                         <motion.img
                             variants={imageVariants}
+                            initial="hidden"
+                            animate="show"
+                            exit="exit"
                             src={currentOffer.image}
                             alt={currentOffer.title}
                             decoding="async"
                             loading="eager"
-                            className="absolute inset-0 w-full h-full object-cover object-center saturate-125 brightness-110 contrast-125 origin-center"
+                            className="absolute inset-0 w-full h-full object-cover object-center saturate-125 brightness-110 contrast-125 origin-center pointer-events-none"
                         />
 
                         {/* High-End Glassmorphism Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent md:via-black/50 backdrop-blur-[2px]" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent md:hidden" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent md:via-black/50 backdrop-blur-[2px] pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent md:hidden pointer-events-none" />
 
                         {/* Content Area with Staggered Entrance */}
-                        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-24 max-w-5xl text-white z-20 pointer-events-auto">
-                            <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit">
+                        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-12 lg:px-24 max-w-7xl mx-auto text-white z-20 pointer-events-none w-full">
+                            <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="pointer-events-auto w-full max-w-3xl">
 
-                                <motion.div variants={itemVariants} className="flex items-center gap-2 md:gap-3 mb-2 md:mb-5 flex-wrap">
+                                <motion.div variants={itemVariants} className="flex items-center gap-2 md:gap-3 mb-3 md:mb-6 flex-wrap">
                                     <span className={`inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest bg-gradient-to-r ${currentOffer.accent} shadow-lg shadow-orange-500/20`}>
-                                        <IconComponent size={12} className="md:w-3.5 md:h-3.5" />
+                                        <IconComponent size={14} className="md:w-4 md:h-4" />
                                         {currentOffer.subtitle}
                                     </span>
-                                    <div className="hidden sm:flex items-center gap-1.5 text-yellow-400 text-[10px] md:text-xl font-bold bg-white/10 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-1.5 rounded-xl border border-white/20 shadow-xl">
+                                    <div className="hidden sm:flex items-center gap-1.5 text-yellow-400 text-[10px] md:text-sm font-black uppercase tracking-widest bg-white/10 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-white/20 shadow-xl">
                                         <Sparkles size={14} className="md:w-4 md:h-4" /> EXCLUSIVE
                                     </div>
                                 </motion.div>
 
                                 {/* Next-Gen Typography */}
-                                <motion.h2 variants={itemVariants} className="text-3xl sm:text-5xl md:text-[5.5rem] font-black mb-2 md:mb-6 leading-[1.1] tracking-tight drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-300">
+                                <motion.h2 variants={itemVariants} className="text-4xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-black mb-4 md:mb-6 leading-[1.05] tracking-tight drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-400">
                                     {currentOffer.title}
                                 </motion.h2>
 
-                                <motion.p variants={itemVariants} className="text-xs sm:text-lg md:text-xl font-medium mb-5 md:mb-8 text-gray-300 max-w-md md:max-w-xl leading-relaxed line-clamp-2 drop-shadow-lg">
+                                <motion.p variants={itemVariants} className="text-sm sm:text-lg md:text-2xl font-medium mb-6 md:mb-10 text-gray-300 max-w-sm md:max-w-xl leading-relaxed drop-shadow-lg">
                                     {currentOffer.description}
                                 </motion.p>
 
                                 <motion.div variants={itemVariants} className="flex items-center gap-3 md:gap-5 flex-wrap">
                                     {/* Shimmering Button */}
-                                    <button className="group/btn relative px-6 py-3 md:px-10 md:py-4 bg-white text-black rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-white/30 flex items-center gap-2 md:gap-3 overflow-hidden cursor-pointer">
+                                    <button className="group/btn relative px-6 py-3.5 md:px-10 md:py-4 bg-white text-black rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-white/30 flex items-center gap-2 md:gap-3 overflow-hidden cursor-pointer">
                                         {/* Shimmer effect overlay */}
                                         <div className="absolute inset-0 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-black/10 to-transparent skew-x-12"></div>
                                         <span className="relative z-10 transition-transform group-hover/btn:scale-105">View Menu</span>
-                                        <ArrowRight size={16} className="md:w-5 md:h-5 relative z-10 transition-transform group-hover/btn:translate-x-1.5 text-orange-500 group-hover/btn:text-red-500" />
+                                        <ArrowRight size={18} className="md:w-5 md:h-5 relative z-10 transition-transform group-hover/btn:translate-x-1.5 text-orange-500 group-hover/btn:text-red-500" />
                                     </button>
 
                                     <div className="hidden sm:flex items-center gap-2 px-5 py-3 md:py-3.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
@@ -176,32 +196,35 @@ const HeroBanner = ({ topRightContent }) => {
 
             {/* Top Right Slot (Location) */}
             {topRightContent && (
-                <div className="absolute top-4 right-4 md:top-8 md:right-8 z-40 pointer-events-auto">
+                <div className="absolute top-4 right-4 md:top-6 md:right-8 z-40 pointer-events-auto">
                     {topRightContent}
                 </div>
             )}
 
             {/* Indicators - Bottom */}
-            <div className="absolute inset-x-0 bottom-4 md:bottom-8 flex justify-between items-end px-6 md:px-12 z-30 pointer-events-none">
-                <div className="flex gap-2 pointer-events-auto">
+            <div className="absolute inset-x-0 bottom-4 md:bottom-8 flex justify-between items-end px-6 md:px-12 lg:px-24 mx-auto max-w-7xl z-30 pointer-events-none">
+                <div className="flex gap-2.5 pointer-events-auto mb-2 md:mb-0">
                     {premiumOffers.map((_, index) => (
                         <button
                             key={index}
-                            onClick={() => { setIsAutoPlaying(false); setCurrentIndex(index); }}
-                            className={`h-1.5 md:h-2 rounded-full transition-all duration-500 shadow-lg ${index === currentIndex ? 'w-10 md:w-16 bg-white shadow-white/50' : 'w-2 md:w-3 bg-white/40 hover:bg-white/60'}`}
+                            onClick={() => { setIsAutoPlaying(false); setPage([index, index > page ? 1 : -1]); }}
+                            className={`h-1.5 md:h-2 rounded-full transition-all duration-500 shadow-lg ${index === safeIndex ? 'w-10 md:w-16 bg-white shadow-white/50' : 'w-2 md:w-3 bg-white/40 hover:bg-white/60'}`}
                         />
                     ))}
                 </div>
 
-                <div className="hidden md:flex gap-3 pointer-events-auto">
-                    <button onClick={prevSlide} className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl hover:shadow-white/20">
+                <div className="hidden md:flex gap-4 pointer-events-auto">
+                    <button onClick={() => paginate(-1)} className="w-14 h-14 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl hover:shadow-white/20">
                         <ChevronLeft size={24} />
                     </button>
-                    <button onClick={nextSlide} className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl hover:shadow-white/20">
+                    <button onClick={() => paginate(1)} className="w-14 h-14 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl hover:shadow-white/20">
                         <ChevronRight size={24} />
                     </button>
                 </div>
             </div>
+
+            {/* Fade Out Edge for seamless integration to content below */}
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none z-30"></div>
         </div>
     );
 };
