@@ -12,18 +12,20 @@ const Typewriter = ({ text, onComplete }) => {
     const indexRef = useRef(0);
 
     useEffect(() => {
-        indexRef.current = 0;
+        let currentText = "";
+        let currentIndex = 0;
         setDisplayedText("");
 
         const intervalId = setInterval(() => {
-            if (indexRef.current < text.length) {
-                setDisplayedText((prev) => prev + text.charAt(indexRef.current));
-                indexRef.current++;
+            if (currentIndex < text.length) {
+                currentText += text.charAt(currentIndex);
+                setDisplayedText(currentText);
+                currentIndex++;
             } else {
                 clearInterval(intervalId);
                 if (onComplete) onComplete();
             }
-        }, 10); // Faster typing speed
+        }, 10);
 
         return () => clearInterval(intervalId);
     }, [text]);
