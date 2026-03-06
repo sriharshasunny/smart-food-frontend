@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles, Zap, Award } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const premiumOffers = [
     {
@@ -34,7 +35,7 @@ const premiumOffers = [
     }
 ];
 
-// High-Performance CSS-only floating orbs (0% JS overhead)
+// High-Performance CSS-only floating orbs
 const FloatingOrbs = () => (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10 opacity-70">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-orange-500/40 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
@@ -43,17 +44,48 @@ const FloatingOrbs = () => (
     </div>
 );
 
+// Framer Motion Variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+    },
+    exit: { opacity: 0, transition: { duration: 0.5 } }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30, filter: 'blur(10px)' },
+    show: {
+        opacity: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        transition: { type: 'spring', stiffness: 70, damping: 15 }
+    }
+};
+
+const imageVariants = {
+    hidden: { scale: 1.1, opacity: 0 },
+    show: {
+        scale: 1,
+        opacity: 1,
+        transition: {
+            opacity: { duration: 1 },
+            scale: { duration: 15, ease: "linear" } // Continuous pan/zoom (Ken Burns)
+        }
+    },
+    exit: { opacity: 0, transition: { duration: 0.8 } }
+};
+
 const HeroBanner = ({ topRightContent }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-    const containerRef = useRef(null);
-    const [transform, setTransform] = useState('');
 
     useEffect(() => {
         if (!isAutoPlaying) return;
         const timer = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % premiumOffers.length);
-        }, 5000);
+        }, 6000); // Slightly longer for the cinematic effect
         return () => clearInterval(timer);
     }, [isAutoPlaying]);
 
@@ -67,116 +99,90 @@ const HeroBanner = ({ topRightContent }) => {
         setCurrentIndex((prev) => (prev + 1) % premiumOffers.length);
     };
 
-    // Ultra-lightweight Vanilla JS 3D Tilt Effect
-    const handleMouseMove = (e) => {
-        if (!containerRef.current) return;
-        const { left, top, width, height } = containerRef.current.getBoundingClientRect();
-
-        // Calculate mouse position relative to center of element (-1 to 1)
-        const x = (e.clientX - left - width / 2) / (width / 2);
-        const y = (e.clientY - top - height / 2) / (height / 2);
-
-        // Constrain tilt to max 4 degrees to ensure lag-free performance
-        const rotateX = y * -4;
-        const rotateY = x * 4;
-
-        // requestAnimationFrame natively throttles this to monitor refresh rate (60/120fps)
-        requestAnimationFrame(() => {
-            setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`);
-        });
-    };
-
-    const handleMouseLeave = () => {
-        requestAnimationFrame(() => {
-            setTransform(`perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`);
-        });
-    };
-
     const currentOffer = premiumOffers[currentIndex];
     const IconComponent = currentOffer.icon;
 
     return (
-        <div
-            ref={containerRef}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className="relative w-full h-[260px] sm:h-[380px] md:h-[480px] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto group select-none content-visibility-auto contain-paint ease-out transition-transform duration-200"
-            style={{ transform, transformStyle: 'preserve-3d' }}
-        >
+        <div className="relative w-full h-[260px] sm:h-[380px] md:h-[480px] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl mx-auto group select-none content-visibility-auto contain-paint">
+
             <FloatingOrbs />
 
-            {/* Carousel Container */}
-            <div className="relative h-full w-full bg-gray-900 pointer-events-none">
-                {premiumOffers.map((offer, index) => (
-                    <div
-                        key={offer.id}
-                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${index === currentIndex ? 'opacity-100 z-0' : 'opacity-0 z-0'}`}
-                        style={{ willChange: 'opacity' }}
+            {/* Carousel Container leveraging Framer Motion AnimatePresence */}
+            <div className="relative h-full w-full bg-gray-950 pointer-events-none overflow-hidden">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentIndex}
+                        className="absolute inset-0"
+                        initial="hidden"
+                        animate="show"
+                        exit="exit"
                     >
-                        {/* Background Image - Optimized Loading */}
-                        <div className="absolute inset-0 overflow-hidden">
-                            <img
-                                src={offer.image}
-                                alt={offer.title}
-                                decoding="async"
-                                loading="eager"
-                                className={`w-full h-full object-cover object-center transition-transform duration-[10000ms] ease-out saturate-125 brightness-110 contrast-125 ${index === currentIndex ? 'scale-105' : 'scale-100'}`}
-                                style={{ willChange: 'transform' }}
-                            />
-                        </div>
+                        {/* Background Image with Ken Burns Effect */}
+                        <motion.img
+                            variants={imageVariants}
+                            src={currentOffer.image}
+                            alt={currentOffer.title}
+                            decoding="async"
+                            loading="eager"
+                            className="absolute inset-0 w-full h-full object-cover object-center saturate-125 brightness-110 contrast-125 origin-center"
+                        />
 
                         {/* High-End Glassmorphism Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent md:via-black/50 backdrop-blur-[2px]" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent md:hidden" />
 
-                        {/* Content Area with 3D Pop (TranslateZ) */}
-                        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-24 max-w-5xl text-white z-20 pointer-events-auto" style={{ transform: 'translateZ(50px)' }}>
-                            <div className={`transition-all duration-700 delay-100 transform ${index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-                                <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-5 flex-wrap">
-                                    <span className={`inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest bg-gradient-to-r ${offer.accent} shadow-lg shadow-orange-500/20`}>
+                        {/* Content Area with Staggered Entrance */}
+                        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-24 max-w-5xl text-white z-20 pointer-events-auto">
+                            <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit">
+
+                                <motion.div variants={itemVariants} className="flex items-center gap-2 md:gap-3 mb-2 md:mb-5 flex-wrap">
+                                    <span className={`inline-flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest bg-gradient-to-r ${currentOffer.accent} shadow-lg shadow-orange-500/20`}>
                                         <IconComponent size={12} className="md:w-3.5 md:h-3.5" />
-                                        {offer.subtitle}
+                                        {currentOffer.subtitle}
                                     </span>
                                     <div className="hidden sm:flex items-center gap-1.5 text-yellow-400 text-[10px] md:text-xl font-bold bg-white/10 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-1.5 rounded-xl border border-white/20 shadow-xl">
                                         <Sparkles size={14} className="md:w-4 md:h-4" /> EXCLUSIVE
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Next-Gen Typography */}
-                                <h2 className="text-3xl sm:text-5xl md:text-[5.5rem] font-black mb-2 md:mb-6 leading-[1.1] tracking-tight drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-300">
-                                    {offer.title}
-                                </h2>
+                                <motion.h2 variants={itemVariants} className="text-3xl sm:text-5xl md:text-[5.5rem] font-black mb-2 md:mb-6 leading-[1.1] tracking-tight drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-300">
+                                    {currentOffer.title}
+                                </motion.h2>
 
-                                <p className="text-xs sm:text-lg md:text-xl font-medium mb-5 md:mb-8 text-gray-300 max-w-md md:max-w-xl leading-relaxed line-clamp-2 drop-shadow-lg">
-                                    {offer.description}
-                                </p>
+                                <motion.p variants={itemVariants} className="text-xs sm:text-lg md:text-xl font-medium mb-5 md:mb-8 text-gray-300 max-w-md md:max-w-xl leading-relaxed line-clamp-2 drop-shadow-lg">
+                                    {currentOffer.description}
+                                </motion.p>
 
-                                <div className="flex items-center gap-3 md:gap-5 flex-wrap">
-                                    <button className="group/btn relative px-6 py-3 md:px-10 md:py-4 bg-white text-black rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider hover:bg-gradient-to-r hover:from-white hover:to-gray-200 transition-all duration-300 hover:shadow-2xl hover:shadow-white/20 flex items-center gap-2 md:gap-3 overflow-hidden cursor-pointer">
+                                <motion.div variants={itemVariants} className="flex items-center gap-3 md:gap-5 flex-wrap">
+                                    {/* Shimmering Button */}
+                                    <button className="group/btn relative px-6 py-3 md:px-10 md:py-4 bg-white text-black rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-white/30 flex items-center gap-2 md:gap-3 overflow-hidden cursor-pointer">
+                                        {/* Shimmer effect overlay */}
+                                        <div className="absolute inset-0 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-black/10 to-transparent skew-x-12"></div>
                                         <span className="relative z-10 transition-transform group-hover/btn:scale-105">View Menu</span>
                                         <ArrowRight size={16} className="md:w-5 md:h-5 relative z-10 transition-transform group-hover/btn:translate-x-1.5 text-orange-500 group-hover/btn:text-red-500" />
                                     </button>
 
                                     <div className="hidden sm:flex items-center gap-2 px-5 py-3 md:py-3.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Promo Code</span>
-                                        <span className="text-sm md:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 ml-1">{offer.code}</span>
+                                        <span className="text-sm md:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 ml-1">{currentOffer.code}</span>
                                     </div>
-                                </div>
-                            </div>
+                                </motion.div>
+                            </motion.div>
                         </div>
-                    </div>
-                ))}
+                    </motion.div>
+                </AnimatePresence>
             </div>
 
             {/* Top Right Slot (Location) */}
             {topRightContent && (
-                <div className="absolute top-4 right-4 md:top-8 md:right-8 z-40 pointer-events-auto" style={{ transform: 'translateZ(30px)' }}>
+                <div className="absolute top-4 right-4 md:top-8 md:right-8 z-40 pointer-events-auto">
                     {topRightContent}
                 </div>
             )}
 
             {/* Indicators - Bottom */}
-            <div className="absolute inset-x-0 bottom-4 md:bottom-8 flex justify-between items-end px-6 md:px-12 z-30 pointer-events-none" style={{ transform: 'translateZ(40px)' }}>
+            <div className="absolute inset-x-0 bottom-4 md:bottom-8 flex justify-between items-end px-6 md:px-12 z-30 pointer-events-none">
                 <div className="flex gap-2 pointer-events-auto">
                     {premiumOffers.map((_, index) => (
                         <button
