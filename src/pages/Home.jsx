@@ -323,7 +323,7 @@ const Home = () => {
 
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
-                            <div ref={restaurantContainerRef} data-lenis-prevent className="w-full overflow-x-auto overflow-y-hidden pb-4 pt-1 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth touch-pan-x overscroll-contain transform-gpu">
+                            <div ref={restaurantContainerRef} data-lenis-prevent className="w-full overflow-x-auto overflow-y-hidden pb-4 pt-1 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth overscroll-contain transform-gpu">
                                 {loadingData ? (
                                     Array.from({ length: 4 }).map((_, i) => (
                                         <div key={`skel-${i}`} className="min-w-[260px] snap-start h-full">
@@ -367,7 +367,6 @@ const Home = () => {
 
                         <div className="flex justify-between items-center mb-4 relative z-10 shrink-0">
                             <div className="relative group">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                                 <h2 className="text-xl font-black text-gray-900 flex items-center gap-2 relative">
                                     <span className="bg-gradient-to-r from-orange-400 to-yellow-400 text-white px-3 py-1 rounded-lg text-[11px] shadow-sm uppercase tracking-widest shadow-orange-500/20">Trending</span>
                                     <span>Picks ⚡</span>
@@ -382,7 +381,7 @@ const Home = () => {
                         </div>
 
                         {/* Quick Grid (Vertical Scroll) - Simple Rainbow Cards */}
-                        <div ref={trendingContainerRef} data-lenis-prevent className="flex flex-col overflow-y-auto pr-1 hide-scrollbar gap-2 relative z-10 h-full pt-1 scroll-smooth touch-pan-y overscroll-contain transform-gpu">
+                        <div ref={trendingContainerRef} data-lenis-prevent className="flex flex-col overflow-y-auto pr-1 hide-scrollbar gap-2 relative z-10 h-full pt-1 scroll-smooth overscroll-contain transform-gpu">
 
                             {loadingData ? (
                                 Array.from({ length: 4 }).map((_, i) => (
@@ -452,11 +451,9 @@ const Home = () => {
 
                 {/* 2. Menu Section Header (Glowing Gradient Line) */}
                 <div ref={sectionHeaderRef} className="flex items-center justify-center relative py-6 md:py-8 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
                     <div className="h-px bg-gradient-to-r from-transparent via-orange-300 to-transparent flex-1 opacity-50"></div>
 
                     <div className="px-6 relative">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 rounded-full blur opacity-20 group-hover:opacity-60 transition duration-1000 animate-pulse"></div>
                         <span className="relative px-6 py-2 bg-white rounded-full border border-orange-100 text-sm md:text-base font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600 uppercase shadow-sm">
                             Explore Food Items
                         </span>
