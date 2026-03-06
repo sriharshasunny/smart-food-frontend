@@ -45,15 +45,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
             {/* Sidebar Container */}
             <motion.div
-                className={`fixed top-4 left-4 bottom-4 h-[calc(100vh-2rem)] w-[280px] z-[60] transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-[120%]'
+                className={`fixed top-0 left-0 h-full w-[280px] z-[60] transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
                     } shrink-0`}
             >
-                <div className="h-full w-full relative overflow-hidden rounded-3xl shadow-2xl flex flex-col bg-white">
+                <div className="h-full w-full relative overflow-hidden rounded-tr-[2.5rem] shadow-2xl flex flex-col bg-white">
 
                     {/* Header with Gradient Border */}
-                    <div className="relative rounded-t-3xl shrink-0">
+                    <div className="relative rounded-tr-[2.5rem] shrink-0">
                         {/* Gradient Border */}
-                        <div className="absolute inset-x-0 bottom-0 h-[1.5px] bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 p-[1.5px] rounded-tr-[2.5rem]">
+                            <div className="h-full w-full bg-white rounded-tr-[calc(2.5rem-1.5px)]"></div>
+                        </div>
 
                         <div className="relative p-6 flex items-center justify-between">
                             <div className="flex items-center gap-2 group">
