@@ -1,15 +1,11 @@
 require('dotenv').config();
 const { processChatRequest } = require('../controllers/chatController');
 
-// Mock req and res
 const req = {
     body: {
-        message: "I want to reorder what I got last time. Are those items available?",
-        userId: "d8e3d0cd-f2d1-432d-88b1-12f38d390a37", // A valid user ID format, though might need a real one from DB
-        history: [
-            { sender: 'user', content: 'What is near me?' },
-            { sender: 'ai', content: 'I found these restaurants nearby!' }
-        ]
+        message: "suggest me best food items for dinner like burgers and biryani and ice creams",
+        userId: "d8e3d0cd-f2d1-432d-88b1-12f38d390a37",
+        history: []
     }
 };
 

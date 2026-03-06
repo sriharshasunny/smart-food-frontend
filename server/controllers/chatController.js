@@ -180,7 +180,19 @@ async function advancedSearchFood(filters) {
     let query = supabase.from('foods').select('*, restaurant:restaurants(*)');
 
     if (filters.food_name) {
-        query = query.or(`name.ilike.%${filters.food_name}%,category.ilike.%${filters.food_name}%,description.ilike.%${filters.food_name}%`);
+        // Handle potential comma-separated lists from AI safely to prevent Supabase OR syntax errors
+        const words = filters.food_name.split(',').map(w => w.trim()).filter(Boolean);
+        const orConditions = [];
+        words.forEach(word => {
+            const safeWord = word.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+            if (safeWord) {
+                // If the value has spaces, Supabase might still complain unless quoted, but % matches around it
+                orConditions.push(`name.ilike.%${safeWord}%,category.ilike.%${safeWord}%,description.ilike.%${safeWord}%`);
+            }
+        });
+        if (orConditions.length > 0) {
+            query = query.or(orConditions.join(','));
+        }
     }
     if (filters.price_max) query = query.lte('price', filters.price_max);
     if (filters.price_min) query = query.gte('price', filters.price_min);

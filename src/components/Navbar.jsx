@@ -19,16 +19,16 @@ const Navbar = ({ toggleSidebar }) => {
     ];
 
     return (
-        <nav className="sticky top-4 mt-4 mx-4 md:mx-auto md:w-[calc(100%-2rem)] max-w-[1200px] z-50 transition-all duration-300 rounded-full shadow-2xl shadow-black/10">
+        <nav className="sticky top-0 z-50 transition-all duration-300 rounded-b-[1.5rem] shadow-lg">
             {/* 1. Gradient Border Layer (The "Light") */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400/80 via-pink-500/80 to-purple-500/80 animate-gradient-x p-[1.5px]">
-                {/* 2. Inner Background Layer (Glassmorphism) */}
-                <div className="h-full w-full bg-white/90 backdrop-blur-xl rounded-[calc(9999px-1.5px)]"></div>
+            <div className="absolute inset-0 rounded-b-[1.5rem] bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 animate-gradient-x p-[1.5px] shadow-xl shadow-purple-500/20">
+                {/* 2. Inner Background Layer (Solid White) */}
+                <div className="h-full w-full bg-white rounded-b-[calc(1.5rem-1.5px)]"></div>
             </div>
 
-            <div className="px-5 w-full relative z-10">
-                {/* Reduced height by 12px: h-[42px] md:h-[58px] */}
-                <div className="flex justify-between items-center h-[42px] md:h-[58px] gap-4">
+            <div className="max-w-[1600px] mx-auto px-6 w-full relative z-10">
+                {/* Reduced height by ~10px: h-16/20 -> h-[54px] md:h-[70px] */}
+                <div className="flex justify-between items-center h-[54px] md:h-[70px] gap-4">
 
                     {/* LEFT: Toggle, Logo */}
                     <div className="flex items-center gap-2 md:gap-4">
