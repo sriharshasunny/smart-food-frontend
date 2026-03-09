@@ -20,7 +20,11 @@ exports.processChatRequest = async (req, res) => {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" }); // Using flash for speed and context
+        const jsonModel = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        const textModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const conversationContext = history && history.length > 0
             ? history.map(msg => `${msg.sender === 'user' ? 'User' : 'SmartBot'}: ${msg.content || msg.message || ''}`).join('\n')
@@ -56,7 +60,7 @@ exports.processChatRequest = async (req, res) => {
             Current User Message: "${message}"
         `;
 
-        const pass1Result = await model.generateContent(pass1Prompt);
+        const pass1Result = await jsonModel.generateContent(pass1Prompt);
         const pass1Text = pass1Result.response.text();
 
         let structuredData;
@@ -134,7 +138,7 @@ exports.processChatRequest = async (req, res) => {
             Only return the raw conversational text string. No JSON, no markdown formatting.
         `;
 
-        const pass2Result = await model.generateContent(pass2Prompt);
+        const pass2Result = await textModel.generateContent(pass2Prompt);
         const finalMessage = pass2Result.response.text().trim();
 
         console.log("Pass 2 Response:", finalMessage);
