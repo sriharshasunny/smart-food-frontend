@@ -10,12 +10,12 @@ const Layout = ({ children }) => {
 
     return (
         <div className="min-h-screen flex bg-gray-50">
-            {/* Sidebar */}
+            {/* Sidebar (Fixed/Sticky on Desktop, Absolute on Mobile) */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             {/* Main Content Wrapper */}
-            <div className="flex-1 flex flex-col min-h-screen w-full transition-all duration-300">
-                {/* Navbar - sticky top-0 keeps it pinned while page scrolls */}
+            <div className="flex-1 flex flex-col min-h-screen relative w-full transition-all duration-300">
+                {/* Navbar */}
                 <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
                 {/* Page Content */}
