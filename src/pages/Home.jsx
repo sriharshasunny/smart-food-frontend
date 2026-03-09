@@ -213,9 +213,10 @@ const Home = () => {
         return { dishes: filteredDishes, restaurants: filteredRestaurants };
     }, [searchQuery, activeCategory, subFilters, restaurantFilters, dishes, realRestaurants]);
 
+    // High-End Glassmorphism Location Widget
     const locationWidget = (
         <div
-            className="flex items-center gap-3 bg-white/10 p-2 pl-3 pr-5 rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 cursor-pointer group relative overflow-hidden"
+            className="flex items-center gap-3 bg-white/10 backdrop-blur-2xl p-2 pl-3 pr-5 rounded-full border border-white/20 shadow-2xl transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-orange-500/20 cursor-pointer group relative overflow-hidden"
             onClick={detectLocation}
         >
             {/* Glossy highlight line */}
@@ -322,7 +323,7 @@ const Home = () => {
 
                         {/* Content Area */}
                         <ErrorBoundary key={viewMode}>
-                            <div ref={restaurantContainerRef} className="w-full overflow-x-auto overflow-y-hidden pb-4 pt-1 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth overscroll-contain transform-gpu">
+                            <div ref={restaurantContainerRef} data-lenis-prevent className="w-full overflow-x-auto overflow-y-hidden pb-4 pt-1 hide-scrollbar flex snap-x scroll-pl-4 gap-4 relative z-10 h-full items-center px-1 scroll-smooth overscroll-contain transform-gpu">
                                 {loadingData ? (
                                     Array.from({ length: 4 }).map((_, i) => (
                                         <div key={`skel-${i}`} className="min-w-[260px] snap-start h-full">
@@ -502,7 +503,7 @@ const Home = () => {
                 </div>
 
                 {/* 4. Popular Food Items Section (Bottom) */}
-                <section className="min-h-[500px] pt-2">
+                <section className="min-h-[500px] content-visibility-auto contain-layout pt-2">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
                         {loadingData ? (

@@ -122,8 +122,8 @@ const HeroBanner = ({ topRightContent }) => {
                             className="absolute inset-0 w-full h-full object-cover object-center origin-center pointer-events-none"
                         />
 
-                        {/* High-End gradient overlay for performance */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent md:via-black/50 pointer-events-none" />
+                        {/* High-End Glassmorphism Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent md:via-black/50 backdrop-blur-[2px] pointer-events-none" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent md:hidden pointer-events-none" />
 
                         {/* Content Area with Staggered Entrance */}
@@ -156,7 +156,7 @@ const HeroBanner = ({ topRightContent }) => {
                                         <ArrowRight size={18} className="md:w-5 md:h-5 relative z-10 transition-transform group-hover/btn:translate-x-1 text-orange-500" />
                                     </button>
 
-                                    <div className="hidden sm:flex items-center gap-2 px-5 py-3 md:py-3.5 bg-black/80 rounded-2xl border border-white/10 shadow-lg">
+                                    <div className="hidden sm:flex items-center gap-2 px-5 py-3 md:py-3.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Promo Code</span>
                                         <span className="text-sm md:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 ml-1">{currentOffer.code}</span>
                                     </div>
@@ -187,10 +187,10 @@ const HeroBanner = ({ topRightContent }) => {
                 </div>
 
                 <div className="hidden md:flex gap-4 pointer-events-auto">
-                    <button onClick={() => paginate(-1)} className="w-14 h-14 rounded-full border border-white/20 bg-black/60 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl hover:shadow-white/20">
+                    <button onClick={() => paginate(-1)} className="w-14 h-14 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl hover:shadow-white/20">
                         <ChevronLeft size={24} />
                     </button>
-                    <button onClick={() => paginate(1)} className="w-14 h-14 rounded-full border border-white/20 bg-black/60 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl hover:shadow-white/20">
+                    <button onClick={() => paginate(1)} className="w-14 h-14 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl hover:shadow-white/20">
                         <ChevronRight size={24} />
                     </button>
                 </div>

@@ -11,7 +11,7 @@ const data = JSON.stringify({
 const options = {
     hostname: 'localhost',
     port: 5000,
-    path: '/api/chat/ask',
+    path: '/api/chat',
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
