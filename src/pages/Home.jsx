@@ -449,7 +449,7 @@ const Home = () => {
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
                 {/* 2. Menu Section Header (Glowing Gradient Line) */}
-                <div ref={sectionHeaderRef} className="flex items-center justify-center relative py-6 md:py-8 overflow-hidden group">
+                <div ref={sectionHeaderRef} className="flex items-center justify-center relative py-2 md:py-4 overflow-hidden group">
                     <div className="h-px bg-gradient-to-r from-transparent via-orange-300 to-transparent flex-1 opacity-50"></div>
 
                     <div className="px-6 relative">

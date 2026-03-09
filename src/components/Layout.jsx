@@ -9,13 +9,13 @@ const Layout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen flex bg-gray-50">
-            {/* Sidebar (Fixed/Sticky on Desktop, Absolute on Mobile) */}
+        <div className="h-screen overflow-hidden flex bg-gray-50">
+            {/* Sidebar */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            {/* Main Content Wrapper */}
-            <div className="flex-1 flex flex-col min-h-screen relative w-full transition-all duration-300">
-                {/* Navbar */}
+            {/* Main Content Wrapper - scrollable, navbar is sticky inside */}
+            <div className="flex-1 flex flex-col min-h-screen overflow-y-auto w-full transition-all duration-300">
+                {/* Navbar sticks to the top of this scrollable container */}
                 <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
                 {/* Page Content */}
