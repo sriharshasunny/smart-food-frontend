@@ -20,7 +20,7 @@ const RestaurantCard = memo(({ restaurant }) => {
     return (
         <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">
             <div
-                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100 hover:-translate-y-1 transform-gpu will-change-transform"
+                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100 hover:-translate-y-1"
             >
                 {/* Image Section */}
                 <div className="relative h-32 md:h-40 overflow-hidden shrink-0 bg-gray-100">

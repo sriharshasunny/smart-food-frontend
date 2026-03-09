@@ -213,10 +213,9 @@ const Home = () => {
         return { dishes: filteredDishes, restaurants: filteredRestaurants };
     }, [searchQuery, activeCategory, subFilters, restaurantFilters, dishes, realRestaurants]);
 
-    // High-End Glassmorphism Location Widget
     const locationWidget = (
         <div
-            className="flex items-center gap-3 bg-white/10 backdrop-blur-2xl p-2 pl-3 pr-5 rounded-full border border-white/20 shadow-2xl transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-orange-500/20 cursor-pointer group relative overflow-hidden"
+            className="flex items-center gap-3 bg-white/10 p-2 pl-3 pr-5 rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 cursor-pointer group relative overflow-hidden"
             onClick={detectLocation}
         >
             {/* Glossy highlight line */}
@@ -503,7 +502,7 @@ const Home = () => {
                 </div>
 
                 {/* 4. Popular Food Items Section (Bottom) */}
-                <section className="min-h-[500px] content-visibility-auto contain-layout pt-2">
+                <section className="min-h-[500px] pt-2">
                     {/* Food Grid */}
                     <ErrorBoundary key="food-grid">
                         {loadingData ? (

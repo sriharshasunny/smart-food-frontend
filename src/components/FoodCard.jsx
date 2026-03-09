@@ -29,7 +29,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
     if (variant === 'horizontal') {
         return (
             <div
-                className="bg-white rounded-2xl p-3 border border-gray-100 flex gap-4 relative group hover:border-orange-200 transition-colors will-change-transform transform-gpu"
+                className="bg-white rounded-2xl p-3 border border-gray-100 flex gap-4 relative group hover:border-orange-200 transition-colors"
             >
 
                 {/* Image Section - Square - Optimized loading */}
@@ -101,7 +101,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
 
     // Vertical layout (original - for home page grid)
     return (
-        <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 hover:border-orange-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group flex flex-col h-full will-change-transform transform-gpu hover:-translate-y-1.5 cursor-pointer relative">
+        <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 hover:border-orange-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group flex flex-col h-full hover:-translate-y-1.5 cursor-pointer relative">
 
             {/* Premium Inner Glow */}
             <div className="absolute inset-0 rounded-[1.5rem] border-2 border-transparent group-hover:border-white/50 pointer-events-none z-10 transition-colors duration-500" />
