@@ -21,10 +21,10 @@ exports.processChatRequest = async (req, res) => {
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const jsonModel = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             generationConfig: { responseMimeType: "application/json" }
         });
-        const textModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const textModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const conversationContext = history && history.length > 0
             ? history.map(msg => `${msg.sender === 'user' ? 'User' : 'SmartBot'}: ${msg.content || msg.message || ''}`).join('\n')
