@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
 
@@ -74,7 +74,6 @@ export const ShopProvider = ({ children }) => {
 
                         // MERGE STRATEGY: 
                         // Combined Cart = Backend Cart + (Local Cart Items that aren't in Backend)
-                        // Actually better: If in both, sum quantity? Or prefer Local?
                         // Let's sum quantity for duplicates, add unique ones.
 
                         const fastCartMap = new Map();
@@ -118,16 +117,7 @@ export const ShopProvider = ({ children }) => {
 
         // 2. LOGOUT Detection
         else if (!currentUser && previousUser) {
-            // User logged out. 
-            // Optional: Clear cart to be clean? Or keep for guest?
-            // "Cart items disappearing" - User might want them to stay?
-            // Usually standard is Discard. 
-            // But if I want to "Fix items appearing", I'll keep them in LocalStorage but clear Context?
-            // No, Context mirrors LS.
-            // Let's CLEAR for security, assuming "Disappearing" referred to the Refresh issue, not Logout.
-            // But if they refresh, `currentUser` is null initially? No, Firebase Auth persists.
-            // If they Refresh, `loading` is true, then `user` comes back.
-            // So this `else if` only hits on explicit Logout.
+            // User logged out. Clear for security
             setCart([]);
             setWishlist([]);
             localStorage.removeItem('cart'); // Clean slate for new guest
@@ -167,8 +157,8 @@ export const ShopProvider = ({ children }) => {
     }, [cart, user, isInitialized]);
 
 
-    // Cart Logic
-    const addToCart = (item) => {
+    // Cart Logic - Memoized
+    const addToCart = useCallback((item) => {
         const itemWithId = { ...item, id: item._id || item.id };
         setCart((prevCart) => {
             const existingItem = prevCart.find((i) => i.id === itemWithId.id);
@@ -179,13 +169,13 @@ export const ShopProvider = ({ children }) => {
             }
             return [...prevCart, { ...itemWithId, quantity: 1 }];
         });
-    };
+    }, []);
 
-    const removeFromCart = (itemId) => {
+    const removeFromCart = useCallback((itemId) => {
         setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
-    };
+    }, []);
 
-    const updateQuantity = (itemId, amount) => {
+    const updateQuantity = useCallback((itemId, amount) => {
         setCart((prevCart) =>
             prevCart.map((item) => {
                 if (item.id === itemId) {
@@ -194,12 +184,12 @@ export const ShopProvider = ({ children }) => {
                 return item;
             }).filter((item) => item.quantity > 0)
         );
-    };
+    }, []);
 
-    const clearCart = () => setCart([]);
+    const clearCart = useCallback(() => setCart([]), []);
 
-    // Wishlist Logic
-    const toggleWishlist = (item) => {
+    // Wishlist Logic - Memoized
+    const toggleWishlist = useCallback((item) => {
         const itemWithId = { ...item, id: item._id || item.id };
 
         // Optimistic UI Update first
@@ -219,17 +209,19 @@ export const ShopProvider = ({ children }) => {
                 body: JSON.stringify({ userId: user._id, foodId: itemWithId.id })
             }).catch(e => console.error("Wishlist Sync Error", e));
         }
-    };
+    }, [user?._id]);
 
-    const isInWishlist = (itemId, type = 'food') => wishlist.some((item) => item.id === itemId && (item.type || 'food') === type);
+    const isInWishlist = useCallback((itemId, type = 'food') => {
+        return wishlist.some((item) => item.id === itemId && (item.type || 'food') === type);
+    }, [wishlist]);
 
-    const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-    const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+    const cartTotal = useMemo(() => cart.reduce((total, item) => total + item.price * item.quantity, 0), [cart]);
+    const cartCount = useMemo(() => cart.reduce((count, item) => count + item.quantity, 0), [cart]);
 
     // Global Search State
     const [searchQuery, setSearchQuery] = useState("");
 
-    const value = React.useMemo(() => ({
+    const value = useMemo(() => ({
         cart,
         wishlist,
         addToCart,
@@ -242,7 +234,19 @@ export const ShopProvider = ({ children }) => {
         cartCount,
         searchQuery,
         setSearchQuery
-    }), [cart, wishlist, user, searchQuery]);
+    }), [
+        cart,
+        wishlist,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        toggleWishlist,
+        isInWishlist,
+        cartTotal,
+        cartCount,
+        searchQuery
+    ]);
 
     return (
         <ShopContext.Provider value={value}>

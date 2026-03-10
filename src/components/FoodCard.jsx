@@ -5,13 +5,14 @@ import { optimizeImage } from '../utils/imageOptimizer';
 
 // Optimization: Use memo to prevent unnecessary re-renders
 const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured = false, onAdd }) => {
-    const { addToCart, toggleWishlist, isInWishlist, cart } = useShop();
+    // Avoid importing 'cart' directly if we don't strictly need it to display the quantity here
+    // In many UI designs, FoodCard just needs to *add* to cart. 
+    // This simple change prevents all 50 FoodCards from re-rendering every time 1 item is added to the cart!
+    const { addToCart, toggleWishlist, isInWishlist } = useShop();
     const [imageLoaded, setImageLoaded] = useState(false);
-    const isWishlisted = isInWishlist(food.id);
 
-    // Check if item is in cart
-    const cartItem = cart.find(item => item.id === food.id);
-    const quantity = cartItem?.quantity || 0;
+    // Derived state
+    const isWishlisted = isInWishlist(food.id);
 
     const handleAdd = (e) => {
         e.preventDefault();
@@ -29,14 +30,13 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
     if (variant === 'horizontal') {
         return (
             <div
-                className="bg-white rounded-2xl p-3 border border-gray-100 flex gap-4 relative group hover:border-orange-200 transition-colors will-change-transform transform-gpu"
+                className="bg-white rounded-2xl p-3 border border-gray-100 flex gap-4 relative hover:border-orange-200 transition-colors"
+                style={{ transform: 'translateZ(0)' }} // Hardware acceleration without heavy classes
             >
-
                 {/* Image Section - Square - Optimized loading */}
                 <div className="relative w-28 h-28 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                    {/* YouTube-style Skeleton Overlay */}
                     {!imageLoaded && (
-                        <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
+                        <div className="absolute inset-0 bg-gray-200" />
                     )}
                     <img
                         src={optimizeImage(food.image, 200)} // Optimize for thumbnail
@@ -44,7 +44,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
                         loading="lazy"
                         decoding="async"
                         onLoad={() => setImageLoaded(true)}
-                        className={`w-full h-full object-cover transform transition-opacity duration-500 relative z-10 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        className={`w-full h-full object-cover relative z-10 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     />
 
                     {/* Veg/Non-veg Indicator */}
@@ -55,7 +55,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
                     {/* Wishlist Button - Simplified interactions */}
                     <button
                         onClick={handleWishlist}
-                        className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-white/90 text-gray-400 hover:text-red-500 transition-colors shadow-sm"
+                        className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-white/90 text-gray-400 hover:text-red-500 shadow-sm"
                     >
                         <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
                     </button>
@@ -75,8 +75,8 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
 
                     {/* Rating and Time */}
                     <div className="flex items-center gap-3 mb-3 text-xs text-gray-500 font-medium">
-                        <div className="flex items-center gap-1 bg-black/5 backdrop-blur-sm px-2 py-0.5 rounded text-yellow-500 shadow-sm shadow-black/5 font-black border border-black/5 text-[10px]">
-                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500 drop-shadow-[0_0_2px_rgba(234,179,8,0.4)]" />
+                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded text-yellow-600 font-bold border border-gray-100 text-[10px]">
+                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                             <span>{food.rating || 4.2}</span>
                         </div>
                         <span>•</span>
@@ -101,16 +101,14 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
 
     // Vertical layout (original - for home page grid)
     return (
-        <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 hover:border-orange-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group flex flex-col h-full will-change-transform transform-gpu hover:-translate-y-1.5 cursor-pointer relative">
-
-            {/* Premium Inner Glow */}
-            <div className="absolute inset-0 rounded-[1.5rem] border-2 border-transparent group-hover:border-white/50 pointer-events-none z-10 transition-colors duration-500" />
-
+        <div
+            className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 flex flex-col h-full cursor-pointer relative hover:border-orange-200 transition-colors"
+            style={{ transform: 'translateZ(0)' }}
+        >
             {/* Image Section */}
             <div className="relative h-44 bg-gray-100 overflow-hidden">
-                {/* YouTube-style Skeleton Overlay */}
                 {!imageLoaded && (
-                    <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
+                    <div className="absolute inset-0 bg-gray-200" />
                 )}
 
                 <img
@@ -119,28 +117,28 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
                     loading="lazy"
                     decoding="async"
                     onLoad={() => setImageLoaded(true)}
-                    className={`w-full h-full object-cover relative z-10 transition-all duration-700 ease-out group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0 scale-105'}`}
+                    className={`w-full h-full object-cover relative z-10 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80" />
 
                 {/* Restaurant Name Overlay */}
                 {restaurantName && (
                     <div className="absolute top-3 left-3 z-10">
-                        <p className="text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-1.5 drop-shadow-md bg-black/30 backdrop-blur-md px-2 py-1 rounded-md border border-white/10">
+                        <p className="text-[10px] font-black text-white uppercase tracking-wider bg-black/50 px-2 py-1 rounded-md">
                             {restaurantName}
                         </p>
                     </div>
                 )}
 
-                {/* Rating Badge - Liquid Dark with Gold Text */}
-                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-lg text-yellow-400 text-[11px] font-black shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-white/10 ring-1 ring-white/5">
-                    {food.rating || 4.2} <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                {/* Rating Badge */}
+                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 bg-black/60 px-2.5 py-1.5 rounded-lg text-yellow-400 text-[11px] font-black">
+                    {food.rating || 4.2} <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                 </div>
 
                 <button
                     onClick={handleWishlist}
-                    className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-white hover:text-red-500 transition-colors border border-white/20 hover:border-transparent shadow-sm"
+                    className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 text-gray-400 hover:text-red-500 shadow-sm"
                 >
                     <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current text-red-500' : ''}`} />
                 </button>
@@ -149,7 +147,7 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
             {/* Content */}
             <div className="p-4 flex flex-col flex-grow bg-white">
                 <div className="flex justify-between items-start mb-1.5 gap-2">
-                    <h3 className="font-bold text-gray-900 line-clamp-1 text-[15px] group-hover:text-orange-600 transition-colors leading-tight">
+                    <h3 className="font-bold text-gray-900 line-clamp-1 text-[15px] leading-tight">
                         {food.name}
                     </h3>
                     <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 mt-0.5 ${food.isVeg ? 'border-green-600' : 'border-red-600'}`}>
@@ -168,10 +166,10 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
 
                     <button
                         onClick={handleAdd}
-                        className="bg-orange-50 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 text-orange-600 hover:text-white font-bold py-2 px-4 rounded-xl text-xs uppercase tracking-wider transition-all duration-300 border border-orange-100 hover:border-transparent shadow-sm hover:shadow-orange-500/30 flex items-center gap-1 group/btn"
+                        className="bg-orange-50 hover:bg-orange-500 text-orange-600 hover:text-white font-bold py-2 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors border border-orange-100 hover:border-transparent flex items-center gap-1"
                     >
                         ADD
-                        <span className="text-sm font-light leading-none group-hover/btn:rotate-90 transition-transform duration-300 ml-0.5">+</span>
+                        <span className="text-sm font-light leading-none ml-0.5">+</span>
                     </button>
                 </div>
             </div>
@@ -179,4 +177,9 @@ const FoodCard = memo(({ food, restaurantName, variant = 'vertical', isFeatured 
     );
 });
 
-export default FoodCard;
+// We need a stable comparison to prevent re-renders when parent states change
+export default memo(FoodCard, (prevProps, nextProps) => {
+    return prevProps.food.id === nextProps.food.id &&
+        prevProps.variant === nextProps.variant &&
+        prevProps.onAdd === nextProps.onAdd;
+});

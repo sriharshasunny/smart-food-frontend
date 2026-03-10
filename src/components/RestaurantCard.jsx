@@ -11,6 +11,8 @@ const RestaurantCard = memo(({ restaurant }) => {
     const { id, name, image, rating, cuisine, deliveryTime, minOrder, categories, costForTwo, tags } = restaurant || {};
     const { isInWishlist, toggleWishlist } = useShop();
     const [imageLoaded, setImageLoaded] = useState(false);
+
+    // Derived state
     const isWishlisted = isInWishlist(id);
 
     const cuisineText = Array.isArray(cuisine) ? cuisine.join(', ') : (cuisine || (Array.isArray(categories) ? categories.join(', ') : "Restaurant"));
@@ -20,13 +22,13 @@ const RestaurantCard = memo(({ restaurant }) => {
     return (
         <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">
             <div
-                className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-100 hover:-translate-y-1 transform-gpu will-change-transform"
+                className="bg-white rounded-[1.5rem] shadow-sm transition-colors duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-200"
+                style={{ transform: 'translateZ(0)' }} // Hardware acceleration without heavy classes
             >
                 {/* Image Section */}
                 <div className="relative h-32 md:h-40 overflow-hidden shrink-0 bg-gray-100">
-                    {/* YouTube-style Skeleton Overlay */}
                     {!imageLoaded && (
-                        <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
+                        <div className="absolute inset-0 bg-gray-200" />
                     )}
                     <img
                         src={optimizeImage(image || fallbackImage, 500)}
@@ -34,7 +36,7 @@ const RestaurantCard = memo(({ restaurant }) => {
                         loading="lazy"
                         decoding="async"
                         onLoad={() => setImageLoaded(true)}
-                        className={`w-full h-full object-cover relative z-10 transition-all duration-500 ease-out group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0 scale-95'}`}
+                        className={`w-full h-full object-cover relative z-10 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     />
 
                     {/* Gradient Overlay */}
@@ -52,17 +54,17 @@ const RestaurantCard = memo(({ restaurant }) => {
                             e.stopPropagation();
                             toggleWishlist(restaurant);
                         }}
-                        className={`absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300 shadow-sm border border-white/20 ${isWishlisted
+                        className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors duration-300 shadow-sm border border-white/20 ${isWishlisted
                             ? 'bg-red-500/90 text-white'
-                            : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
+                            : 'bg-white/90 text-gray-400 hover:text-red-500'
                             }`}
                     >
                         <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
                     </button>
 
-                    {/* Prominent Rating - Liquid Dark with Gold Text */}
-                    <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-lg text-yellow-400 text-[11px] font-black shadow-[0_4px_12px_rgba(0,0,0,0.5)] flex items-center gap-1.5 border border-white/10 ring-1 ring-white/5">
-                        {rating || 4.5} <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                    {/* Prominent Rating */}
+                    <div className="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1.5 rounded-lg text-yellow-400 text-[11px] font-black flex items-center gap-1.5">
+                        {rating || 4.5} <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                     </div>
                 </div>
 
@@ -72,8 +74,8 @@ const RestaurantCard = memo(({ restaurant }) => {
                         <h3 className="text-[17px] font-black text-gray-900 line-clamp-1 flex-1 tracking-tight group-hover:text-gray-600 transition-colors">
                             {name || "Restaurant Name"}
                         </h3>
-                        <div className="bg-gray-50 rounded-full p-1.5 group-hover:bg-gray-100 transition-colors">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400 group-hover:text-black" />
+                        <div className="bg-gray-50 rounded-full p-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
                         </div>
                     </div>
 
@@ -86,7 +88,7 @@ const RestaurantCard = memo(({ restaurant }) => {
                             Free Delivery
                         </span>
 
-                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-orange-600 transition-colors flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
                             Visit <span className="text-lg leading-none mb-0.5">›</span>
                         </span>
                     </div>
@@ -96,4 +98,7 @@ const RestaurantCard = memo(({ restaurant }) => {
     );
 });
 
-export default RestaurantCard;
+// Deep comparison to prevent re-renders unless id changes
+export default memo(RestaurantCard, (prevProps, nextProps) => {
+    return prevProps.restaurant?.id === nextProps.restaurant?.id;
+});

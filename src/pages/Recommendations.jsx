@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useShop } from '../context/ShopContext';
 import { mockDishes } from '../data/mockData';
 import FoodCard from '../components/FoodCard';
 
 const Recommendations = () => {
     const { addToCart } = useShop();
+
+    // Wrap in useCallback to prevent child components from re-rendering
+    const handleAddToCart = useCallback((dish) => {
+        addToCart(dish);
+    }, [addToCart]);
 
     // Simple logic to just show some "recommended" dishes for now
     const recommendedDishes = mockDishes.filter(d => d.rating >= 4.5);
@@ -16,7 +21,7 @@ const Recommendations = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {recommendedDishes.map(dish => (
-                    <FoodCard key={dish.id} food={dish} onAdd={addToCart} />
+                    <FoodCard key={dish.id} food={dish} onAdd={handleAddToCart} />
                 ))}
             </div>
         </div>
