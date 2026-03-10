@@ -100,37 +100,37 @@ exports.createPayment = async (req, res) => {
                 let foodId = item.foodId || item._id || item.id;
                 let restaurantId = item.restaurant_id || item.restaurantId;
 
-                // 1. Validate if foodId is a UUID
-                const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+                const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
-                // 2. Fallback Logic: If restaurantId is missing or foodId is not a UUID
-                if (!restaurantId || !isUUID(foodId)) {
-                    console.log(`[Payment] Resolving item by name fallback: "${item.name}"`);
-
+                // Priority 1: Resolve by UUID if possible
+                if (isUUID(foodId) && !isUUID(restaurantId)) {
                     const { data: foodData } = await supabase
+                        .from('foods')
+                        .select('restaurant_id')
+                        .eq('id', foodId)
+                        .maybeSingle();
+                    if (foodData) restaurantId = foodData.restaurant_id;
+                }
+
+                // Priority 2: Resolve by Name Fallback
+                if (!isUUID(restaurantId)) {
+                    console.log(`[Payment] Fallback to name search for: ${item.name}`);
+                    const { data: nameData } = await supabase
                         .from('foods')
                         .select('id, restaurant_id')
                         .ilike('name', item.name)
-                        .limit(1)
-                        .single();
+                        .maybeSingle();
 
-                    if (foodData) {
-                        foodId = foodData.id;
-                        restaurantId = foodData.restaurant_id;
-                        console.log(`[Payment] Fallback Success for "${item.name}": FoodID=${foodId}, RestID=${restaurantId}`);
-                    } else {
-                        console.warn(`[Payment] Fallback Failed for "${item.name}". Dashboard visibility might be affected.`);
+                    if (nameData) {
+                        foodId = foodId || nameData.id;
+                        restaurantId = nameData.restaurant_id;
                     }
                 }
 
-                // Ensure we don't insert invalid UUIDs into UUID columns
-                const finalFoodId = isUUID(foodId) ? foodId : null;
-                const finalRestaurantId = isUUID(restaurantId) ? restaurantId : null;
-
                 return {
                     order_id: newOrderId,
-                    food_id: finalFoodId,
-                    restaurant_id: finalRestaurantId,
+                    food_id: isUUID(foodId) ? foodId : null,
+                    restaurant_id: isUUID(restaurantId) ? restaurantId : null,
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity,
