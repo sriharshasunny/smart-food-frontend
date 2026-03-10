@@ -119,11 +119,23 @@ router.get('/:id/dashboard', async (req, res) => {
             !['Delivered', 'Cancelled'].includes(item.preparation_status)
         ).length;
 
+        // DEBUG: Check raw contents
+        const { data: rawItems } = await supabase.from('order_items').select('id, restaurant_id').limit(5);
+
         res.json({
             name: rest.name,
             totalItems: foodCount || 0,
             activeOrders: activeOrders,
-            revenue: revenue
+            revenue: revenue,
+            _debug: {
+                receivedId: id,
+                itemsFound: orderItems?.length || 0,
+                rawSample: rawItems?.length > 0 ? {
+                    col: 'restaurant_id',
+                    val: rawItems[0].restaurant_id,
+                    match: rawItems[0].restaurant_id === id
+                } : 'no_items'
+            }
         });
 
     } catch (error) {
