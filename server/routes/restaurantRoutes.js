@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../utils/supabase');
+const restaurantOrderController = require('../controllers/restaurantOrderController');
 
 // 1. Admin: Create Restaurant
 router.post('/create', async (req, res) => {
@@ -107,11 +108,22 @@ router.get('/:id/dashboard', async (req, res) => {
             .select('*', { count: 'exact', head: true })
             .eq('restaurant_id', id);
 
+        // Get Real Stats from order_items
+        const { data: orderItems, error: statsError } = await supabase
+            .from('order_items')
+            .select('price, quantity, preparation_status')
+            .eq('restaurant_id', id);
+
+        const revenue = (orderItems || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const activeOrders = (orderItems || []).filter(item =>
+            !['Delivered', 'Cancelled'].includes(item.preparation_status)
+        ).length;
+
         res.json({
             name: rest.name,
             totalItems: foodCount || 0,
-            activeOrders: 0, // Placeholder for future
-            revenue: 0 // Placeholder
+            activeOrders: activeOrders,
+            revenue: revenue
         });
 
     } catch (error) {
@@ -209,5 +221,11 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ message: "Error deleting restaurant", error: error.message });
     }
 });
+
+// 9. NEW: Get Restaurant Orders
+router.get('/:id/orders', restaurantOrderController.getRestaurantOrders);
+
+// 10. NEW: Update Order Item Status
+router.patch('/order-item/:itemId', restaurantOrderController.updateOrderItemStatus);
 
 module.exports = router;

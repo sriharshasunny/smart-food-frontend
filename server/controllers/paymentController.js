@@ -94,28 +94,43 @@ exports.createPayment = async (req, res) => {
         console.log("Processing Cart for Order Items:", JSON.stringify(cart, null, 2));
 
         if (cart && cart.length > 0) {
-            const itemsToInsert = cart.map(item => {
+            // Fetch restaurant_ids for the items to ensure they are tracked correctly
+            // Some items might already have restaurant_id if passed from frontend
+            const itemsToInsert = await Promise.all(cart.map(async (item) => {
                 let foodId = item.foodId || item._id || item.id;
+                let restaurantId = item.restaurant_id || item.restaurantId;
 
-                // Validate UUID format (Simple regex check)
+                // Validate UUID format
                 const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(foodId);
 
+                if (!restaurantId && isUUID) {
+                    // Fallback: Fetch restaurant_id from foods table if missing
+                    const { data: food } = await supabase
+                        .from('foods')
+                        .select('restaurant_id')
+                        .eq('id', foodId)
+                        .single();
+                    if (food) restaurantId = food.restaurant_id;
+                }
+
                 if (!isUUID) {
-                    console.warn(`[Payment] Item ID '${foodId}' is not a valid UUID. Setting food_id to NULL.`);
+                    console.warn(`[Payment] Item ID '${foodId}' is not a valid UUID.`);
                     foodId = null;
                 }
 
-                console.log(`Mapping Item: ${item.name}, Final ID: ${foodId}`);
+                console.log(`Mapping Item: ${item.name}, Food ID: ${foodId}, Restaurant ID: ${restaurantId}`);
 
                 return {
                     order_id: newOrderId,
-                    food_id: foodId, // now safe (UUID or null)
+                    food_id: foodId,
+                    restaurant_id: restaurantId,
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity,
-                    image: item.image
+                    image: item.image,
+                    preparation_status: 'Placed'
                 };
-            });
+            }));
 
             const { error: itemsError } = await supabase
                 .from('order_items')

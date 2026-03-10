@@ -14,6 +14,42 @@ const RestaurantDashboard = () => {
     const [foods, setFoods] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [orders, setOrders] = useState([]);
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders'
+
+    const fetchOrders = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/restaurant/${id}/orders`);
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data);
+            }
+        } catch (error) {
+            console.error("Orders Fetch Error:", error);
+        }
+    };
+
+    const handleUpdateStatus = async (itemId, newStatus) => {
+        try {
+            const res = await fetch(`${API_URL}/api/restaurant/order-item/${itemId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                // Update local state for immediate feedback
+                setOrders(prev => prev.map(order => ({
+                    ...order,
+                    items: order.items.map(item =>
+                        item.itemId === itemId ? { ...item, status: newStatus } : item
+                    )
+                })));
+            }
+        } catch (error) {
+            console.error("Status Update Error:", error);
+        }
+    };
 
     // Variant: Add Edit Logic
     const [editItem, setEditItem] = useState(null);
@@ -48,7 +84,7 @@ const RestaurantDashboard = () => {
             const [restRes, foodsRes, statsRes] = await Promise.all([
                 fetch(`${API_URL}/api/restaurant/${id}`),
                 fetch(`${API_URL}/api/food/restaurant/${id}`),
-                fetch(`${API_URL}/api/restaurant/${id}/stats`)
+                fetch(`${API_URL}/api/restaurant/${id}/dashboard`)
             ]);
 
             if (restRes.ok) {
@@ -66,6 +102,7 @@ const RestaurantDashboard = () => {
                 const statsData = await statsRes.json();
                 setStats(statsData);
             }
+            fetchOrders(id);
 
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
@@ -78,6 +115,9 @@ const RestaurantDashboard = () => {
         const storedId = localStorage.getItem('restaurant_id');
         if (storedId) {
             fetchDashboardData(storedId);
+            // Polling for new orders every 15 seconds
+            const interval = setInterval(() => fetchOrders(storedId), 15000);
+            return () => clearInterval(interval);
         } else {
             navigate('/login');
         }
@@ -231,14 +271,18 @@ const RestaurantDashboard = () => {
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 mt-6">
-                    <button className="w-full flex items-center gap-3 px-4 py-3.5 bg-orange-50 text-orange-700 font-bold rounded-2xl transition-all shadow-sm ring-1 ring-orange-100">
-                        <LayoutDashboard className="w-5 h-5" />
-                        Overview
+                    <button
+                        onClick={() => setActiveTab('overview')}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 font-bold rounded-2xl transition-all shadow-sm ${activeTab === 'overview' ? 'bg-orange-50 text-orange-700 ring-1 ring-orange-100' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-md'}`}
+                    >
+                        <LayoutDashboard className="w-5 h-5" /> Overview
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-500 font-bold hover:bg-white hover:text-gray-900 rounded-2xl transition-all hover:shadow-md hover:ring-1 hover:ring-gray-100 group">
-                        <Package className="w-5 h-5 group-hover:text-orange-500 transition-colors" />
-                        Live Orders
-                        <span className="ml-auto bg-gray-100 group-hover:bg-orange-100 text-gray-500 group-hover:text-orange-600 px-2 rounded-lg text-[10px] font-black py-0.5 transition-colors">BETA</span>
+                    <button
+                        onClick={() => setActiveTab('orders')}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 font-bold rounded-2xl transition-all shadow-sm ${activeTab === 'orders' ? 'bg-orange-50 text-orange-700 ring-1 ring-orange-100' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-md'}`}
+                    >
+                        <Package className="w-5 h-5" /> Live Orders
+                        {stats.activeOrders > 0 && <span className="ml-auto bg-orange-500 text-white px-2 rounded-lg text-[10px] font-black py-0.5">{stats.activeOrders}</span>}
                     </button>
                     <button className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-500 font-bold hover:bg-white hover:text-gray-900 rounded-2xl transition-all hover:shadow-md hover:ring-1 hover:ring-gray-100 group">
                         <DollarSign className="w-5 h-5 group-hover:text-green-500 transition-colors" />
@@ -272,22 +316,24 @@ const RestaurantDashboard = () => {
                 {/* Topbar */}
                 <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                     <div>
-                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Dashboard</h2>
-                        <p className="text-gray-500 font-medium">Here's what's happening today.</p>
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">{activeTab === 'overview' ? 'Dashboard' : 'Order Management'}</h2>
+                        <p className="text-gray-500 font-medium">{activeTab === 'overview' ? "Here's what's happening today." : "Track and prepare your live orders."}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <button className="bg-white border border-gray-200 text-gray-600 font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm hover:bg-gray-50 transition-colors">
                             Help Center
                         </button>
-                        <button
-                            onClick={() => {
-                                setNewItem({ name: '', price: '', description: '', category: 'Main Course', image: '', isVeg: true });
-                                setShowAddModal(true);
-                            }}
-                            className="bg-black text-white hover:bg-gray-900 font-bold px-6 py-2.5 rounded-xl text-sm shadow-lg shadow-gray-200 flex items-center gap-2 transition-transform active:scale-95"
-                        >
-                            <Plus className="w-4 h-4" /> Add New Item
-                        </button>
+                        {activeTab === 'overview' && (
+                            <button
+                                onClick={() => {
+                                    setNewItem({ name: '', price: '', description: '', category: 'Main Course', image: '', isVeg: true });
+                                    setShowAddModal(true);
+                                }}
+                                className="bg-black text-white hover:bg-gray-900 font-bold px-6 py-2.5 rounded-xl text-sm shadow-lg shadow-gray-200 flex items-center gap-2 transition-transform active:scale-95"
+                            >
+                                <Plus className="w-4 h-4" /> Add New Item
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -345,111 +391,191 @@ const RestaurantDashboard = () => {
                     </div>
                 </motion.div>
 
-                {/* Menu Section */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-xl font-black text-gray-900">Menu Overview</h3>
-                        <div className="flex gap-2">
-                            <select className="bg-white border border-gray-200 text-sm font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20">
-                                <option>All Categories</option>
-                                <option>Main Course</option>
-                                <option>Starter</option>
-                            </select>
+                {/* Content Section */}
+                {activeTab === 'overview' ? (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-xl font-black text-gray-900">Menu Overview</h3>
+                            <div className="flex gap-2">
+                                <select className="bg-white border border-gray-200 text-sm font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20">
+                                    <option>All Categories</option>
+                                    <option>Main Course</option>
+                                    <option>Starter</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
-                    {isLoading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="bg-white rounded-[2rem] h-40 animate-pulse border border-gray-100"></div>
-                            ))}
-                        </div>
-                    ) : (
-                        <motion.div
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"
-                        >
-                            {foods.map((food) => (
-                                <motion.div
-                                    layout
-                                    variants={itemVariants}
-                                    key={food.id}
-                                    className={`group bg-white rounded-[2.5rem] border p-5 transition-all duration-500 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col ${food.available ? 'border-gray-100 opacity-100' : 'border-gray-200 bg-gray-50 opacity-80 grayscale overflow-hidden'}`}
-                                >
-                                    {/* Image Section */}
-                                    <div className="h-48 w-full rounded-[2rem] overflow-hidden mb-5 relative shrink-0">
-                                        {food.image ? (
-                                            <img
-                                                src={food.image}
-                                                alt={food.name}
-                                                className="w-full h-full object-cover"
-                                                loading="lazy"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
-                                                <Utensils className="w-10 h-10 opacity-50" />
-                                            </div>
-                                        )}
-
-                                        {/* Top Action Bar (Edit/Delete) */}
-                                        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleEditClick(food); }}
-                                                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-700 hover:text-orange-600 flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
-                                                title="Edit Dish"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteItem(food.id); }}
-                                                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-700 hover:text-red-600 flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
-                                                title="Delete Dish"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-
-                                        {/* Veg/Non-Veg Badge */}
-                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                                            <div className={`w-2 h-2 rounded-full ${food.is_veg ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_6px_currentColor]`} />
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-gray-600">{food.category}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Content Section */}
-                                    <div className="flex-1 flex flex-col">
-                                        <div className="flex justify-between items-start mb-2 gap-2">
-                                            <h3 className="font-bold text-xl text-gray-900 leading-tight line-clamp-1" title={food.name}>{food.name}</h3>
-                                            <span className="font-black text-xl text-gray-900 whitespace-nowrap">₹{food.price}</span>
-                                        </div>
-                                        <p className="text-gray-500 text-sm font-medium line-clamp-2 mb-6 leading-relaxed flex-1">
-                                            {food.description || "No description available."}
-                                        </p>
-
-                                        {/* Bottom Footer: Availability Toggle */}
-                                        <div className="mt-auto pt-4 border-t border-dashed border-gray-100 flex items-center justify-between">
-                                            <span className={`text-[11px] font-black uppercase tracking-wider transition-colors ${food.available ? 'text-green-600' : 'text-gray-400'}`}>
-                                                {food.available ? 'Available Now' : 'Currently Unavailable'}
-                                            </span>
-
-                                            <button
-                                                onClick={() => handleToggleStock(food.id, food.available)}
-                                                className={`relative w-14 h-8 rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-orange-500/20 ${food.available ? 'bg-gradient-to-r from-green-400 to-green-500 shadow-[0_4px_12px_rgba(74,222,128,0.4)]' : 'bg-gray-200 shadow-inner'}`}
-                                            >
-                                                <span className="sr-only">Toggle Availability</span>
-                                                <span
-                                                    className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-spring ${food.available ? 'translate-x-6' : 'translate-x-0'}`}
+                        {isLoading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="bg-white rounded-[2rem] h-40 animate-pulse border border-gray-100"></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <motion.div
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"
+                            >
+                                {foods.map((food) => (
+                                    <motion.div
+                                        layout
+                                        variants={itemVariants}
+                                        key={food.id}
+                                        className={`group bg-white rounded-[2.5rem] border p-5 transition-all duration-500 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col ${food.available ? 'border-gray-100 opacity-100' : 'border-gray-200 bg-gray-50 opacity-80 grayscale overflow-hidden'}`}
+                                    >
+                                        {/* Image Section */}
+                                        <div className="h-48 w-full rounded-[2rem] overflow-hidden mb-5 relative shrink-0">
+                                            {food.image ? (
+                                                <img
+                                                    src={food.image}
+                                                    alt={food.name}
+                                                    className="w-full h-full object-cover"
+                                                    loading="lazy"
                                                 />
-                                            </button>
+                                            ) : (
+                                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
+                                                    <Utensils className="w-10 h-10 opacity-50" />
+                                                </div>
+                                            )}
+
+                                            {/* Top Action Bar (Edit/Delete) */}
+                                            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(food); }}
+                                                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-700 hover:text-orange-600 flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
+                                                    title="Edit Dish"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteItem(food.id); }}
+                                                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-700 hover:text-red-600 flex items-center justify-center transition-colors hover:scale-105 active:scale-95"
+                                                    title="Delete Dish"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
+                                            {/* Veg/Non-Veg Badge */}
+                                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                                                <div className={`w-2 h-2 rounded-full ${food.is_veg ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_6px_currentColor]`} />
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-600">{food.category}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    )}
-                </div>
+
+                                        {/* Content Section */}
+                                        <div className="flex-1 flex flex-col">
+                                            <div className="flex justify-between items-start mb-2 gap-2">
+                                                <h3 className="font-bold text-xl text-gray-900 leading-tight line-clamp-1" title={food.name}>{food.name}</h3>
+                                                <span className="font-black text-xl text-gray-900 whitespace-nowrap">₹{food.price}</span>
+                                            </div>
+                                            <p className="text-gray-500 text-sm font-medium line-clamp-2 mb-6 leading-relaxed flex-1">
+                                                {food.description || "No description available."}
+                                            </p>
+
+                                            {/* Bottom Footer: Availability Toggle */}
+                                            <div className="mt-auto pt-4 border-t border-dashed border-gray-100 flex items-center justify-between">
+                                                <span className={`text-[11px] font-black uppercase tracking-wider transition-colors ${food.available ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    {food.available ? 'Available Now' : 'Currently Unavailable'}
+                                                </span>
+
+                                                <button
+                                                    onClick={() => handleToggleStock(food.id, food.available)}
+                                                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-orange-500/20 ${food.available ? 'bg-gradient-to-r from-green-400 to-green-500 shadow-[0_4px_12px_rgba(74,222,128,0.4)]' : 'bg-gray-200 shadow-inner'}`}
+                                                >
+                                                    <span className="sr-only">Toggle Availability</span>
+                                                    <span
+                                                        className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-spring ${food.available ? 'translate-x-6' : 'translate-x-0'}`}
+                                                    />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="space-y-6 pb-20">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-xl font-black text-gray-900">Live Orders</h3>
+                            <button onClick={() => fetchOrders(restaurant._id || restaurant.id)} className="text-orange-500 text-xs font-bold hover:underline">Refresh List</button>
+                        </div>
+                        {orders.length === 0 ? (
+                            <div className="bg-white border-2 border-dashed border-gray-100 rounded-[2.5rem] py-20 flex flex-col items-center justify-center text-gray-400">
+                                <Package className="w-16 h-16 mb-4 opacity-20" />
+                                <p className="font-bold">No active orders right now.</p>
+                                <p className="text-sm">They'll show up here as soon as customers buy something!</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {orders.map((order) => (
+                                    <motion.div layout key={order.id} className="bg-white rounded-[2.5rem] border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Order ID</p>
+                                                <h4 className="font-black text-lg text-gray-900">#{order.id.slice(-8).toUpperCase()}</h4>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Customer</p>
+                                                <p className="font-bold text-gray-800">{order.guest_info?.name || 'Guest'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3 mb-6 bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                                            {order.items.map((item, i) => (
+                                                <div key={i} className="flex items-center justify-between p-2 bg-white rounded-xl shadow-sm border border-gray-50">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                                            {item.image && <img src={item.image} className="w-full h-full object-cover" />}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-gray-900">{item.name}</p>
+                                                            <p className="text-[10px] font-bold text-gray-400">{item.quantity} × ₹{item.price}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <select
+                                                            value={item.status}
+                                                            onChange={(e) => handleUpdateStatus(item.itemId, e.target.value)}
+                                                            className={`text-[10px] font-black px-3 py-1.5 rounded-lg border-none focus:ring-2 focus:ring-orange-500/20 shadow-sm appearance-none cursor-pointer
+                                                                ${item.status === 'Placed' ? 'bg-blue-50 text-blue-600' :
+                                                                    item.status === 'Preparing' ? 'bg-orange-50 text-orange-600' :
+                                                                        item.status === 'Ready' ? 'bg-purple-50 text-purple-600' :
+                                                                            item.status === 'Delivered' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'}`}
+                                                        >
+                                                            <option value="Placed">Placed</option>
+                                                            <option value="Preparing">Preparing</option>
+                                                            <option value="Ready">Ready</option>
+                                                            <option value="Out for Delivery">Out for Delivery</option>
+                                                            <option value="Delivered">Delivered</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-4 border-t border-dashed border-gray-100">
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Value</p>
+                                                <p className="text-xl font-black text-orange-600">₹{order.items.reduce((s, i) => s + (i.price * i.quantity), 0)}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {order.items.every(i => i.status === 'Delivered') ? (
+                                                    <span className="flex items-center gap-1.5 text-green-500 font-black text-xs bg-green-50 px-4 py-2 rounded-xl border border-green-100"><CheckCircle className="w-4 h-4" /> Delivered</span>
+                                                ) : (
+                                                    <p className="text-[11px] font-bold text-gray-400 italic">Individual item status updates track progress</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </main>
 
             {/* Add/Edit Modal */}
