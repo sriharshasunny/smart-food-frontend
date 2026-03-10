@@ -250,7 +250,9 @@ async function advancedSearchFood(filters) {
     if (filters.price_min) query = query.gte('price', filters.price_min);
     if (typeof filters.veg === 'boolean') query = query.eq('is_veg', filters.veg);
 
-    // Show ALL items (available + suspended/unavailable) - include all in result
+    // Strictly show ONLY available items
+    query = query.eq('available', true);
+
     // Try to sort by rating first; fall back to created_at if rating column missing
     let { data, error } = await query.order('rating', { ascending: false }).limit(Math.min(filters.limit || 10, 20));
     if (error && error.message?.includes('rating')) {
@@ -259,18 +261,10 @@ async function advancedSearchFood(filters) {
     }
     if (error) throw error;
 
-    // Mark suspended items but keep them in results with a flag
-    const available = [], unavailable = [];
-    (data || []).forEach(item => {
-        if (item.available === false) {
-            item._suspended = true; // flag for UI badge
-            unavailable.push(item);
-        } else {
-            available.push(item);
-        }
-    });
-    // Return available first, then suspended at end
-    return { available, unavailable, similar: [] };
+    if (error) throw error;
+
+    // Return only available items
+    return { available: data || [], unavailable: [], similar: [] };
 }
 
 async function advancedGetOrders(userId, filters) {
@@ -304,35 +298,30 @@ async function advancedGetOrders(userId, filters) {
         if (rests.size) conds.push(`restaurant_id.in.(${[...rests].join(',')})`);
         if (conds.length) q = q.or(conds.join(','));
         const { data: sim } = await q.order('created_at', { ascending: false }).limit(6);
-        const avSet = new Set(available.map(f => f.id));
         similar = (sim || []).filter(i => !avSet.has(i.id));
     }
-    return { available, unavailable, similar, original_orders: orders };
+    return { available, unavailable: [], similar, original_orders: orders };
 }
 
 async function searchRestaurants(filters = {}) {
     const limit = filters.limit || 6;
-    let query = supabase.from('restaurants').select('*, foods(*)');
+    let query = supabase.from('restaurants').select('*, foods(*)').eq('is_active', true);
     if (filters.restaurant_name) query = query.ilike('name', `%${filters.restaurant_name}%`);
     if (filters.location) query = query.ilike('address', `%${filters.location}%`);
-    if (filters.open_now) query = query.eq('is_active', true);
 
-    // Show ALL restaurants (active + suspended/inactive)
-    // Sort logic: active first, then by rating
+    // Sort logic: by rating
     const { data: rests, error } = await query
-        .order('is_active', { ascending: false })
         .order('rating', { ascending: false, nullsLast: true })
         .limit(limit);
 
     if (error) throw error;
     (rests || []).forEach(r => {
-        if (r.is_active === false) r._suspended = true; // flag for UI
         if (Array.isArray(r.foods)) {
-            // Show all food items for the restaurant (available + unavailable)
+            // Show ONLY available food items for the restaurant
             r.foods = r.foods
-                .map(f => { if (f.available === false) f._suspended = true; return f; })
-                .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (a._suspended ? 1 : -1))
-                .slice(0, 10); // show up to 10 foods per restaurant in chat
+                .filter(f => f.available !== false)
+                .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                .slice(0, 10);
         }
     });
     return rests || [];
@@ -340,30 +329,30 @@ async function searchRestaurants(filters = {}) {
 
 async function getOffers(filters = {}) {
     const limit = filters.limit || 6;
-    // Show all items sorted by rating for deals section
+    // Show ONLY available items sorted by rating
     let { data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+        .eq('available', true)
         .order('rating', { ascending: false, nullsLast: true }).limit(limit);
     if (error && error.message?.includes('rating')) {
         ({ data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+            .eq('available', true)
             .order('created_at', { ascending: false }).limit(limit));
     }
     if (error) throw error;
-    (data || []).forEach(f => { if (f.available === false) f._suspended = true; });
-    // Sort available first
-    return (data || []).sort((a, b) => (a._suspended ? 1 : 0) - (b._suspended ? 1 : 0));
+    return data || [];
 }
 
 async function getTrendingItems(filters = {}) {
     const limit = filters.limit || 6;
-    // Show all items, best rated first (suspended shown at end)
+    // Show ONLY available items, best rated first
     let { data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+        .eq('available', true)
         .order('rating', { ascending: false, nullsLast: true }).limit(limit);
     if (error && error.message?.includes('rating')) {
         ({ data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+            .eq('available', true)
             .order('created_at', { ascending: false }).limit(limit));
     }
     if (error) throw error;
-    (data || []).forEach(f => { if (f.available === false) f._suspended = true; });
-    // Sort available first
-    return (data || []).sort((a, b) => (a._suspended ? 1 : 0) - (b._suspended ? 1 : 0));
+    return data || [];
 }
