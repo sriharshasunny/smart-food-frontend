@@ -1,6 +1,31 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require('../utils/supabase');
 
+// Retry helper: retries up to maxRetries times on 503/429 errors
+async function generateWithRetry(model, prompt, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await model.generateContent(prompt);
+        } catch (err) {
+            const statusCode = err?.status;
+            const msg = err?.message || '';
+            const is503 = statusCode === 503 || msg.includes('503');
+            // 429 often includes a retry delay
+            const retryMatch = msg.match(/retry in (\d+(?:\.\d+)?)s/);
+            const is429 = statusCode === 429 || msg.includes('429') || msg.includes('Too Many Requests');
+            if ((is503 || is429) && attempt < maxRetries) {
+                // If the API tells us exactly when to retry, honour it (up to 10s)
+                const parsedDelay = retryMatch ? Math.min(parseFloat(retryMatch[1]) * 1000, 10000) : null;
+                const delay = parsedDelay || attempt * 2000;
+                console.warn(`Gemini ${statusCode || 'rate-limit'} on attempt ${attempt}, retrying in ${delay}ms...`);
+                await new Promise(r => setTimeout(r, delay));
+            } else {
+                throw err;
+            }
+        }
+    }
+}
+
 exports.processChatRequest = async (req, res) => {
     try {
         const { message, userId, history = [] } = req.body;
@@ -20,6 +45,7 @@ exports.processChatRequest = async (req, res) => {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
+        // gemini-2.5-flash is the primary model; retry logic handles transient 503s
         const jsonModel = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
             generationConfig: { responseMimeType: "application/json" }
@@ -60,7 +86,7 @@ exports.processChatRequest = async (req, res) => {
             Current User Message: "${message}"
         `;
 
-        const pass1Result = await jsonModel.generateContent(pass1Prompt);
+        const pass1Result = await generateWithRetry(jsonModel, pass1Prompt);
         const pass1Text = pass1Result.response.text();
 
         let structuredData;
@@ -138,7 +164,7 @@ exports.processChatRequest = async (req, res) => {
             Only return the raw conversational text string. No JSON, no markdown formatting.
         `;
 
-        const pass2Result = await textModel.generateContent(pass2Prompt);
+        const pass2Result = await generateWithRetry(textModel, pass2Prompt);
         const finalMessage = pass2Result.response.text().trim();
 
         console.log("Pass 2 Response:", finalMessage);
