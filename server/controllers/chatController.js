@@ -242,11 +242,26 @@ async function advancedSearchFood(filters) {
     if (filters.price_min) query = query.gte('price', filters.price_min);
     if (typeof filters.veg === 'boolean') query = query.eq('is_veg', filters.veg);
 
-    const { data, error } = await query.order('created_at', { ascending: false }).limit(Math.min(filters.limit || 8, 20));
+    // Show ALL items (available + suspended/unavailable) - include all in result
+    // Try to sort by rating first; fall back to created_at if rating column missing
+    let { data, error } = await query.order('rating', { ascending: false }).limit(Math.min(filters.limit || 8, 20));
+    if (error && error.message?.includes('rating')) {
+        // rating column not yet added; fall back
+        ({ data, error } = await query.order('created_at', { ascending: false }).limit(Math.min(filters.limit || 8, 20)));
+    }
     if (error) throw error;
 
+    // Mark suspended items but keep them in results with a flag
     const available = [], unavailable = [];
-    (data || []).forEach(item => (item.available === false ? unavailable : available).push(item));
+    (data || []).forEach(item => {
+        if (item.available === false) {
+            item._suspended = true; // flag for UI badge
+            unavailable.push(item);
+        } else {
+            available.push(item);
+        }
+    });
+    // Return available first, then suspended at end
     return { available, unavailable, similar: [] };
 }
 
@@ -291,28 +306,46 @@ async function searchRestaurants(filters) {
     let query = supabase.from('restaurants').select('*, foods(*)');
     if (filters.restaurant_name) query = query.ilike('name', `%${filters.restaurant_name}%`);
     if (filters.location) query = query.ilike('address', `%${filters.location}%`);
-    const { data, error } = await query.limit(5);
+    // Show ALL restaurants (active + suspended/inactive)
+    const { data, error } = await query.order('rating', { ascending: false, nullsLast: true }).limit(10);
     if (error) throw error;
     (data || []).forEach(r => {
+        if (r.is_active === false) r._suspended = true; // flag for UI
         if (Array.isArray(r.foods)) {
-            r.foods = r.foods.filter(f => f.available !== false)
-                .sort((a, b) => (b.price || 0) - (a.price || 0))
-                .slice(0, 3);
+            // Show all food items for the restaurant (available + unavailable)
+            r.foods = r.foods
+                .map(f => { if (f.available === false) f._suspended = true; return f; })
+                .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (a._suspended ? 1 : -1))
+                .slice(0, 4);
         }
     });
+    // Sort: active restaurants first, then suspended
+    (data || []).sort((a, b) => (a._suspended ? 1 : 0) - (b._suspended ? 1 : 0));
     return data || [];
 }
 
 async function getOffers() {
-    const { data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
-        .eq('available', true).order('created_at', { ascending: false }).limit(8);
+    // Show all items sorted by rating for deals section
+    let { data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+        .order('rating', { ascending: false, nullsLast: true }).limit(8);
+    if (error && error.message?.includes('rating')) {
+        ({ data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+            .order('created_at', { ascending: false }).limit(8));
+    }
     if (error) throw error;
-    return data || [];
+    (data || []).forEach(f => { if (f.available === false) f._suspended = true; });
+    return (data || []).sort((a, b) => (a._suspended ? 1 : 0) - (b._suspended ? 1 : 0));
 }
 
 async function getTrendingItems() {
-    const { data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
-        .eq('available', true).order('created_at', { ascending: false }).limit(8);
+    // Show all items, best rated first (suspended shown at end)
+    let { data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+        .order('rating', { ascending: false, nullsLast: true }).limit(8);
+    if (error && error.message?.includes('rating')) {
+        ({ data, error } = await supabase.from('foods').select('*, restaurant:restaurants(*)')
+            .order('created_at', { ascending: false }).limit(8));
+    }
     if (error) throw error;
-    return data || [];
+    (data || []).forEach(f => { if (f.available === false) f._suspended = true; });
+    return (data || []).sort((a, b) => (a._suspended ? 1 : 0) - (b._suspended ? 1 : 0));
 }

@@ -29,9 +29,13 @@ const Typewriter = memo(({ text, speed = 11, onComplete }) => {
 const FoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
     const [loaded, setLoaded] = useState(false);
     const isVeg = food.is_veg;
+    const isSuspended = food._suspended || food.available === false;
     return (
         <div
-            className="group relative bg-gradient-to-br from-white/8 to-white/4 rounded-2xl overflow-hidden border border-white/10 hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 hover:-translate-y-0.5"
+            className={`group relative bg-gradient-to-br from-white/8 to-white/4 rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 ${isSuspended
+                    ? 'border-gray-700/60 opacity-80 grayscale-[30%]'
+                    : 'border-white/10 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10'
+                }`}
             style={{ animationDelay: `${index * 60}ms` }}
         >
             {/* Image */}
@@ -43,10 +47,18 @@ const FoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
                     loading="lazy"
                     onLoad={() => setLoaded(true)}
                     onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'; }}
-                    className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                    className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'} ${isSuspended ? 'grayscale-[50%]' : ''}`}
                 />
                 {/* Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+                {/* SUSPENDED ribbon */}
+                {isSuspended && (
+                    <div className="absolute top-0 right-0 bg-red-500/90 text-white text-[9px] font-black px-2 py-1 rounded-bl-xl uppercase tracking-widest flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full" />
+                        Unavailable
+                    </div>
+                )}
 
                 {/* Veg/Non-veg badge */}
                 <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center ${isVeg ? 'border-green-500 bg-black/60' : 'border-red-500 bg-black/60'}`}>
@@ -75,12 +87,16 @@ const FoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
                 )}
                 <div className="flex items-center justify-between">
                     <span className="text-emerald-400 font-black text-base">₹{food.price}</span>
-                    <button
-                        onClick={() => onAdd(food)}
-                        className="bg-orange-500 hover:bg-orange-400 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl transition-all active:scale-90 shadow-md shadow-orange-500/30 flex items-center gap-1"
-                    >
-                        ADD <ShoppingBag size={9} className="inline" />
-                    </button>
+                    {isSuspended ? (
+                        <span className="text-[10px] text-red-400/80 font-semibold bg-red-500/10 px-2 py-1 rounded-lg">Unavailable</span>
+                    ) : (
+                        <button
+                            onClick={() => onAdd(food)}
+                            className="bg-orange-500 hover:bg-orange-400 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl transition-all active:scale-90 shadow-md shadow-orange-500/30 flex items-center gap-1"
+                        >
+                            ADD <ShoppingBag size={9} className="inline" />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -88,42 +104,57 @@ const FoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
 });
 
 // ─── Restaurant Card ─────────────────────────────────────────────────────────
-const RestaurantCard = memo(({ rest, onView }) => (
-    <div className="bg-white/6 rounded-2xl overflow-hidden border border-white/10 hover:border-orange-500/40 transition-all duration-300">
-        <div className="p-3">
-            <div className="flex justify-between items-start mb-1">
-                <h4 className="font-bold text-white text-sm leading-tight flex-1 pr-2">{rest.name}</h4>
-                {rest.rating && (
-                    <div className="flex items-center gap-1 text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full flex-shrink-0">
-                        <Star size={9} className="fill-current" />
-                        <span className="text-[10px] font-bold">{rest.rating}</span>
+const RestaurantCard = memo(({ rest, onView }) => {
+    const isSuspended = rest._suspended || rest.is_active === false;
+    return (
+        <div className={`rounded-2xl overflow-hidden border transition-all duration-300 ${isSuspended ? 'bg-white/3 border-gray-700/50 opacity-80' : 'bg-white/6 border-white/10 hover:border-orange-500/40'
+            }`}>
+            <div className="p-3">
+                <div className="flex justify-between items-start mb-1">
+                    <div className="flex items-center gap-2 flex-1 pr-2">
+                        <h4 className="font-bold text-white text-sm leading-tight">{rest.name}</h4>
+                        {isSuspended && (
+                            <span className="text-[9px] font-black bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded-md uppercase tracking-wide flex-shrink-0">Closed</span>
+                        )}
+                    </div>
+                    {rest.rating && (
+                        <div className="flex items-center gap-1 text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                            <Star size={9} className="fill-current" />
+                            <span className="text-[10px] font-bold">{rest.rating}</span>
+                        </div>
+                    )}
+                </div>
+                {rest.address && (
+                    <p className="text-[11px] text-gray-500 flex items-center gap-1 mb-2 line-clamp-1">
+                        <MapPin size={9} /> {rest.address}
+                    </p>
+                )}
+                {rest.foods?.length > 0 && (
+                    <div className="bg-black/20 rounded-xl p-2 mb-2 space-y-1">
+                        {rest.foods.slice(0, 4).map((f, i) => (
+                            <div key={i} className={`flex justify-between text-[11px] py-0.5 ${f._suspended ? 'opacity-50' : ''}`}>
+                                <span className="text-gray-300 truncate flex-1 pr-2 flex items-center gap-1">
+                                    {f._suspended && <span className="text-red-400 text-[9px]">[N/A]</span>}
+                                    • {f.name}
+                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    {f.rating && <span className="text-yellow-400 text-[9px]">⭐{Number(f.rating).toFixed(1)}</span>}
+                                    <span className="text-gray-400">₹{f.price}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
+                <button
+                    onClick={() => onView(rest._id || rest.id)}
+                    className="w-full bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-400/50 text-white text-[11px] font-semibold py-2 rounded-xl transition-all flex items-center justify-center gap-1 group"
+                >
+                    {isSuspended ? 'View Details' : 'View Full Menu'} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                </button>
             </div>
-            {rest.address && (
-                <p className="text-[11px] text-gray-500 flex items-center gap-1 mb-2 line-clamp-1">
-                    <MapPin size={9} /> {rest.address}
-                </p>
-            )}
-            {rest.foods?.length > 0 && (
-                <div className="bg-black/20 rounded-xl p-2 mb-2 space-y-1">
-                    {rest.foods.slice(0, 3).map((f, i) => (
-                        <div key={i} className="flex justify-between text-[11px]">
-                            <span className="text-gray-300 truncate flex-1 pr-2">• {f.name}</span>
-                            <span className="text-gray-400 shrink-0">₹{f.price}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-            <button
-                onClick={() => onView(rest._id || rest.id)}
-                className="w-full bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-400/50 text-white text-[11px] font-semibold py-2 rounded-xl transition-all flex items-center justify-center gap-1 group"
-            >
-                View Full Menu <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
         </div>
-    </div>
-));
+    );
+});
 
 // ─── Quick Pick Category Button ───────────────────────────────────────────────
 const QuickPick = memo(({ label, emoji, color, onClick }) => (
