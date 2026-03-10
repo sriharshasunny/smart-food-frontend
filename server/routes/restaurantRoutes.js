@@ -130,11 +130,9 @@ router.get('/:id/dashboard', async (req, res) => {
             _debug: {
                 receivedId: id,
                 itemsFound: orderItems?.length || 0,
-                rawSample: rawItems?.length > 0 ? {
-                    col: 'restaurant_id',
-                    val: rawItems[0].restaurant_id,
-                    match: rawItems[0].restaurant_id === id
-                } : 'no_items'
+                supabaseUrl: process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL.substring(0, 15)}...` : 'not_set',
+                hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+                envLoadPath: path.join(__dirname, '../../.env')
             }
         });
 
