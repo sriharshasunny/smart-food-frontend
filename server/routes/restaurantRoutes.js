@@ -120,8 +120,8 @@ router.get('/:id/dashboard', async (req, res) => {
             !['Delivered', 'Cancelled'].includes(item.preparation_status)
         ).length;
 
-        // DEBUG: Check raw contents
-        const { data: rawItems } = await supabase.from('order_items').select('id, restaurant_id').limit(5);
+        // DEBUG: Check global access
+        const { count: globalItemCount } = await supabase.from('order_items').select('*', { count: 'exact', head: true });
 
         res.json({
             name: rest.name,
@@ -131,9 +131,8 @@ router.get('/:id/dashboard', async (req, res) => {
             _debug: {
                 receivedId: id,
                 itemsFound: orderItems?.length || 0,
+                globalCount: globalItemCount || 0,
                 supabaseUrl: process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL.substring(0, 15)}...` : 'not_set',
-                hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-                envLoadPath: path.join(__dirname, '../../.env')
             }
         });
 
