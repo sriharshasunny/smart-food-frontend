@@ -65,10 +65,11 @@ const StarField = () => (
 const UFOAssistant = ({ userId }) => {
   const canvasRef = useRef(null);
   const [data, setData] = useState(null);
-  const [active, setActive] = useState(false);
+  const [ufoPos, setUfoPos] = useState({ x: -100, y: 100, opacity: 0 });
   const ufoState = useRef({
     x: -100, y: 100, vx: 0, vy: 0, rotation: 0,
-    targetX: 200, targetY: 200, trail: []
+    targetX: 200, targetY: 200, trail: [],
+    hidingUntil: 0, opacity: 0
   });
 
   const fetchMsg = useCallback(async () => {
@@ -80,38 +81,45 @@ const UFOAssistant = ({ userId }) => {
   }, [userId]);
 
   useEffect(() => {
-    if (!active) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let frame;
 
-    const loop = () => {
+    const loop = (time) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const u = ufoState.current;
       
+      const isHiding = time < u.hidingUntil;
+      
+      if (isHiding) {
+        u.opacity = Math.max(0, u.opacity - 0.1);
+      } else {
+        u.opacity = Math.min(1, u.opacity + 0.05);
+      }
+
       // Physics (Login-style)
       const dx = u.targetX - u.x;
       const dy = u.targetY - u.y;
       const dist = Math.hypot(dx, dy);
       
       if (dist < 50) {
-        if (Math.random() < 0.01) {
+        if (Math.random() < 0.02) {
           u.targetX = Math.random() * (canvas.width - 200) + 100;
           u.targetY = Math.random() * (canvas.height - 200) + 100;
         }
       } else {
-        u.vx += (dx / dist) * 0.05;
-        u.vy += (dy / dist) * 0.05;
+        u.vx += (dx / dist) * 0.08;
+        u.vy += (dy / dist) * 0.08;
       }
       
-      u.vx *= 0.98; u.vy *= 0.98;
+      u.vx *= 0.97; u.vy *= 0.97;
       u.x += u.vx; u.y += u.vy;
-      u.rotation = u.vx * 0.08;
+      u.rotation = u.vx * 0.1;
       
       // Trail
-      if (Math.hypot(u.vx, u.vy) > 0.2) {
-        u.trail.push({ x: u.x, y: u.y, opacity: 0.6, size: 2 });
+      if (u.opacity > 0.1 && Math.hypot(u.vx, u.vy) > 0.2) {
+        u.trail.push({ x: u.x, y: u.y, opacity: u.opacity * 0.6, size: 2 });
       }
       if (u.trail.length > 20) u.trail.shift();
       u.trail.forEach(p => {
@@ -120,44 +128,66 @@ const UFOAssistant = ({ userId }) => {
         ctx.fillStyle = `rgba(0, 255, 200, ${p.opacity})`; ctx.fill();
       });
 
-      // Render UFO
-      ctx.save();
-      ctx.translate(u.x, u.y);
-      ctx.rotate(u.rotation);
-      ctx.shadowColor = 'rgba(0, 255, 150, 0.8)'; ctx.shadowBlur = 15;
-      ctx.font = '32px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🛸', 0, 0);
-      ctx.restore();
+      if (u.opacity > 0) {
+        ctx.save();
+        ctx.globalAlpha = u.opacity;
+        ctx.translate(u.x, u.y);
+        ctx.rotate(u.rotation);
+        ctx.shadowColor = 'rgba(0, 255, 150, 0.8)'; ctx.shadowBlur = 15;
+        ctx.font = '32px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🛸', 0, 0);
+        ctx.restore();
+      }
+
+      // Sync state for React bubble
+      setUfoPos({ x: u.x, y: u.y, opacity: u.opacity });
 
       frame = requestAnimationFrame(loop);
+    };
+
+    const handleCanvasClick = (e) => {
+      const u = ufoState.current;
+      const dist = Math.hypot(e.clientX - u.x, e.clientY - u.y);
+      if (dist < 40) {
+        u.hidingUntil = performance.now() + 2000;
+        // Boost velocity away
+        u.vx *= 5; u.vy *= 5;
+      }
     };
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
+
     window.addEventListener('resize', resize);
+    window.addEventListener('mousedown', handleCanvasClick);
     resize();
     frame = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', resize); };
-  }, [active]);
+    return () => { 
+      cancelAnimationFrame(frame); 
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousedown', handleCanvasClick);
+    };
+  }, []); // Remove [active] as it's always active now
 
   useEffect(() => {
-    const interval = setInterval(() => { fetchMsg(); setActive(true); setTimeout(() => setActive(false), 25000); }, 75000);
-    const initial = setTimeout(() => { fetchMsg(); setActive(true); setTimeout(() => setActive(false), 25000); }, 3000);
-    return () => { clearInterval(interval); clearTimeout(initial); };
+    fetchMsg();
+    const interval = setInterval(fetchMsg, 60000); // New msg every minute
+    return () => clearInterval(interval);
   }, [fetchMsg]);
 
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
       <canvas ref={canvasRef} className="absolute inset-0" />
-      {active && data && (
+      {ufoPos.opacity > 0.5 && data && (
         <div 
           className="absolute ufo-message-bubble"
           style={{ 
-            left: ufoState.current.x + 30, 
-            top: ufoState.current.y - 70,
-            transition: 'all 0.1s linear'
+            left: ufoPos.x + 30, 
+            top: ufoPos.y - 70,
+            opacity: ufoPos.opacity,
+            transition: 'all 0.05s linear'
           }}
         >
           <div className="premium-glass bg-black/80 px-4 py-2.5 rounded-2xl rounded-bl-sm border border-cyan-500/30 shadow-[0_0_20px_rgba(0,255,255,0.1)] max-w-[180px]">
@@ -199,7 +229,7 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
       className="group relative premium-glass rounded-[2rem] overflow-hidden card-shine
                  hover:shadow-cyan-500/10 transition-all duration-700 ease-out flex flex-col h-full border border-white/5"
     >
-      <div className="relative h-44 overflow-hidden bg-[#0a0a15]">
+      <div className="relative h-[161px] overflow-hidden bg-[#0a0a15]">
         {food.image ? (
           <img
             src={food.image}
