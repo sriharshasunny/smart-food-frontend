@@ -17,16 +17,25 @@ const SPACE_CSS = `
     100% { transform: translateY(1000%); opacity: 0; }
   }
   @keyframes ufo-peek {
-    0% { transform: translate(-150%, 50%) rotate(20deg); opacity: 0; }
-    15% { transform: translate(10%, 10%) rotate(0deg); opacity: 1; }
-    85% { transform: translate(15%, 15%) rotate(-5deg); opacity: 1; }
-    100% { transform: translate(200%, -50%) rotate(-20deg); opacity: 0; }
+    0% { transform: translate(-100px, 80%) rotate(10deg); opacity: 0; }
+    5% { opacity: 0.8; }
+    15% { transform: translate(15vw, 15vh) rotate(0deg); }
+    30% { transform: translate(60vw, 20vh) rotate(-5deg); }
+    50% { transform: translate(75vw, 50vh) rotate(5deg); }
+    70% { transform: translate(30vw, 60vh) rotate(-2deg); }
+    85% { transform: translate(10vw, 30vh) rotate(0deg); }
+    95% { opacity: 0.8; }
+    100% { transform: translate(-100px, 10vh) rotate(-10deg); opacity: 0; }
   }
   @keyframes bubble-pop {
     0% { transform: scale(0); opacity: 0; }
     5% { transform: scale(1.1); opacity: 1; }
     10%, 90% { transform: scale(1); opacity: 1; }
     100% { transform: scale(0); opacity: 0; }
+  }
+  @keyframes ufo-light-spin {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
   }
   .star-field {
     animation: stars 120s linear infinite;
@@ -75,19 +84,19 @@ const UFOAssistant = ({ userId }) => {
   }, [userId]);
 
   useEffect(() => {
-    // Show every 45 seconds for 10 seconds
+    // Show every 70 seconds for 25 seconds
     const interval = setInterval(() => {
       fetchMsg();
       setActive(true);
-      setTimeout(() => setActive(false), 10000);
-    }, 45000);
+      setTimeout(() => setActive(false), 25000);
+    }, 70000);
 
-    // Initial show after 5s
+    // Initial show after 2s
     const initial = setTimeout(() => {
       fetchMsg();
       setActive(true);
-      setTimeout(() => setActive(false), 10000);
-    }, 5000);
+      setTimeout(() => setActive(false), 25000);
+    }, 2000);
 
     return () => { clearInterval(interval); clearTimeout(initial); };
   }, [fetchMsg]);
@@ -96,35 +105,80 @@ const UFOAssistant = ({ userId }) => {
 
   return (
     <div 
-      className="fixed bottom-10 left-10 z-[100] pointer-events-none"
-      style={{ animation: 'ufo-peek 10s ease-in-out forwards' }}
+      className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
     >
+      <div 
+        className="absolute bottom-10 left-10"
+        style={{ 
+          animation: 'ufo-peek 25s ease-in-out forwards',
+          opacity: 0.6 // More subtle when moving over items
+        }}
+      >
       {/* Speech Bubble */}
-      <div className="mb-4 ml-6 ufo-bubble opacity-0">
-        <div className="bg-white text-gray-900 px-4 py-2 rounded-2xl rounded-bl-sm shadow-2xl relative border-2 border-orange-500 max-w-[200px]">
-          <p className="text-[11px] font-bold leading-tight">
+      <div className="mb-4 ml-8 ufo-bubble opacity-0">
+        <div className="glass-card bg-black/80 text-white px-5 py-3 rounded-2xl rounded-bl-sm shadow-2xl relative border border-orange-500/50 max-w-[220px]">
+          <p className="text-[12px] font-bold leading-tight drop-shadow-md">
             {data.message}
           </p>
-          <div className="absolute -bottom-2 left-0 w-4 h-4 bg-white border-b-2 border-l-2 border-orange-500 rotate-45" />
+          <div className="absolute -bottom-2.5 left-0 w-5 h-5 bg-black/80 border-b border-l border-orange-500/50 rotate-45" />
         </div>
       </div>
 
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_0_10px_rgba(255,140,0,0.5)]">
-        <path d="M12 4C8.68629 4 6 5.79086 6 8C6 8.52554 6.15552 9.02324 6.4344 9.46781C4.42173 10.1064 3 11.3916 3 12.875C3 15.1532 7.02944 17 12 17C16.9706 17 21 15.1532 21 12.875C21 11.3916 19.5783 10.1064 17.5656 9.46781C17.8445 9.02324 18 8.52554 18 8C18 5.79086 15.3137 4 12 4Z" fill="#ff6b00" fillOpacity="0.3" stroke="#ff8c00" strokeWidth="1"/>
-        <path d="M8 8C8 6.89543 9.79086 6 12 6C14.2091 6 16 6.89543 16 8" stroke="#ff8c00" strokeWidth="1"/>
-        <circle cx="8" cy="13" r="1.5" fill="#ffcc00">
-          <animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite" />
+      {/* 3D Realistic UFO */}
+      <svg width="100" height="70" viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_20px_40px_rgba(255,140,0,0.3)] opacity-90 transition-opacity duration-1000">
+        <defs>
+          <radialGradient id="ufoGlass" cx="50%" cy="50%" r="50%" fx="40%" fy="30%">
+            <stop offset="0%" stopColor="#88CCFF" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#003366" stopOpacity="0.9" />
+          </radialGradient>
+          <linearGradient id="ufoBody" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#e0e0e0" />
+            <stop offset="50%" stopColor="#999999" />
+            <stop offset="100%" stopColor="#444444" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        {/* Cockpit Shell */}
+        <path d="M30 35C30 25 38.9543 18 50 18C61.0457 18 70 25 70 35H30Z" fill="url(#ufoGlass)" stroke="#AADDFF" strokeWidth="0.5" />
+        <ellipse cx="50" cy="30" rx="12" ry="6" fill="white" fillOpacity="0.2" />
+
+        {/* Main Body (The Rim) */}
+        <path d="M10 40C10 32 27.9086 28 50 28C72.0914 28 90 32 90 40C90 48 72.0914 52 50 52C27.9086 52 10 48 10 40Z" fill="url(#ufoBody)" stroke="#333" strokeWidth="1" />
+        
+        {/* Base / Bottom Dome */}
+        <path d="M35 48C35 55 41.7157 60 50 60C58.2843 60 65 55 65 48H35Z" fill="#333" />
+        
+        {/* Lights */}
+        <circle cx="25" cy="42" r="2.5" fill="#FFD700" filter="url(#glow)">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="0.8s" repeatCount="indefinite" />
         </circle>
-        <circle cx="12" cy="13" r="1.5" fill="#ffcc00">
-          <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" />
+        <circle cx="50" cy="45" r="3" fill="#FF5500" filter="url(#glow)">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="1.2s" repeatCount="indefinite" />
         </circle>
-        <circle cx="16" cy="13" r="1.5" fill="#ffcc00">
-          <animate attributeName="opacity" values="1;0.2;1" dur="0.8s" repeatCount="indefinite" />
+        <circle cx="75" cy="42" r="2.5" fill="#FFD700" filter="url(#glow)">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="1s" repeatCount="indefinite" />
         </circle>
+
+        {/* Tractor beam - subtle */}
+        <path d="M40 60 L30 150 L70 150 L60 60 Z" fill="url(#beamGrad)" opacity="0.1" />
+        <defs>
+          <linearGradient id="beamGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFCC00" />
+            <stop offset="100%" stopColor="transparent" />
+          </linearGradient>
+        </defs>
       </svg>
+    </div>
     </div>
   );
 };
+
 
 
 // ─── Skeleton ───────────────────────────────────────────────────────────────
@@ -247,6 +301,7 @@ const Recommendations = () => {
   // Filters
   const [vegFilter, setVegFilter] = useState('all'); // 'all' | 'veg' | 'non_veg'
   const [mealFilter, setMealFilter] = useState('all'); // 'all' | 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  const [sortBy, setSortBy] = useState('match'); // 'match', 'rating', 'price_lo', 'price_hi'
 
   const userId = user?._id || user?.id;
   const loadingRef = useRef(false);
@@ -288,14 +343,21 @@ const Recommendations = () => {
     fetchPage(nextPage, false);
   };
 
-  // Apply client-side filters on the loaded set
-  const filtered = foods.filter(f => {
-    const isVeg = f.is_veg === true || f.is_veg === 'true';
-    if (vegFilter === 'veg' && !isVeg) return false;
-    if (vegFilter === 'non_veg' && isVeg) return false;
-    if (mealFilter !== 'all' && f.meal_type && f.meal_type !== 'any' && f.meal_type !== mealFilter) return false;
-    return true;
-  });
+  // Apply client-side filters & sorting on the loaded set
+  const filtered = foods
+    .filter(f => {
+      const isVeg = f.is_veg === true || f.is_veg === 'true' || f.isVeg;
+      if (vegFilter === 'veg' && !isVeg) return false;
+      if (vegFilter === 'non_veg' && isVeg) return false;
+      if (mealFilter !== 'all' && f.meal_type && f.meal_type !== 'any' && f.meal_type !== mealFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'rating') return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
+      if (sortBy === 'price_lo') return (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0);
+      if (sortBy === 'price_hi') return (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0);
+      return (b._score || 0) - (a._score || 0); // Default: match score
+    });
 
   const strategyLabel = strategy === 'cold_start'
     ? '🔥 Trending Near You'
@@ -339,17 +401,36 @@ const Recommendations = () => {
             </h1>
           </div>
 
-          {/* Combined Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <FilterChip label="All" active={vegFilter === 'all'} onClick={() => setVegFilter('all')} />
-            <FilterChip label="Veg" active={vegFilter === 'veg'} onClick={() => setVegFilter('veg')} />
-            <div className="w-px h-4 bg-white/10 mx-1" />
-            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
+          {/* Combined Filters & Sort */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex bg-white/5 rounded-lg border border-white/5 p-0.5">
+              <FilterChip label="All" active={vegFilter === 'all'} onClick={() => setVegFilter('all')} />
+              <FilterChip label="Veg" active={vegFilter === 'veg'} onClick={() => setVegFilter('veg')} />
+              <FilterChip label="Non-Veg" active={vegFilter === 'non_veg'} onClick={() => setVegFilter('non_veg')} />
+            </div>
+
+            <div className="w-px h-6 bg-white/10 mx-1 hidden md:block" />
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-gray-500 uppercase">Sort:</span>
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-white/5 border border-white/10 text-gray-300 text-[11px] font-bold rounded-lg px-2 py-1 outline-none focus:border-orange-500 transition-colors"
+              >
+                <option value="match" className="bg-[#050510]">Best Match</option>
+                <option value="rating" className="bg-[#050510]">Rating</option>
+                <option value="price_lo" className="bg-[#050510]">Price: Low-High</option>
+                <option value="price_hi" className="bg-[#050510]">Price: High-Low</option>
+              </select>
+            </div>
+            
+            <div className="w-full md:w-auto flex gap-1.5 overflow-x-auto hide-scrollbar pt-2 md:pt-0">
               {['breakfast', 'lunch', 'dinner', 'snack'].map(type => (
                 <button
                   key={type}
                   onClick={() => setMealFilter(p => p === type ? 'all' : type)}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all border ${mealFilter === type ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/5 border-white/5 text-gray-400'}`}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all border ${mealFilter === type ? 'bg-orange-500 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-white/5 border-white/5 text-gray-400'}`}
                 >
                   {type}
                 </button>
