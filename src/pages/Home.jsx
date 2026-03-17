@@ -409,7 +409,7 @@ const Home = () => {
                                 ))
                             ) : (
                                 // Use recommendation API results for logged-in users, fall back to regular dishes
-                                (trendingRecs.length > 0 ? trendingRecs : filteredData.dishes).slice(0, 6).map((dish) => (
+                                (trendingRecs.length > 0 ? trendingRecs : filteredData.dishes).map((dish) => (
                                     <div
                                         key={dish.id}
                                         className="bg-white relative overflow-hidden rounded-[1.25rem] p-2 flex gap-3 transition-transform duration-200 cursor-pointer border border-gray-100 hover:border-orange-200 hover:-translate-y-0.5 group/item items-center shrink-0 shadow-sm"

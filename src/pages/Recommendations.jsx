@@ -236,7 +236,7 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
                  hover:shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_20px_rgba(6,182,212,0.05)] 
                  transition-all duration-700 ease-out flex flex-col h-full border border-white/[0.03]"
     >
-      <div className="relative h-[210px] overflow-hidden">
+      <div className="relative h-[185px] overflow-hidden">
         {food.image ? (
           <img
             src={food.image}
