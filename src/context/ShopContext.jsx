@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
+import { trackAddToCart, trackWishlist } from '../utils/trackActivity';
 
 const ShopContext = createContext();
 
@@ -169,7 +170,12 @@ export const ShopProvider = ({ children }) => {
             }
             return [...prevCart, { ...itemWithId, quantity: 1 }];
         });
-    }, []);
+        // Track cart activity for recommendation engine (fire & forget)
+        const userId = user?._id || user?.id;
+        if (userId && itemWithId.id) {
+            trackAddToCart(userId, itemWithId);
+        }
+    }, [user]);
 
     const removeFromCart = useCallback((itemId) => {
         setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
@@ -208,6 +214,9 @@ export const ShopProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user._id, foodId: itemWithId.id })
             }).catch(e => console.error("Wishlist Sync Error", e));
+
+            // Track wishlist activity for recommendations
+            trackWishlist(user._id, itemWithId);
         }
     }, [user?._id]);
 

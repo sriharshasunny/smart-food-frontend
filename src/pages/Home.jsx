@@ -9,6 +9,7 @@ import { mockRestaurants, mockDishes, categories } from '../data/mockData';
 import { Search, MapPin, ChevronRight, Sparkles } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import SkeletonCard from '../components/SkeletonCard';
+import RecommendationSection from '../components/RecommendationSection';
 
 import { API_URL } from '../config';  // Import Config
 
@@ -266,6 +267,9 @@ const Home = () => {
                 <ErrorBoundary key="hero">
                     <HeroBanner topRightContent={locationWidget} />
                 </ErrorBoundary>
+
+                {/* AI Recommendation Strip */}
+                <RecommendationSection />
 
                 {/* --- Content Sections --- */}
 
