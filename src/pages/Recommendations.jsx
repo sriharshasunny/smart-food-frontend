@@ -3,9 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { API_URL } from '../config';
 import { trackAddToCart } from '../utils/trackActivity';
-import { Rocket, Sparkles, Zap, ShieldCheck, ChevronRight, Info, Star, Clock } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { optimizeImage } from '../utils/imageOptimizer';
+import { Rocket, Sparkles, Zap, ShieldCheck, ChevronRight, Info } from 'lucide-react';
 
 // ─── CSS Visual Effects ──────────────────────────────────────────────────────
 const SPACE_CSS = `
@@ -227,83 +225,70 @@ const Skeleton = () => (
 );
 
 // ─── Food Grid Card ──────────────────────────────────────────────────────────
-const FoodGridCard = ({ food, userId, onAdd, index = 0 }) => {
-    const isVeg = food.is_veg === true || food.is_veg === 'true' || food.isVeg;
-    const rating = parseFloat(food.rating) || 4.2;
-    const score = food._score ? (food._score * 100).toFixed(0) : null;
-    const [loaded, setLoaded] = React.useState(false);
+const FoodGridCard = ({ food, userId, onAdd }) => {
+  const isVeg = food.is_veg === true || food.is_veg === 'true' || food.isVeg;
+  const rating = parseFloat(food.rating) || 4.2;
+  const score = food._score ? (food._score * 100).toFixed(0) : null;
 
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -10 }}
-            className="group relative bg-white/5 backdrop-blur-xl rounded-[2.5rem] overflow-hidden border border-white/10 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_30px_rgba(6,182,212,0.15)] hover:border-cyan-500/30 h-full flex flex-col"
-        >
-            <div className="relative h-56 overflow-hidden">
-                {!loaded && <div className="absolute inset-0 bg-white/5 animate-pulse" />}
-                <img
-                    src={optimizeImage(food.image || food.imageUrl || food.image_url, 600)}
-                    alt={food.name}
-                    onLoad={() => setLoaded(true)}
-                    className={`w-full h-full object-cover transition-all duration-1000 ${loaded ? 'opacity-90 scale-100 group-hover:opacity-100 group-hover:scale-110' : 'opacity-0 scale-110'}`}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-transparent to-transparent opacity-80" />
-                
-                {/* Match Percentage Pill */}
-                {score && (
-                    <div className="absolute top-5 right-5 z-20">
-                        <div className="bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 text-cyan-400 px-4 py-1.5 rounded-full font-black text-[10px] shadow-[0_0_20px_rgba(6,182,212,0.2)] tracking-tighter uppercase animate-pulse-glow">
-                            {score}% Match
-                        </div>
-                    </div>
-                )}
+  return (
+    <div
+      className="premium-card-mockup group relative bg-[#111114] rounded-[2rem] overflow-hidden 
+                 hover:shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_20px_rgba(6,182,212,0.05)] 
+                 transition-all duration-700 ease-out flex flex-col h-full border border-white/[0.03]"
+    >
+      <div className="relative h-[165px] overflow-hidden">
+        {food.image ? (
+          <img
+            src={food.image}
+            alt={food.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 brightness-[0.8] group-hover:brightness-100"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl bg-[#1a1a1e]">🍽️</div>
+        )}
 
-                {/* Veg Indicator */}
-                <div className={`absolute top-5 left-5 w-5 h-5 rounded-md border flex items-center justify-center bg-white shadow-lg ${isVeg ? 'border-green-600' : 'border-red-600'}`}>
-                    <div className={`w-2 h-2 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111114] via-transparent to-transparent opacity-100" />
+        
+        {/* Match Percentage - Mockup Style */}
+        {score && (
+          <div className="absolute top-4 right-4 z-20">
+            <div className="bg-cyan-500/10 backdrop-blur-md border border-cyan-500/30 text-cyan-400 px-3 py-1 rounded-full font-bold text-[9px] shadow-[0_0_15px_rgba(6,182,212,0.1)] tracking-tighter uppercase">
+              {score}% Match
             </div>
+          </div>
+        )}
+      </div>
 
-            <div className="p-6 flex flex-col flex-grow relative z-10">
-                <div className="mb-3">
-                    <h3 className="text-white font-black text-xl tracking-tight group-hover:text-cyan-400 transition-colors line-clamp-1 mb-1">
-                        {food.name}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                            <Star size={12} className="fill-orange-400 text-orange-400" />
-                            <span className="text-gray-300 text-xs font-bold">{rating.toFixed(1)}</span>
-                        </div>
-                        <div className="w-1 h-1 bg-gray-600 rounded-full" />
-                        <div className="flex items-center gap-1">
-                            <Clock size={12} className="text-gray-400" />
-                            <span className="text-gray-400 text-xs font-medium">25-30 mins</span>
-                        </div>
-                    </div>
-                </div>
+      <div className="p-5 flex flex-col flex-grow relative z-10 bg-[#0c0c0e]">
+        <div className="flex justify-between items-start mb-2 gap-2">
+          <h3 className="text-gray-100 font-bold text-[16px] tracking-tight group-hover:text-cyan-400 transition-colors line-clamp-1">
+            {food.name}
+          </h3>
+          <div className={`w-3 h-3 rounded-full border flex items-center justify-center mt-1 scale-90 ${isVeg ? 'border-green-500/30' : 'border-red-500/30'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          </div>
+        </div>
 
-                <p className="text-gray-400 text-xs font-medium line-clamp-2 mb-6 leading-relaxed opacity-70">
-                    {food.description || `Specially curated selection from ${food.restaurant?.name || 'Chef Specialty'}`}
-                </p>
+        <p className="text-gray-500 text-[11px] font-medium line-clamp-2 mb-6 leading-relaxed">
+          {food.description || `Exclusives from ${food.restaurant?.name || 'Chef Specialty'}`}
+        </p>
 
-                <div className="mt-auto flex items-center justify-between pt-5 border-t border-white/5">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-0.5">Premium Price</span>
-                        <span className="font-black text-2xl text-white tracking-tighter">₹{food.price}</span>
-                    </div>
-                    <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => { trackAddToCart(userId, food); onAdd(food); }}
-                        className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest transition-all shadow-[0_10px_25px_rgba(6,182,212,0.3)] hover:shadow-[0_15px_35px_rgba(6,182,212,0.4)]"
-                    >
-                        Order Now
-                    </motion.button>
-                </div>
-            </div>
-        </motion.div>
-    );
+        <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/[0.03]">
+          <div className="flex flex-col">
+            <span className="text-[9px] text-gray-600 font-black uppercase tracking-[0.1em]">Price</span>
+            <span className="font-black text-lg text-white tracking-tight">₹{food.price}</span>
+          </div>
+          <button
+            onClick={() => { trackAddToCart(userId, food); onAdd(food); }}
+            className="px-5 py-2 bg-white/[0.03] hover:bg-cyan-500 text-gray-400 hover:text-white font-black rounded-xl text-[10px] uppercase tracking-widest transition-all duration-300 border border-white/5 active:scale-95 shadow-lg"
+          >
+            Order
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 
@@ -323,7 +308,7 @@ const FilterChip = ({ label, active, onClick }) => (
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const Recommendations = () => {
-    const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { addToCart } = useShop();
 
   const [foods, setFoods] = useState([]);
@@ -412,26 +397,9 @@ const Recommendations = () => {
 
   const mealIcon = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack: '🍿' };
 
-    if (authLoading) {
-        return (
-            <div className="min-h-screen bg-[#020205] pb-24 relative overflow-hidden">
-                <StarField />
-                <div className="relative z-20 px-8 pt-12">
-                    <div className="max-w-xl mb-12 animate-pulse">
-                        <div className="h-4 bg-cyan-500/20 w-48 rounded-full mb-6" />
-                        <div className="h-12 bg-white/5 w-96 rounded-2xl" />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} />)}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (!userId) {
-        return (
-            <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center text-center px-6">
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center text-center px-6">
         <div className="text-6xl mb-4">🔐</div>
         <h2 className="text-2xl font-bold text-white mb-2">Login to see recommendations</h2>
         <p className="text-gray-400 text-sm">Your personal food recommendations appear here after you log in.</p>
@@ -457,14 +425,10 @@ const Recommendations = () => {
       <div className="px-4 md:px-8 pt-8 pb-3 relative">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-3 mb-3 bg-cyan-500/10 w-fit px-4 py-1.5 rounded-full border border-cyan-500/20 backdrop-blur-md">
-                <div className="relative">
-                    <span className="w-2.5 h-2.5 bg-cyan-400 rounded-full block animate-pulse-glow" />
-                    <span className="absolute inset-0 bg-cyan-400/50 rounded-full animate-ping" />
-                </div>
-                <span className="text-cyan-400 font-black tracking-[0.2em] text-[10px] uppercase">AI Prediction Engine Active</span>
+            <div className="flex items-center gap-2 mb-1.5 text-cyan-500 font-black tracking-tighter text-[9px] uppercase opacity-70">
+              <Zap size={12} className="fill-cyan-500" /> Engine Active
             </div>
-            <h1 className="text-4xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-500 tracking-tighter leading-[0.9] mb-4">
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter">
               {strategyLabel.split(' ').slice(1).join(' ')}
             </h1>
           </div>
@@ -507,23 +471,18 @@ const Recommendations = () => {
           </div>
         </div>
 
-        {/* AI Explainer */}
+        {/* AI Explainer - Thinned */}
         {explanation && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="mt-8 relative group max-w-2xl"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-transparent blur-3xl -z-10 opacity-30" />
-            <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-5 rounded-3xl flex items-center gap-4 group-hover:border-cyan-500/30 transition-colors">
-              <div className="bg-gradient-to-br from-cyan-400 to-blue-500 p-2.5 rounded-2xl text-white shrink-0 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                <Sparkles size={20} className="animate-pulse" />
+          <div className="mt-6 relative group max-w-3xl">
+            <div className="relative premium-glass border-cyan-500/10 p-4 rounded-xl flex items-center gap-3 overflow-hidden">
+              <div className="bg-cyan-500/10 p-2 rounded-lg text-cyan-400 shrink-0">
+                <Info size={18} />
               </div>
-              <p className="text-gray-300 text-sm md:text-base italic leading-relaxed font-semibold tracking-tight">
+              <p className="text-gray-300 text-xs md:text-sm italic leading-relaxed font-medium">
                 "{explanation}"
               </p>
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
 

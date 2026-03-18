@@ -5,15 +5,18 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
     if (isSticky) {
         return (
             <div data-lenis-prevent className="w-full overflow-x-auto pb-0 hide-scrollbar animate-fade-in-down">
-                <div className="flex gap-2 px-0 items-center h-full">
+                <div className="flex gap-1 px-0 items-center h-full">
                     {/* All Option */}
                     <button
                         onClick={() => onSelectCategory('All')}
-                        className={`flex-shrink-0 h-10 px-5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all flex items-center gap-3 border ${activeCategory === 'All'
-                            ? 'bg-gray-900 text-white border-transparent shadow-lg transform scale-105'
-                            : 'bg-gray-50 text-gray-500 hover:bg-white hover:text-black border-transparent hover:border-gray-200'
+                        className={`flex-shrink-0 h-9 px-4 rounded-full text-[11px] font-bold tracking-wide transition-all flex items-center gap-2 border ${activeCategory === 'All'
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-transparent shadow-md transform scale-105'
+                            : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'
                             }`}
                     >
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${activeCategory === 'All' ? 'bg-white/20' : 'bg-white'}`}>
+                            <span className="text-[9px]">ALL</span>
+                        </div>
                         All
                     </button>
 
@@ -22,12 +25,12 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
                         <button
                             key={cat.id}
                             onClick={() => onSelectCategory(cat.name)}
-                            className={`flex-shrink-0 h-10 px-5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all flex items-center gap-3 border ${activeCategory === cat.name
-                                ? 'bg-orange-500 text-white border-transparent shadow-lg transform scale-105'
-                                : 'bg-gray-50 text-gray-500 hover:bg-white hover:text-black border-transparent hover:border-gray-200'
+                            className={`flex-shrink-0 h-9 px-4 rounded-full text-[11px] font-bold tracking-wide transition-all flex items-center gap-2 border ${activeCategory === cat.name
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-transparent shadow-md transform scale-105'
+                                : 'bg-gray-50 text-gray-600 hover:bg-white hover:text-black border-transparent hover:border-gray-200 hover:shadow-sm'
                                 }`}
                         >
-                            <img src={cat.image} alt={cat.name} className="w-6 h-6 rounded-full object-cover shadow-sm bg-white" />
+                            <img src={cat.image} alt={cat.name} className="w-5 h-5 rounded-full object-cover shadow-sm bg-white" />
                             {cat.name}
                         </button>
                     ))}
@@ -38,61 +41,55 @@ const CategoryFilter = ({ categories, activeCategory, onSelectCategory, isSticky
 
     // DEFAULT MODE: Image Circles
     return (
-        <div data-lenis-prevent className="w-full overflow-x-auto pb-6 hide-scrollbar pt-4">
-            <div className="flex gap-8 px-4 sm:px-0 items-end">
+        <div data-lenis-prevent className="w-full overflow-x-auto pb-4 hide-scrollbar pt-2">
+            <div className="flex gap-6 px-4 sm:px-0">
                 {/* All Option */}
                 <button
                     onClick={() => onSelectCategory('All')}
-                    className={`flex-shrink-0 flex flex-col items-center gap-4 transition-all duration-300 ${activeCategory === 'All' ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:-translate-y-1'}`}
+                    className={`flex-shrink-0 flex flex-col items-center gap-2 group transition-all ${activeCategory === 'All' ? 'scale-105' : 'opacity-80 hover:opacity-100'}`}
                 >
                     <div className={`
-                        w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 relative
+                        w-20 h-20 rounded-full flex items-center justify-center transition-all relative z-10
                         ${activeCategory === 'All'
-                            ? 'bg-gray-900 shadow-[0_20px_40px_rgba(0,0,0,0.2)] ring-4 ring-gray-100 animate-float'
-                            : 'bg-white shadow-sm border border-gray-100'
+                            ? 'bg-gradient-to-tr from-orange-500 to-red-500 shadow-lg shadow-orange-300 ring-4 ring-orange-50 animate-float'
+                            : 'bg-white shadow-md group-hover:shadow-lg border border-gray-100'
                         }
                     `}>
-                        <span className={`font-black text-xs tracking-widest ${activeCategory === 'All' ? 'text-white' : 'text-gray-400'}`}>ALL</span>
-                        {activeCategory === 'All' && (
-                            <div className="absolute inset-x-0 -bottom-2 flex justify-center">
-                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-ping" />
-                            </div>
-                        )}
+                        <span className={`font-black text-sm ${activeCategory === 'All' ? 'text-white' : 'text-orange-500'}`}>ALL</span>
                     </div>
-                    <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${activeCategory === 'All' ? 'text-gray-900' : 'text-gray-400'}`}>
-                        Everything
+                    <span className={`text-xs font-bold transition-colors ${activeCategory === 'All' ? 'text-orange-600' : 'text-gray-500'}`}>
+                        All
                     </span>
                 </button>
 
-                {/* Category items */}
+                {/* Category items with 3D Glossy Images */}
                 {categories.map((cat) => (
                     <button
                         key={cat.id}
                         onClick={() => onSelectCategory(cat.name)}
-                        className={`flex-shrink-0 flex flex-col items-center gap-4 group transition-all duration-500 ${activeCategory === cat.name ? 'scale-110' : 'hover:-translate-y-2'}`}
+                        className={`flex-shrink-0 flex flex-col items-center gap-3 group transition-all duration-300 ${activeCategory === cat.name ? 'scale-110' : 'hover:-translate-y-1'
+                            }`}
                     >
-                        <div className="relative">
-                            {activeCategory === cat.name && (
-                                <div className="absolute inset-0 bg-orange-500/20 blur-2xl rounded-full animate-pulse" />
-                            )}
-                            <div className={`
-                                relative w-24 h-24 rounded-[2rem] flex items-center justify-center transition-all duration-700
-                                ${activeCategory === cat.name ? 'animate-float shadow-[0_25px_50px_rgba(249,115,22,0.25)]' : 'bg-transparent group-hover:shadow-lg'}
-                            `}>
-                                <img
-                                    src={cat.image}
-                                    alt={cat.name}
-                                    className={`w-28 h-28 max-w-none object-cover aspect-square drop-shadow-2xl transition-all duration-700 rounded-full ${activeCategory === cat.name ? 'scale-110 rotate-3' : 'grayscale-[40%] group-hover:grayscale-0 group-hover:scale-105'}`}
-                                />
-                                {activeCategory === cat.name && (
-                                    <div className="absolute inset-x-0 -bottom-2 flex justify-center">
-                                        <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse-glow" />
-                                    </div>
-                                )}
-                            </div>
+                        {/* 3D Icon Container */}
+                        <div className={`
+                            relative w-20 h-20 rounded-3xl flex items-center justify-center transition-all duration-500
+                            ${activeCategory === cat.name ? 'animate-float' : ''}
+                        `}>
+                            {/* Glow Effect / Backdrop */}
+                            <div className={`absolute inset-0 rounded-full blur-xl transition-opacity duration-500 ${activeCategory === cat.name ? 'bg-orange-200/50 opacity-100' : 'bg-gray-100/0 opacity-0 group-hover:opacity-50'
+                                }`} />
+
+                            {/* The Image (No border crop, let it float or fill depending on aspect) */}
+                            <img
+                                src={cat.image}
+                                alt={cat.name}
+                                className={`w-24 h-24 max-w-none object-cover aspect-square drop-shadow-lg transition-transform duration-500 rounded-full ${activeCategory === cat.name ? 'scale-110 drop-shadow-2xl' : 'grayscale-[20%] group-hover:grayscale-0 group-hover:scale-110'
+                                    }`}
+                            />
                         </div>
 
-                        <span className={`text-[11px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all duration-300 py-1 px-4 rounded-full ${activeCategory === cat.name ? 'text-white bg-orange-500 shadow-lg shadow-orange-500/30' : 'text-gray-400 group-hover:text-gray-900 group-hover:bg-gray-100'}`}>
+                        <span className={`text-xs font-bold whitespace-nowrap transition-colors bg-white/80 px-2 py-0.5 rounded-full backdrop-blur-sm ${activeCategory === cat.name ? 'text-orange-600 shadow-sm' : 'text-gray-500 group-hover:text-gray-800'
+                            }`}>
                             {cat.name}
                         </span>
                     </button>

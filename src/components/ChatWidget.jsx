@@ -8,8 +8,6 @@ import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const pulseGlow = `
@@ -58,42 +56,80 @@ const Typewriter = memo(({ text, speed = 12, onComplete }) => {
 const ChatFoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
     const [loaded, setLoaded] = useState(false);
     const isVeg = food.is_veg;
+    const isSuspended = food._suspended || food.available === false;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ y: -4 }}
-            className="group relative bg-white/90 backdrop-blur-md rounded-[1.5rem] overflow-hidden border border-white/50 transition-all duration-300 shadow-sm hover:shadow-xl"
+        <div
+            className={`group relative bg-white rounded-2xl overflow-hidden border transition-all duration-300 shadow-sm animate-slide-up ${isSuspended
+                ? 'border-gray-200 opacity-70 grayscale-[25%]'
+                : 'border-gray-100 hover:border-orange-200 hover:shadow-xl hover:-translate-y-1'
+                }`}
+            style={{
+                animationDelay: `${index * 80}ms`,
+                animationFillMode: 'both'
+            }}
         >
-            <div className="relative h-32 overflow-hidden bg-gray-50">
+            {/* Image */}
+            <div className="relative h-32 overflow-hidden bg-gray-100">
+                {!loaded && <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-50 animate-pulse" />}
                 <img
                     src={optimizeImage(food.image || food.imageUrl || food.image_url, 300)}
                     alt={food.name}
+                    loading="lazy"
                     onLoad={() => setLoaded(true)}
-                    className={`w-full h-full object-cover transition-all duration-700 ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}
+                    onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'; }}
+                    className={`w-full h-full object-cover transition-all duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${isSuspended ? '' : 'group-hover:scale-105'}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                <div className={`absolute top-2 left-2 w-3.5 h-3.5 rounded-sm border flex items-center justify-center bg-white shadow-sm ${isVeg ? 'border-green-600' : 'border-red-600'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+
+                {/* Suspended ribbon */}
+                {isSuspended && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <span className="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">Unavailable</span>
+                    </div>
+                )}
+
+                {/* Veg dot */}
+                <div className={`absolute top-2 left-2 w-4 h-4 rounded border-2 flex items-center justify-center bg-white ${isVeg ? 'border-green-500' : 'border-red-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
                 </div>
+
+                {/* Rating pill */}
+                {food.rating && (
+                    <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm">
+                        <Star size={8} className="fill-orange-400 text-orange-400" />
+                        <span className="text-orange-600 text-[10px] font-bold">{Number(food.rating).toFixed(1)}</span>
+                    </div>
+                )}
             </div>
 
-            <div className="p-3">
-                <h4 className="font-black text-gray-900 text-[13px] leading-tight line-clamp-1 mb-1 group-hover:text-orange-600 transition-colors">{food.name}</h4>
-                <div className="flex items-center justify-between mt-3">
-                    <span className="text-gray-900 font-black text-sm tracking-tight">₹{food.price}</span>
-                    <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => onAdd(food)}
-                        className="bg-gradient-to-r from-orange-500 to-red-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl transition-all shadow-lg shadow-orange-500/20 flex items-center gap-1 uppercase tracking-wider"
+            {/* Body */}
+            <div className="p-2.5">
+                <h4 className="font-bold text-gray-800 text-[12px] leading-tight line-clamp-1 mb-0.5">{food.name}</h4>
+                {food.restaurant?.name && (
+                    <button
+                        onClick={() => onViewRestaurant?.(food.restaurant?.id || food.restaurant?._id)}
+                        className="text-[10px] text-orange-500 hover:text-orange-600 truncate w-full text-left flex items-center gap-0.5 mb-2 transition-colors"
                     >
-                        Add +
-                    </motion.button>
+                        <MapPin size={8} className="flex-shrink-0" />
+                        {food.restaurant.name}
+                    </button>
+                )}
+                <div className="flex items-center justify-between">
+                    <span className="text-green-600 font-black text-[13px]">₹{food.price}</span>
+                    {isSuspended ? (
+                        <span className="text-[9px] text-red-500 font-semibold">N/A</span>
+                    ) : (
+                        <button
+                            onClick={() => onAdd(food)}
+                            className="bg-orange-500 hover:bg-orange-600 text-white text-[9px] font-black px-2.5 py-1.5 rounded-lg transition-all active:scale-90 shadow-sm shadow-orange-200 flex items-center gap-1"
+                        >
+                            ADD <ShoppingBag size={8} />
+                        </button>
+                    )}
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 });
 
@@ -410,55 +446,34 @@ const ChatWidget = () => {
         <>
             <style>{pulseGlow}</style>
             {/* ── Floating UFO Trigger ── */}
-            <motion.button
+            <button
                 onClick={() => { setIsOpen(o => !o); setUnread(0); }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
-                className="fixed bottom-6 right-6 z-[60] w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-[0_10px_30px_rgba(139,92,246,0.3)] hover:shadow-[0_15px_40px_rgba(139,92,246,0.5)] transition-all duration-300 border-[2px] border-white/50 backdrop-blur-md group overflow-hidden"
+                className="fixed bottom-6 right-6 z-[60] w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-[0_10px_30px_rgba(139,92,246,0.3)] hover:shadow-[0_15px_40px_rgba(139,92,246,0.5)] active:scale-95 transition-all duration-300 border-[2px] border-white/30 backdrop-blur-md group"
+                style={{ animation: 'float-orb 4s ease-in-out infinite, pulse-glow 3s infinite' }}
             >
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity animate-shimmer" />
-                <AnimatePresence mode="wait">
-                    {isOpen ? (
-                        <motion.div
-                            key="close"
-                            initial={{ opacity: 0, rotate: -90 }}
-                            animate={{ opacity: 1, rotate: 0 }}
-                            exit={{ opacity: 0, rotate: 90 }}
-                        >
-                            <X size={26} className="text-white drop-shadow-md" />
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="open"
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.5 }}
-                            className="relative flex items-center justify-center"
-                        >
-                            <Bot size={28} className="text-white drop-shadow-lg" />
-                            {unread > 0 && (
-                                <span className="absolute -top-3 -right-3 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 border-[2px] border-white flex items-center justify-center text-[10px] font-black text-white shadow-md">{unread}</span>
-                            )}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </motion.button>
+                {isOpen ? (
+                    <X size={26} className="text-white drop-shadow-md" />
+                ) : (
+                    <div className="relative flex items-center justify-center w-full h-full">
+                        <Bot size={28} className="text-white drop-shadow-lg group-hover:rotate-12 transition-transform duration-300" />
+                        {unread > 0 && (
+                            <span className="absolute -top-3 -right-3 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 border-[2px] border-white flex items-center justify-center text-[10px] font-black text-white shadow-md">{unread}</span>
+                        )}
+                        {/* Core UFO glow */}
+                        <div className="absolute inset-2 bg-white/20 rounded-full blur-sm mix-blend-overlay"></div>
+                    </div>
+                )}
+            </button>
 
             {/* ── Chat Window ── */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className={`
-                            fixed bottom-28 right-4 md:right-6 z-50 flex flex-col font-sans
-                            bg-white/80 backdrop-blur-3xl border border-white/40 rounded-[2.5rem] overflow-hidden
-                            shadow-[0_20px_50px_rgba(0,0,0,0.15)]
-                            transition-all duration-300 origin-bottom-right
-                            ${isExpanded ? 'w-[95vw] md:w-[600px] h-[85vh] max-h-[880px]' : 'w-[92vw] md:w-[420px] h-[680px] max-h-[80vh]'}
-                        `}
-                    >
+            {isOpen && (
+                <div className={`
+                    fixed bottom-28 right-4 md:right-6 z-50 flex flex-col font-sans
+                    bg-white/60 backdrop-blur-2xl border border-white/50 rounded-[2rem] overflow-hidden
+                    shadow-[0_8px_32px_rgba(0,0,0,0.1)]
+                    transition-all duration-300 animate-slide-up origin-bottom-right
+                    ${isExpanded ? 'w-[95vw] md:w-[600px] h-[85vh] max-h-[880px]' : 'w-[92vw] md:w-[420px] h-[680px] max-h-[80vh]'}
+                `}>
 
                     {/* ── Header ── matches glassmorphism style */}
                     <div className="flex items-center justify-between px-5 py-4 bg-white/40 backdrop-blur-md border-b border-white/40 shrink-0">
@@ -648,10 +663,8 @@ const ChatWidget = () => {
                             </div>
                         </>
                     )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
+                </div>
+            )}
         </>
     );
 };

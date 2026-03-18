@@ -12,8 +12,6 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import SkeletonCard from '../components/SkeletonCard';
 
 import { API_URL } from '../config';  // Import Config
-import { motion, AnimatePresence } from 'framer-motion';
-import { optimizeImage } from '../utils/imageOptimizer';
 
 const Home = () => {
     const { addToCart, searchQuery, setSearchQuery } = useShop();
@@ -235,27 +233,27 @@ const Home = () => {
 
     // High-End Glassmorphism Location Widget
     const locationWidget = (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            className="flex items-center gap-3 bg-white/10 backdrop-blur-2xl p-2 pl-3 pr-5 rounded-full border border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.1)] transition-all duration-300 hover:bg-white/15 cursor-pointer group relative overflow-hidden"
+        <div
+            className="flex items-center gap-3 bg-white/10 backdrop-blur-2xl p-2 pl-3 pr-5 rounded-full border border-white/20 shadow-2xl transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-orange-500/20 cursor-pointer group relative overflow-hidden"
             onClick={detectLocation}
         >
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
+            {/* Glossy highlight line */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
 
-            <div className="bg-gradient-to-br from-orange-400 to-red-500 p-2.5 rounded-full shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-all duration-300 relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity animate-shimmer" />
+            <button
+                className="bg-gradient-to-br from-orange-400 to-red-500 p-2.5 rounded-full shadow-lg shadow-red-500/30 group-hover:shadow-red-500/50 transition-all duration-300 relative"
+                title="Detect My Location"
+            >
+                <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
                 <MapPin size={16} className={`text-white w-4 h-4 ${loadingLocation ? 'animate-bounce' : ''}`} />
-            </div>
-            <div className="flex flex-col items-start">
-                <h2 className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] leading-none mb-1">Delivering to</h2>
+            </button>
+            <div className="flex flex-col items-start pt-0.5">
+                <h2 className="text-[10px] font-black text-orange-200 uppercase tracking-[0.2em] leading-none mb-1">Delivering to</h2>
                 <h1 className="text-[15px] font-black text-white leading-none drop-shadow-md group-hover:text-orange-300 transition-colors max-w-[160px] truncate">
                     {loadingLocation ? "Locating..." : locationName}
                 </h1>
             </div>
-        </motion.div>
+        </div>
     );
 
     // Memoized add handler to prevent prop thrashing on FoodCard
@@ -278,7 +276,7 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white pb-20 font-sans text-gray-900 overflow-x-hidden">
+        <div className="min-h-screen bg-gray-50 pb-10 font-sans text-gray-900">
             {/* Main Content Area - with Padding */}
             <div className="w-full px-1 sm:px-2 pt-0 space-y-3.5 mx-auto">
 
@@ -470,21 +468,17 @@ const Home = () => {
                 {/* 1. Premium Divider */}
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
-                {/* 2. Menu Section Header */}
-                <div ref={sectionHeaderRef} className="flex items-center justify-center relative py-12 md:py-16 overflow-hidden">
-                    <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent flex-1" />
+                {/* 2. Menu Section Header (Glowing Gradient Line) */}
+                <div ref={sectionHeaderRef} className="flex items-center justify-center relative py-6 md:py-8 overflow-hidden group">
+                    <div className="h-px bg-gradient-to-r from-transparent via-orange-300 to-transparent flex-1 opacity-50"></div>
 
-                    <div className="px-10 relative">
-                        <motion.span 
-                            initial={{ opacity: 0, y: 10 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            className="relative block px-10 py-3 bg-white border border-gray-100/50 text-xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-500 uppercase shadow-sm rounded-full"
-                        >
-                            Explore Menu
-                        </motion.span>
+                    <div className="px-6 relative">
+                        <span className="relative px-6 py-2 bg-white rounded-full border border-orange-100 text-sm md:text-base font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600 uppercase shadow-sm">
+                            Explore Food Items
+                        </span>
                     </div>
 
-                    <div className="h-px bg-gradient-to-r from-gray-200 via-gray-100 to-transparent flex-1" />
+                    <div className="h-px bg-gradient-to-r from-orange-300 via-pink-300 to-transparent flex-1 opacity-50"></div>
                 </div>
 
                 {/* 3. Filter Stack (MAIN + STICKY) */}
@@ -501,24 +495,16 @@ const Home = () => {
                     </div>
 
                     {/* NEW: Secondary Search Bar Below FilterBar */}
-                    <div className="mt-8 mb-6 relative w-full max-w-2xl mx-auto px-4">
-                        <div className="relative group flex items-center bg-gray-50/50 backdrop-blur-md rounded-full border border-gray-200 focus-within:border-orange-500 focus-within:ring-4 focus-within:ring-orange-100 transition-all duration-300 overflow-hidden shadow-sm">
-                            <div className="absolute left-5 text-gray-400 group-focus-within:text-orange-500 transition-colors">
-                                <Search className="w-5 h-5" />
-                            </div>
+                    <div className="mt-4 mb-2 relative w-full max-w-xl mx-auto px-2">
+                        <div className="relative flex items-center bg-white rounded-full border shadow-sm focus-within:shadow-md transition-all border-gray-200 focus-within:border-orange-500">
+                            <Search className="absolute left-4 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="What's on your mind? Dishes, cuisines..."
-                                className="w-full pl-14 pr-12 py-4 rounded-full text-[15px] font-medium outline-none bg-transparent placeholder:text-gray-400 text-gray-800"
+                                placeholder="Search dishes, restaurants..."
+                                className="w-full pl-10 pr-12 py-2.5 rounded-full text-sm outline-none bg-transparent placeholder:text-gray-400"
                             />
-                            {searchQuery && (
-                                <button 
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all text-[10px] font-bold"
-                                >✕</button>
-                            )}
                         </div>
                     </div>
 
