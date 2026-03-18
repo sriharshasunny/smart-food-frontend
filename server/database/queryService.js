@@ -66,18 +66,28 @@ class QueryService {
     }
 
     /**
-     * Direct database broad text search
+     * Direct database broad text search with advanced filters
      */
-    async searchFood(queryText, limit = 10) {
+    async searchFood(queryText, limit = 10, filters = {}) {
         try {
-             // In Supabase, if using ilike or textSearch
-             const { data } = await supabase
+             let query = supabase
                 .from('foods')
                 .select('*, restaurant:restaurant_id(id, name, address, rating)')
-                .eq('available', true)
-                .ilike('name', `%${queryText}%`)
-                .order('rating', { ascending: false })
-                .limit(limit);
+                .eq('available', true);
+
+             if (queryText) {
+                 query = query.ilike('name', `%${queryText}%`);
+             }
+             if (filters.price_max) {
+                 query = query.lte('price', filters.price_max);
+             }
+             if (typeof filters.veg === 'boolean') {
+                 query = query.eq('is_veg', filters.veg);
+             }
+
+             query = query.order('rating', { ascending: false }).limit(limit);
+
+             const { data } = await query;
              return data || [];
         } catch (e) {
             console.error("QueryService.searchFood Error:", e);

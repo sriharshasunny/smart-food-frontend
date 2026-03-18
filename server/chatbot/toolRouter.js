@@ -17,7 +17,7 @@ class ToolRouter {
 
             case 'filter_food':
             case 'search_food':
-                const searchResults = await queryService.searchFood(dataFilters.foodItem || queryText, 15);
+                const searchResults = await queryService.searchFood(dataFilters.food_name || dataFilters.foodItem || queryText, dataFilters.limit || 15, dataFilters);
                 return { type: 'search_food', data: searchResults };
 
             case 'restaurant_search':
