@@ -4,7 +4,7 @@ const entityExtractor = require('./entityExtractor');
 const recommendationConnector = require('./recommendationConnector');
 const actionService = require('./actionService');
 const responseBuilder = require('./responseBuilder');
-const advancedRecommendationEngine = require('../recommendation/recommendationEngine');
+const toolRouter = require('./toolRouter');
 
 exports.processChatRequest = async (req, res) => {
     try {
@@ -33,32 +33,34 @@ exports.processChatRequest = async (req, res) => {
         // 3. Entity Extraction
         const filters = await entityExtractor.extractFilters(message, contextString);
 
-        // 4. Recommendation Integration / Action Execution
-        let data = [];
+        // 4. Recommendation Integration / Action Execution via Tool Router
+        const routerResponse = await toolRouter.route(intent, userId, filters, message);
+        let data = routerResponse.data || [];
         let friendlyMessage = "";
-
-        if (intent === 'general_chat') {
-            friendlyMessage = "I am your food delivery assistant! Let me know if you want recommendations, want to search for food, or need help with a past order.";
-        } else if (intent === 'recommend_food') {
-            // DELEGATING TO ADVANCED RECOMMENDATION ENGINE
-            data = await advancedRecommendationEngine.getRecommendations(userId, 6, filters);
-        } else if (intent === 'search_food' || intent === 'filter_food') {
-            data = await recommendationConnector.advancedSearchFood(filters);
-        } else if (intent === 'restaurant_info') {
-            data = await recommendationConnector.getRestaurants(filters);
-            friendlyMessage = "Here are some top restaurants.";
-        } else if (intent === 'order_help' || intent === 'track_order') {
-            data = await recommendationConnector.getOrderHistory(userId);
-            friendlyMessage = data.length > 0 ? "Here are your recent orders." : "I couldn't find any recent orders.";
-        }
 
         // 5. Build Actions
         const actions = actionService.determineActions(intent, data);
 
-        // 6. Response Building
-        const finalResponsePayload = responseBuilder.build(intent, data, friendlyMessage, actions, {
-            appliedFilters: Object.keys(filters).length ? filters : undefined
-        });
+        // 6. Response Building & Gemini Professional Tone Generation (for top levels)
+        if (intent === 'general_chat' || intent === 'food_question') {
+            friendlyMessage = "I am your intelligent food delivery assistant! Let me know if you want recommendations, want to search for food, or need help with a past order.";
+        } else if (intent === 'order_history') {
+            friendlyMessage = data.length > 0 ? "Here are your recent orders." : "I couldn't find any recent orders.";
+        } else if (intent === 'recommend_food') {
+            friendlyMessage = "Based on your preferences and recent history, here are some great matches available right now.";
+        } else if (intent === 'search_food') {
+            friendlyMessage = "Here is what I found based on your search.";
+        } else if (intent === 'restaurant_info') {
+            friendlyMessage = "Here are some top restaurants.";
+        }
+
+        const finalResponsePayload = responseBuilder.build(
+            routerResponse.type === 'action' ? 'action' : routerResponse.type, 
+            data, 
+            friendlyMessage, 
+            actions, 
+            { appliedFilters: Object.keys(filters).length ? filters : undefined }
+        );
 
         contextManager.saveMessage(userId, 'assistant', finalResponsePayload.message);
         return res.json(finalResponsePayload);

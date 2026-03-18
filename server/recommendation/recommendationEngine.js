@@ -3,6 +3,8 @@ const behaviorEngine = require('./behaviorEngine');
 const similarityEngine = require('./similarityEngine');
 const diversityEngine = require('./diversityEngine');
 const rankingEngine = require('./rankingEngine');
+const queryService = require('../database/queryService');
+const { createClient } = require('@supabase/supabase-js');
 
 /**
  * Orchestrates all recommendation logical steps:
@@ -48,29 +50,49 @@ class RecommendationEngine {
             // Deduped represents personalized high-scoring. Let's slice out true trending from raw.
             const genericTrending = rawCandidates.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 15);
             
-            const finalMix = diversityEngine.enforceDiversity(deduped, genericTrending, limit);
+            let finalRecommendations = diversityEngine.enforceDiversity(deduped, genericTrending, limit);
 
-            // 7. Save to Recommendation History asynchronously to prevent duplicate next query
-            this.logRecommendations(userId, finalMix.map(f => f.id));
+            // 6. Check required count. If < 10, fallback to queryService and merge
+            if (finalRecommendations.length < 10) {
+                console.log(`[RecommendationEngine] Shortfall detected (${finalRecommendations.length} results). Firing fallback queryService.`);
+                const remaining = 10 - finalRecommendations.length;
+                const dbFallbacks = await queryService.matchUserTaste(userId, filters, remaining);
+                
+                // Merge preventing duplicates
+                const currentIds = new Set(finalRecommendations.map(f => f.id));
+                const addedFallbacks = dbFallbacks.filter(f => {
+                    if(!currentIds.has(f.id)) {
+                        f.score = 5.0; // static base score
+                        f.source = 'fallback_query';
+                        return true;
+                    }
+                    return false;
+                });
+                
+                finalRecommendations = [...finalRecommendations, ...addedFallbacks];
 
-            return finalMix;
+                // Re-sort just to be safe
+                finalRecommendations.sort((a, b) => (b.score || 0) - (a.score || 0));
+            }
+
+            // 7. Update recommendation history cache
+            const historyInserts = finalRecommendations.map(food => ({
+                user_id: userId,
+                food_id: food.id,
+                created_at: new Date()
+            }));
+            
+            if (historyInserts.length > 0) {
+                // Background fire and forget
+                supabase.from('recommendation_history').insert(historyInserts).then(() => {});
+            }
+
+            return finalRecommendations.slice(0, 10);
 
         } catch (error) {
             console.error('[RecommendationEngine] Failed:', error.message);
             return [];
         }
-    }
-
-    /**
-     * Best-effort save to history cache.
-     */
-    async logRecommendations(userId, foodIds) {
-        if (!userId || foodIds.length === 0) return;
-        try {
-            await supabase.from('recommendation_history').insert(
-                foodIds.map(id => ({ user_id: userId, food_id: id, created_at: new Date().toISOString() }))
-            );
-        } catch(e) { /* ignore */ }
     }
 
     /**
