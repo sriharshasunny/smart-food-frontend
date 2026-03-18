@@ -341,7 +341,17 @@ const Recommendations = () => {
       const data = await res.json();
 
       const newFoods = data.recommendations || [];
-      setFoods(prev => reset ? newFoods : [...prev, ...newFoods]);
+      setFoods(prev => {
+        const combined = reset ? newFoods : [...prev, ...newFoods];
+        const uniqueMap = new Map();
+        combined.forEach(item => {
+          const id = item.id || item._id;
+          if (id && !uniqueMap.has(id)) {
+            uniqueMap.set(id, item);
+          }
+        });
+        return Array.from(uniqueMap.values());
+      });
       setExplanation(data.explanation || '');
       setStrategy(data.strategy || '');
       setMealType(data.mealType || '');

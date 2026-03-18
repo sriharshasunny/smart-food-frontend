@@ -88,8 +88,8 @@ async function getRecommendations(userId, options = {}) {
 
   // Cold start or trending fallback
   if (strategy === 'cold_start' || recommendations.length < 5) {
-    const trending = await getTrendingFoods(city, limit);
-    const cold = await getColdStartFoods(city, limit);
+    const trending = await getTrendingFoods(city, limit, page);
+    const cold = await getColdStartFoods(city, limit, page);
 
     // Merge: dedupe by id, trending first
     const seen = new Set();

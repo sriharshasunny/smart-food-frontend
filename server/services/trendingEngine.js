@@ -60,8 +60,8 @@ async function getTrendingFoodIds(city = null, limit = 50) {
  * @param {number} limit
  * @returns {Array}
  */
-async function getTrendingFoods(city = null, limit = 20) {
-  const cacheKey = `trending_foods:${city || 'global'}:${limit}`;
+async function getTrendingFoods(city = null, limit = 20, page = 1) {
+  const cacheKey = `trending_foods:${city || 'global'}:${limit}:${page}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
 
@@ -106,9 +106,10 @@ async function getTrendingFoods(city = null, limit = 20) {
     };
   });
 
-  const result = scoredFoods
-    .sort((a, b) => b._score - a._score)
-    .slice(0, limit);
+    const offset = (page - 1) * limit;
+    const result = scoredFoods
+      .sort((a, b) => b._score - a._score)
+      .slice(offset, offset + limit);
 
   cache.set(cacheKey, result, TRENDING_CACHE_TTL);
   return result;
@@ -121,8 +122,8 @@ async function getTrendingFoods(city = null, limit = 20) {
  * @param {number} limit
  * @returns {Array}
  */
-async function getColdStartFoods(city = null, limit = 20) {
-  const cacheKey = `cold_start:${city || 'global'}:${limit}`;
+async function getColdStartFoods(city = null, limit = 20, page = 1) {
+  const cacheKey = `cold_start:${city || 'global'}:${limit}:${page}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
 
@@ -152,14 +153,15 @@ async function getColdStartFoods(city = null, limit = 20) {
 
   // Blend rating + popularity
   const maxPop = Math.max(...(foods || []).map(f => parseFloat(f.popularity_score) || 0), 1);
-  const result = (foods || [])
-    .map(f => ({
-      ...f,
-      restaurant: f.restaurants,
-      _score: (parseFloat(f.rating) / 5) * 0.6 + (parseFloat(f.popularity_score) / maxPop) * 0.4,
-    }))
-    .sort((a, b) => b._score - a._score)
-    .slice(0, limit);
+    const offset = (page - 1) * limit;
+    const result = (foods || [])
+      .map(f => ({
+        ...f,
+        restaurant: f.restaurants,
+        _score: (parseFloat(f.rating) / 5) * 0.6 + (parseFloat(f.popularity_score) / maxPop) * 0.4,
+      }))
+      .sort((a, b) => b._score - a._score)
+      .slice(offset, offset + limit);
 
   cache.set(cacheKey, result, TRENDING_CACHE_TTL);
   return result;
