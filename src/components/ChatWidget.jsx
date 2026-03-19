@@ -12,9 +12,9 @@ import { optimizeImage } from '../utils/imageOptimizer';
 
 const pulseGlow = `
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5); }
-  70% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5); }
+  70% { box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
 }
 
 @keyframes float-orb {
@@ -60,9 +60,9 @@ const ChatFoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
 
     return (
         <div
-            className={`group relative bg-white rounded-2xl overflow-hidden border transition-all duration-300 shadow-sm animate-slide-up ${isSuspended
-                ? 'border-gray-200 opacity-70 grayscale-[25%]'
-                : 'border-gray-100 hover:border-orange-200 hover:shadow-xl hover:-translate-y-1'
+            className={`group relative bg-neutral-900 rounded-2xl overflow-hidden border transition-all duration-300 shadow-xl animate-slide-up ${isSuspended
+                ? 'border-neutral-800 opacity-70 grayscale-[25%]'
+                : 'border-neutral-800 hover:border-orange-500/50 hover:shadow-orange-900/20 hover:-translate-y-1'
                 }`}
             style={{
                 animationDelay: `${index * 80}ms`,
@@ -105,7 +105,7 @@ const ChatFoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
 
             {/* Body */}
             <div className="p-2.5">
-                <h4 className="font-bold text-gray-800 text-[12px] leading-tight line-clamp-1 mb-0.5">{food.name}</h4>
+                <h4 className="font-bold text-white text-[12px] leading-tight line-clamp-1 mb-0.5">{food.name}</h4>
                 {food.restaurant?.name && (
                     <button
                         onClick={() => onViewRestaurant?.(food.restaurant?.id || food.restaurant?._id)}
@@ -139,20 +139,20 @@ const ChatFoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
 const ChatRestaurantCard = memo(({ rest, onView }) => {
     const isSuspended = rest._suspended || rest.is_active === false;
     return (
-        <div className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden shadow-sm ${isSuspended ? 'border-gray-200 opacity-75' : 'border-gray-100 hover:border-orange-200 hover:shadow-md'
+        <div className={`bg-neutral-900 rounded-2xl border transition-all duration-200 overflow-hidden shadow-md ${isSuspended ? 'border-neutral-800 opacity-75' : 'border-neutral-800 hover:border-orange-500/40 hover:shadow-lg'
             }`}>
             <div className="p-3">
                 <div className="flex justify-between items-start mb-1.5">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <h4 className="font-bold text-gray-800 text-[13px] leading-tight truncate">{rest.name}</h4>
+                        <h4 className="font-bold text-white text-[13px] leading-tight truncate">{rest.name}</h4>
                         {isSuspended && (
                             <span className="text-[8px] font-black bg-red-50 text-red-500 border border-red-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide flex-shrink-0">Closed</span>
                         )}
                     </div>
                     {rest.rating && (
-                        <div className="flex items-center gap-0.5 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-full flex-shrink-0 ml-2">
+                        <div className="flex items-center gap-0.5 bg-orange-950/30 border border-orange-500/20 px-1.5 py-0.5 rounded-full flex-shrink-0 ml-2">
                             <Star size={8} className="fill-orange-400 text-orange-400" />
-                            <span className="text-orange-600 text-[10px] font-bold">{rest.rating}</span>
+                            <span className="text-orange-500 text-[10px] font-bold">{rest.rating}</span>
                         </div>
                     )}
                 </div>
@@ -162,7 +162,7 @@ const ChatRestaurantCard = memo(({ rest, onView }) => {
                     </p>
                 )}
                 {rest.foods?.length > 0 && (
-                    <div className="bg-orange-50/60 rounded-xl p-2 mb-2 space-y-1 border border-orange-100/60">
+                    <div className="bg-neutral-800/40 rounded-xl p-2 mb-2 space-y-1 border border-neutral-700/40">
                         {rest.foods.slice(0, 4).map((f, i) => (
                             <div key={i} className={`flex justify-between items-center text-[11px] ${f._suspended ? 'opacity-50' : ''}`}>
                                 <span className="text-gray-600 truncate flex-1 pr-2 flex items-center gap-1">
@@ -196,8 +196,8 @@ const Chip = memo(({ label, emoji, onClick, active }) => (
     <button
         onClick={() => onClick(label)}
         className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl border text-[11px] font-bold whitespace-nowrap transition-all duration-200 active:scale-95 ${active
-            ? 'bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-200'
-            : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600'
+            ? 'bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-900/20'
+            : 'bg-neutral-800 border-neutral-700 text-gray-400 hover:border-orange-500/50 hover:bg-neutral-700 hover:text-orange-400'
             }`}
     >
         <span className="text-base leading-none">{emoji}</span> {label}
@@ -213,9 +213,9 @@ const DateSep = ({ date }) => {
     const label = date === today ? 'Today' : date === yesterday ? 'Yesterday' : new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     return (
         <div className="flex items-center gap-2 my-4">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest px-2 bg-white">{label}</span>
-            <div className="flex-1 h-px bg-gray-100" />
+            <div className="flex-1 h-px bg-neutral-800" />
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest px-2 bg-black">{label}</span>
+            <div className="flex-1 h-px bg-neutral-800" />
         </div>
     );
 };
@@ -445,54 +445,51 @@ const ChatWidget = () => {
     return (
         <>
             <style>{pulseGlow}</style>
-            {/* ── Floating UFO Trigger ── */}
+            {/* ── Floating UFO Trigger ── Black & Orange */}
             <button
                 onClick={() => { setIsOpen(o => !o); setUnread(0); }}
-                className="fixed bottom-6 right-6 z-[60] w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-[0_10px_30px_rgba(139,92,246,0.3)] hover:shadow-[0_15px_40px_rgba(139,92,246,0.5)] active:scale-95 transition-all duration-300 border-[2px] border-white/30 backdrop-blur-md group"
-                style={{ animation: 'float-orb 4s ease-in-out infinite, pulse-glow 3s infinite' }}
+                className="fixed bottom-6 right-6 z-[60] w-16 h-16 flex items-center justify-center rounded-full bg-neutral-900 shadow-[0_10px_30px_rgba(249,115,22,0.3)] hover:shadow-[0_15px_40px_rgba(249,115,22,0.5)] active:scale-95 transition-all duration-300 border-2 border-orange-500/30 group"
+                style={{ animation: 'float-orb 4s ease-in-out infinite' }}
             >
                 {isOpen ? (
-                    <X size={26} className="text-white drop-shadow-md" />
+                    <X size={26} className="text-orange-500" />
                 ) : (
                     <div className="relative flex items-center justify-center w-full h-full">
-                        <Bot size={28} className="text-white drop-shadow-lg group-hover:rotate-12 transition-transform duration-300" />
+                        <Bot size={28} className="text-orange-500 group-hover:rotate-12 transition-transform duration-300" />
                         {unread > 0 && (
-                            <span className="absolute -top-3 -right-3 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 border-[2px] border-white flex items-center justify-center text-[10px] font-black text-white shadow-md">{unread}</span>
+                            <span className="absolute -top-3 -right-3 min-w-[20px] h-[20px] px-1 rounded-full bg-orange-600 border-[2px] border-neutral-900 flex items-center justify-center text-[10px] font-black text-white shadow-md">{unread}</span>
                         )}
-                        {/* Core UFO glow */}
-                        <div className="absolute inset-2 bg-white/20 rounded-full blur-sm mix-blend-overlay"></div>
                     </div>
                 )}
             </button>
 
-            {/* ── Chat Window ── */}
+            {/* ── Chat Window ── Switch to Black Theme */}
             {isOpen && (
                 <div className={`
                     fixed bottom-28 right-4 md:right-6 z-50 flex flex-col font-sans
-                    bg-white/60 backdrop-blur-2xl border border-white/50 rounded-[2rem] overflow-hidden
-                    shadow-[0_8px_32px_rgba(0,0,0,0.1)]
+                    bg-neutral-950 border border-neutral-800 rounded-[2rem] overflow-hidden
+                    shadow-[0_8px_32px_rgba(0,0,0,0.5)]
                     transition-all duration-300 animate-slide-up origin-bottom-right
                     ${isExpanded ? 'w-[95vw] md:w-[600px] h-[85vh] max-h-[880px]' : 'w-[92vw] md:w-[420px] h-[680px] max-h-[80vh]'}
                 `}>
 
-                    {/* ── Header ── matches glassmorphism style */}
-                    <div className="flex items-center justify-between px-5 py-4 bg-white/40 backdrop-blur-md border-b border-white/40 shrink-0">
+                    {/* ── Header ── Black & Orange */}
+                    <div className="flex items-center justify-between px-5 py-4 bg-neutral-900 border-b border-neutral-800 shrink-0">
                         <div className="flex items-center gap-3">
                             {/* UFO Bot avatar */}
                             <div className="relative">
                                 <div
-                                    className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-300/50 border-2 border-white/50"
-                                    style={{ animation: 'pulse-glow 2s infinite' }}
+                                    className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-900/40 border-2 border-orange-400/20"
                                 >
-                                    <Bot size={22} className="text-white drop-shadow-sm" />
+                                    <Bot size={22} className="text-white" />
                                 </div>
-                                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 border-[2.5px] border-white rounded-full shadow-sm" />
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-[2.5px] border-neutral-900 rounded-full shadow-sm" />
                             </div>
                             <div>
-                                <h3 className="text-[15px] font-black text-slate-900 tracking-tight leading-none uppercase">Smart Assistant</h3>
+                                <h3 className="text-[15px] font-black text-white tracking-tight leading-none uppercase">Smart Assistant</h3>
                                 <div className="flex items-center gap-1.5 mt-1">
                                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-                                    <span className="text-[10px] text-slate-500 font-bold tracking-wide uppercase">AI Engine · Active</span>
+                                    <span className="text-[10px] text-gray-400 font-bold tracking-wide uppercase">AI Engine · Active</span>
                                 </div>
                             </div>
                         </div>
@@ -515,18 +512,18 @@ const ChatWidget = () => {
 
                     {/* ── HISTORY VIEW ── */}
                     {view === 'history' ? (
-                        <div className="flex flex-col flex-1 overflow-hidden bg-[#f8fafc]">
-                            <div className="px-4 pt-3 pb-2 shrink-0 bg-white border-b border-gray-100">
-                                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Chat History</p>
+                        <div className="flex flex-col flex-1 overflow-hidden bg-black">
+                            <div className="px-4 pt-3 pb-2 shrink-0 bg-neutral-900 border-b border-neutral-800">
+                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Chat History</p>
                                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
                                     {historyDates.length === 0
-                                        ? <p className="text-[12px] text-gray-400 italic py-1">No history yet.</p>
+                                        ? <p className="text-[12px] text-gray-500 italic py-1">No history yet.</p>
                                         : historyDates.map(date => {
                                             const today = new Date().toDateString(), yesterday = new Date(Date.now() - 86400000).toDateString();
                                             const label = date === today ? 'Today' : date === yesterday ? 'Yesterday' : new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
                                             return (
                                                 <button key={date} onClick={() => setSelDate(date)}
-                                                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${selDate === date ? 'bg-orange-500 text-white shadow-md shadow-orange-200' : 'bg-gray-100 text-gray-500 hover:bg-orange-50 hover:text-orange-600'}`}>
+                                                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${selDate === date ? 'bg-orange-600 text-white shadow-md shadow-orange-900/20' : 'bg-neutral-800 text-gray-400 hover:bg-neutral-700 hover:text-orange-400'}`}>
                                                     {label}
                                                 </button>
                                             );
@@ -538,26 +535,26 @@ const ChatWidget = () => {
                                 {selDate && (historyLogs[selDate] || []).map((msg, i) => (
                                     <div key={i} className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         {msg.sender !== 'user' && (
-                                            <div className="w-6 h-6 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                                                <Bot size={11} className="text-white" />
+                                            <div className="w-6 h-6 rounded-xl bg-neutral-800 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm border border-neutral-700">
+                                                <Bot size={11} className="text-orange-500" />
                                             </div>
                                         )}
-                                        <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[12px] leading-relaxed ${msg.sender === 'user' ? 'bg-orange-500 text-white rounded-tr-md' : 'bg-white text-gray-700 rounded-tl-md border border-gray-100 shadow-sm'}`}>
+                                        <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[12px] leading-relaxed ${msg.sender === 'user' ? 'bg-orange-600 text-white rounded-tr-md' : 'bg-neutral-900 text-gray-100 rounded-tl-md border border-neutral-800'}`}>
                                             {msg.content || msg.message}
                                         </div>
                                     </div>
                                 ))}
                                 {(!selDate || !(historyLogs[selDate]?.length)) && (
                                     <div className="flex flex-col items-center justify-center h-full gap-3 py-16">
-                                        <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center">
-                                            <History size={22} className="text-orange-300" />
+                                        <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
+                                            <History size={22} className="text-neutral-700" />
                                         </div>
-                                        <p className="text-gray-400 text-sm">No messages for this date</p>
+                                        <p className="text-gray-500 text-sm">No messages for this date</p>
                                     </div>
                                 )}
                             </div>
-                            <div className="px-4 py-3 border-t border-gray-100 bg-white shrink-0">
-                                <button onClick={() => setView('chat')} className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-2xl transition-all shadow-sm shadow-orange-200 flex items-center justify-center gap-2">
+                            <div className="px-4 py-3 border-t border-neutral-800 bg-neutral-900 shrink-0">
+                                <button onClick={() => setView('chat')} className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm rounded-2xl transition-all shadow-sm shadow-orange-900/20 flex items-center justify-center gap-2">
                                     <ArrowLeft size={14} /> Back to Chat
                                 </button>
                             </div>
@@ -567,7 +564,7 @@ const ChatWidget = () => {
                             {/* ── CHAT AREA ── */}
                             <div
                                 data-lenis-prevent
-                                className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-none overscroll-y-contain bg-[#f8fafc]"
+                                className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-none overscroll-y-contain bg-black"
                                 style={{ scrollbarWidth: 'none' }}
                             >
                                 {messages.map((msg, idx) => {
@@ -583,15 +580,15 @@ const ChatWidget = () => {
                                             <div className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}>
 
                                                 {!isUser && (
-                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm shadow-purple-200 border border-white/50">
-                                                        <Bot size={14} className="text-white" />
+                                                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm border border-neutral-700">
+                                                        <Bot size={14} className="text-orange-500" />
                                                     </div>
                                                 )}
 
                                                 <div className="max-w-[88%] animate-fade-in">
                                                     <div className={`px-4 py-3 rounded-2xl shadow-sm ${isUser
-                                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-tr-md shadow-purple-200'
-                                                        : 'bg-white/80 backdrop-blur-md text-gray-800 rounded-tl-md border border-white'
+                                                        ? 'bg-orange-600 text-white rounded-tr-md shadow-orange-900/20'
+                                                        : 'bg-neutral-900 text-gray-100 rounded-tl-md border border-neutral-800'
                                                         }`}>
                                                         {renderContent(msg, isLatest)}
                                                     </div>
@@ -606,15 +603,15 @@ const ChatWidget = () => {
                                     );
                                 })}
 
-                                {/* Loading */}
+                                 {/* Loading */}
                                 {loading && (
                                     <div className="flex items-center gap-2.5 animate-fade-in">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-purple-200 border border-white/50">
-                                            <Bot size={14} className="text-white" />
+                                        <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0 shadow-sm border border-neutral-700">
+                                            <Bot size={14} className="text-orange-500" />
                                         </div>
-                                        <div className="bg-white/80 backdrop-blur-md border border-white px-5 py-3.5 rounded-2xl rounded-tl-md flex items-center gap-1.5 shadow-sm">
+                                        <div className="bg-neutral-900 border border-neutral-800 px-5 py-3.5 rounded-2xl rounded-tl-md flex items-center gap-1.5 shadow-sm">
                                             {[0, 1, 2].map(i => (
-                                                <span key={i} className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+                                                <span key={i} className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
                                             ))}
                                         </div>
                                     </div>
@@ -623,10 +620,10 @@ const ChatWidget = () => {
                                 <div ref={bottomRef} className="h-1" />
                             </div>
 
-                            {/* ── Quick Picks ── */}
+                            {/* ── Quick Picks ── Dark */}
                             {showQuickPicks && (
-                                <div className="px-4 pb-3 shrink-0 bg-[#f8fafc]">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Quick Picks</p>
+                                <div className="px-4 pb-3 shrink-0 bg-black">
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Quick Picks</p>
                                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
                                         {QUICK_PICKS.map((q, i) => (
                                             <Chip key={i} label={q.label} emoji={q.emoji} active={activeChip === q.label}
@@ -636,9 +633,9 @@ const ChatWidget = () => {
                                 </div>
                             )}
 
-                            {/* ── Input Bar ── */}
-                            <div className="px-4 pb-4 pt-3 bg-white/50 backdrop-blur-lg border-t border-white/40 shrink-0">
-                                <div className="flex items-center gap-2 bg-white/80 border border-white shadow-sm rounded-full px-1.5 py-1.5 focus-within:border-purple-300 focus-within:ring-4 focus-within:ring-purple-100/50 transition-all">
+                             {/* ── Input Bar ── Dark & Orange */}
+                            <div className="px-4 pb-4 pt-3 bg-neutral-900 border-t border-neutral-800 shrink-0">
+                                <div className="flex items-center gap-2 bg-neutral-800 border border-neutral-700 shadow-sm rounded-full px-1.5 py-1.5 focus-within:border-orange-500/50 transition-all">
                                     <input
                                         ref={inputRef}
                                         type="text"
@@ -646,18 +643,18 @@ const ChatWidget = () => {
                                         onChange={e => setInput(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && submitMessage(input)}
                                         placeholder="Ask for recommendations..."
-                                        className="flex-1 bg-transparent text-gray-800 text-[14px] px-4 py-2 focus:outline-none placeholder-gray-400 min-w-0 font-medium"
+                                        className="flex-1 bg-transparent text-white text-[14px] px-4 py-2 focus:outline-none placeholder-gray-500 min-w-0 font-medium"
                                     />
                                     <button
                                         onClick={() => submitMessage(input)}
                                         disabled={loading || !input.trim()}
-                                        className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:from-gray-300 disabled:to-gray-300 flex items-center justify-center text-white transition-all active:scale-90 shadow-md shadow-purple-200 disabled:shadow-none flex-shrink-0"
+                                        className="w-10 h-10 rounded-full bg-orange-500 hover:bg-orange-600 disabled:bg-neutral-700 flex items-center justify-center text-white transition-all active:scale-90 shadow-md shadow-orange-900/20 disabled:shadow-none flex-shrink-0"
                                     >
                                         <Send size={16} className="translate-x-0.5 -translate-y-px pl-0.5" />
                                     </button>
                                 </div>
                                 <div className="flex items-center justify-center gap-1 mt-2">
-                                    <Sparkles size={10} className="text-purple-400 opacity-80" />
+                                    <Sparkles size={10} className="text-orange-400 opacity-80" />
                                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Powered by Gemini AI Engine</p>
                                 </div>
                             </div>
