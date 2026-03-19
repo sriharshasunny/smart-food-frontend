@@ -81,15 +81,13 @@ function getFastMessage(intent, filters, resultCount) {
     if (intent === 'get_orders') return `Here are your recent orders 📦. Want to reorder something?`;
     if (intent === 'open_now') return `These restaurants are open right now! 🏪`;
     if (intent === 'search_food') {
-        const name = filters?.food_name ? `**${filters.food_name}**` : null;
-        const vegLabel = filters?.veg === true ? 'veg' : filters?.veg === false ? 'non-veg' : null;
+        const name = filters?.food_name ? `**${filters.food_name}**` : 'top-rated food';
+        const vegLabel = filters?.veg === true ? 'veg' : filters?.veg === false ? 'non-veg' : '';
         const priceLabel = filters?.price_max ? ` under ₹${filters.price_max}` : '';
-        if (name && vegLabel) return `Found ${resultCount} ${vegLabel} ${name} options${priceLabel} 🍽️ — enjoy!`;
-        if (name) return `Found ${resultCount} ${name} options${priceLabel} 😋 — enjoy!`;
-        if (vegLabel === 'veg') return `Here are ${resultCount} great veg options${priceLabel} 🥦!`;
-        if (vegLabel === 'non-veg') return `Craving non-veg? Here are ${resultCount} delicious options${priceLabel} 🍗!`;
+        
+        return `Found ${resultCount} ${vegLabel} ${name} options${priceLabel} 🍽️ — hope you find something tasty!`;
     }
-    return `Here are ${resultCount} great options for you! 🎉`;
+    return `Here are ${resultCount} results for your request! 👋`;
 }
 
 // ── Save to Supabase (best-effort) ───────────────────────────────────────────
@@ -209,14 +207,14 @@ User Query: ${ctx ? `(Context: ${ctx})\n` : ''}"${message}"`.trim();
                 intent = parsed.intent;
                 filters = {
                     food_name: (parsed.foods && parsed.foods.length > 0) ? parsed.foods.join(', ') : null,
-                    price_max: parsed.price_max,
-                    price_min: parsed.price_min,
-                    rating_min: parsed.rating_min,
+                    price_max: parseInt(parsed.price_max) || null,
+                    price_min: parseInt(parsed.price_min) || null,
+                    rating_min: parseFloat(parsed.rating_min) || null,
                     location: parsed.location,
                     restaurant: parsed.restaurant,
                     sort_by: parsed.sort_by,
                     veg: parsed.category === 'veg' ? true : parsed.category === 'nonveg' ? false : null,
-                    limit: parsed.intent === 'mixed_food_search' ? 20 : 12
+                    limit: 8 // STRICT LIMIT 8
                 };
 
                 if (intent === 'greeting') {
@@ -251,7 +249,8 @@ User Query: ${ctx ? `(Context: ${ctx})\n` : ''}"${message}"`.trim();
 
         // ── Step 4: Display Data Directly ──
         let finalData = [...dbResult.available, ...dbResult.similar];
-        if (filters.limit) finalData = finalData.slice(0, filters.limit);
+        // Hard-enforce the limit again just in case helper returned more
+        finalData = finalData.slice(0, filters.limit || 8);
 
         const finalMessage = getFastMessage(intent, filters, finalData.length);
 
