@@ -33,75 +33,24 @@ function extractLimit(text) {
 }
 
 // ── Broader food keyword list ─────────────────────────────────────────────────
-const FOOD_KEYWORDS = [
-    'biryani', 'biriyani', 'birayni', 'burger', 'pizza', 'pasta', 'noodles', 'dosa', 'idli',
-    'sandwich', 'roll', 'momos', 'fried rice', 'manchurian', 'paneer', 'sushi',
-    'taco', 'tacos', 'ramen', 'soup', 'waffle', 'waffles', 'ice cream', 'salad',
-    'wrap', 'quesadilla', 'shawarma', 'haleem', 'korma', 'kebab', 'tikka', 'dal',
-    'curry', 'pulao', 'paratha', 'uttapam', 'pav bhaji', 'chole', 'rajma',
-    'samosa', 'dhokla', 'vada', 'chicken', 'mutton', 'fish', 'prawn'
-];
+const { rankFoods } = require('../services/rankingEngine');
+const { getUserPreferences } = require('../services/preferenceEngine');
 
-// ── LOCAL KEYWORD FAST-PATH — single-pass accumulator ────────────────────────
+// ── LOCAL KEYWORD FAST-PATH (Bypassed for Food Items) ─────────────────────
+// Keeping only for basic utility intents to save Gemini calls if needed,
+// but all food search now goes to Gemini for ranked personalization.
 function detectIntentLocally(message) {
     const m = message.toLowerCase();
-
-    // ── Non-food intents: check first so they short-circuit cleanly ──
+    
+    // Non-food strictly utility intents
     if (/my order|past order|order history|previous order|reorder|what did i order|show order/i.test(m))
         return { intent: 'get_orders', filters: {} };
     if (/open now|open today|open at night|what.?s open/i.test(m))
         return { intent: 'open_now', filters: {} };
-    if (/top.*restaurant|best.*restaurant|find.*restaurant|show.*restaurant|restaurant.*near|give.*restaurant/i.test(m))
-        return { intent: 'search_restaurant', filters: { limit: extractLimit(m) || 6 } };
-    
-    // Accumulate food-search signals in one pass
-    const userLimit = extractLimit(m);
-    const limit = userLimit && userLimit > 0 ? Math.min(userLimit, 20) : 6;
-    const filters = { limit };
-    let hasSignal = false;
-
-    // 1. Food name — scan the keyword list
-    const sortedKeywords = [...FOOD_KEYWORDS].sort((a, b) => b.length - a.length); // longest first
-    for (const kw of sortedKeywords) {
-        const re = new RegExp(`\\b${kw.replace(/ /g, '\\s+')}s?\\b`, 'i');
-        if (re.test(m)) {
-            // Normalise biriyani/birayni → biryani, tacos → taco, etc.
-            filters.food_name = (kw === 'biriyani' || kw === 'birayni') ? 'biryani' : kw.replace(/s$/, '');
-            hasSignal = true;
-            break;
-        }
-    }
-
-    // 2. Veg / non-veg flag
-    const isNonVeg = /non.?veg/i.test(m);
-    const isVeg = /\bveg(etarian)?\b/i.test(m) && !isNonVeg;
-    if (isNonVeg) { filters.veg = false; hasSignal = true; }
-    else if (isVeg) { filters.veg = true; hasSignal = true; }
-
-    // 3. Price cap
-    const priceMax = extractPriceMax(m);
-    if (priceMax) { filters.price_max = priceMax; hasSignal = true; }
-
-    // 4. Sort / Rating signals (e.g. "top rated biryani")
-    if (hasSignal && /top rated|best rated|highest rated|popular/i.test(m)) {
-        filters.sort_by = 'rating';
-    }
-
-    // If a food signal was found, return search_food
-    if (hasSignal) return { intent: 'search_food', filters };
-
-    // ── Trending / popular (Only if NO specific food keyword found) ──
-    if (/trending|popular|top rated|best rated|top food|what.?s hot|most ordered/i.test(m))
-        return { intent: 'trending_items', filters: { limit: extractLimit(m) || 6 } };
-
     if (/\boffer|deal|discount|coupon|promo|sale\b/i.test(m))
         return { intent: 'get_offers', filters: {} };
 
-    // Generic "show veg / non-veg food"
-    if (/\bveg\b.*(?:food|option|item|only|pure|meal|dish)|only veg|pure veg|vegetarian food/i.test(m) && !isNonVeg)
-        return { intent: 'search_food', filters: { veg: true, limit } };
-
-    return null; // hand off to Gemini
+    return null; // Go to Gemini for everything else
 }
 
 // ── Friendly message for each intent (no Gemini needed) ─────────────────────
@@ -173,62 +122,66 @@ exports.processChatRequest = async (req, res) => {
             filters = localIntent.filters;
             console.log('[Chat] Fast-path intent:', intent, filters);
         } else {
-            // ── Step 2: Single Gemini call for intent + response together ─
+            // ── Step 2: Use Gemini for personalized intent + response ──
             const apiKey = process.env.GEMINI_API_KEY;
-            if (!apiKey) {
-                return res.json({ type: 'text', message: 'AI service unavailable. Please contact support.' });
-            }
+            if (!apiKey) return res.json({ type: 'text', message: 'AI service unavailable. Please contact support.' });
 
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 generationConfig: { responseMimeType: 'application/json' }
             });
+
+            // Fetch User Preference Data if available
+            const prefs = userId ? await getUserPreferences(userId) : null;
+            const tasteVector = prefs ? `
+                - Preferences: ${prefs.veg_preference || 'any'}
+                - Favorite Cuisines: ${Object.keys(prefs.cuisine_scores || {}).slice(0, 3).join(', ') || 'N/A'}
+                - Avg Price: ₹${prefs.avg_order_price?.toFixed(0) || '200'}
+            `.trim() : 'Cold start (no history)';
 
             const ctx = history.length > 0
                 ? history.slice(-4).map(m => `${m.sender === 'user' ? 'User' : 'Bot'}: ${m.content || m.message}`).join('\n')
                 : '';
 
-            // Single combined prompt: returns intent + friendly_message together
             const combinedPrompt = `
 You are a food delivery AI assistant. Given the user's message, return a JSON object with:
-- "intent": one of: search_food, search_restaurant, get_orders, get_offers, trending_items, open_now, general_info
-- "filters": object. For search_food: food_name(string), veg(boolean), price_max(num), limit(num 1-20, default 6). For search_restaurant: restaurant_name, limit(default 6).
-- "friendly_message": a warm 1-sentence response (max 15 words). For general_info, this IS the response. For others, it's a brief intro.
-- "clarification_question": only for general_info intent, same as friendly_message. Otherwise null.
+- "intent": standard values: search_food, search_restaurant, get_orders, get_offers, trending_items, open_now, general_info
+- "filters": object { food_name(string), veg(boolean), price_max(num), limit(num 1-20, default 6), sort_by: "rating"|"price"|"match" }
+- "friendly_message": a warm 1-sentence response. If search_food, don't mention item count yet.
+- "logic_explanation": why you chose these filters based on user taste if relevant.
 
-Rules: If user asks for "top 10" or "5 best", set limit accordingly. If veg mentioned → filters.veg=true. If non-veg/chicken/meat → filters.veg=false. Budget/cheap → price_max:200.
+Rules:
+- If user mentions biryani (even misspelled like "birayni"), set food_name: "biryani".
+- If user asks for "top", "best", "rated", set "sort_by": "rating".
+- Use the User Profile below to influence your response and filters if ambiguous.
+
+User Profile: ${tasteVector}
 ${ctx ? `Recent chat:\n${ctx}\n` : ''}User: "${message}"
 
-Return ONLY valid JSON, no markdown.`.trim();
+Return ONLY valid JSON.`.trim();
 
             try {
                 const result = await generateWithRetry(model, combinedPrompt);
                 const parsed = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
                 intent = parsed.intent;
                 filters = parsed.filters || {};
+                filters._aiMessage = parsed.friendly_message;
 
-                // For general_info, respond immediately
                 if (intent === 'general_info') {
-                    const reply = parsed.friendly_message || parsed.clarification_question || "What are you in the mood for? Try biryani, pizza, or check your orders!";
+                    const reply = parsed.friendly_message || "What are you in the mood for? Try biryani or pizza!";
                     saveChatHistory(userId, 'assistant', reply);
                     return res.json({ type: 'text', message: reply });
                 }
-
-                // Store the friendly_message for later use (override DB-based one if AI gave a good one)
-                filters._aiMessage = parsed.friendly_message;
-                console.log('[Chat] Gemini intent:', intent, filters);
-
             } catch (aiErr) {
                 console.error('[Chat] Gemini error:', aiErr.message);
-                // Instead of showing an error, fall back to showing trending items
                 intent = 'trending_items';
-                filters = {};
-                filters._aiMessage = "Here are some popular items you might enjoy while I get back on track! 🍽️";
+                filters = { limit: 6 };
+                filters._aiMessage = "Here are some popular items for you! 🍽️";
             }
         }
 
-        // ── Step 3: Database query ────────────────────────────────────────
+        // ── Step 3: Database query + Ranking ────────────────────────
         let dbResult = { available: [], unavailable: [], similar: [] };
         if (intent === 'search_food') dbResult = await advancedSearchFood(filters);
         else if (intent === 'search_restaurant') dbResult.available = await searchRestaurants(filters);
@@ -237,14 +190,14 @@ Return ONLY valid JSON, no markdown.`.trim();
         else if (intent === 'trending_items') dbResult.available = await getTrendingItems(filters);
         else if (intent === 'open_now') dbResult.available = await searchRestaurants({ ...filters, open_now: true });
 
-        // ── Step 4: Build response ────────────────────────────────────────
-        let finalData = intent === 'get_orders'
-            ? (dbResult.unavailable.length > 0 && dbResult.similar.length > 0
-                ? (intent = 'search_food', [...dbResult.available, ...dbResult.similar])
-                : (dbResult.original_orders || dbResult.available))
-            : [...dbResult.available, ...dbResult.similar];
+        // ── Step 4: Personalization & Sorting (Preference Batching) ──
+        let finalData = [...dbResult.available, ...dbResult.similar];
+        if (intent === 'search_food' || intent === 'trending_items') {
+            const prefs = userId ? await getUserPreferences(userId) : null;
+            // Use the internal ranking engine to order by personalization matching
+            finalData = rankFoods(finalData, prefs, { limit: filters.limit || 6 });
+        }
 
-        // Use AI's message if available (Gemini path), else fast local message
         const finalMessage = filters._aiMessage || getFastMessage(intent, filters, finalData.length);
         delete filters._aiMessage;
 
@@ -281,11 +234,22 @@ async function advancedSearchFood(filters) {
     // Strictly show ONLY available items
     query = query.eq('available', true);
 
-    // Try to sort by rating first; fall back to created_at if rating column missing
-    let { data, error } = await query.order('rating', { ascending: false }).limit(Math.min(filters.limit || 6, 20));
+    // Handle explicit sort from AI
+    if (filters.sort_by === 'rating') {
+        query = query.order('rating', { ascending: false });
+    } else if (filters.sort_by === 'price') {
+        query = query.order('price', { ascending: true });
+    } else {
+        // Default: sort by rating to get high-quality candidates
+        query = query.order('rating', { ascending: false });
+    }
+
+    // Fetch a larger pool of candidates (50) for the ranking engine to process
+    let { data, error } = await query.limit(50);
     if (error && error.message?.includes('rating')) {
         // rating column not yet added; fall back
-        ({ data, error } = await query.order('created_at', { ascending: false }).limit(Math.min(filters.limit || 6, 20)));
+        ({ data, error } = await supabase.from('foods').select('*, restaurant:restaurants!inner(*)')
+            .eq('restaurant.is_active', true).eq('available', true).order('created_at', { ascending: false }).limit(50));
     }
     if (error) throw error;
 

@@ -356,12 +356,6 @@ const ChatWidget = () => {
                             <div className="grid grid-cols-2 gap-2">
                                 {foods.map((f, i) => <ChatFoodCard key={f.id || i} food={f} index={i} onAdd={addToCart} onViewRestaurant={handleViewRestaurant} />)}
                             </div>
-                            <button 
-                                onClick={() => { setIsOpen(false); navigate('/recommendations'); }}
-                                className="mt-2 w-full py-2.5 rounded-xl border border-indigo-500/20 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 hover:from-indigo-500 hover:to-purple-500 text-indigo-600 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 group shadow-sm"
-                            >
-                                View All in AI Picks <Sparkles size={12} className="group-hover:animate-pulse text-purple-400 group-hover:text-white" />
-                            </button>
                         </>
                     )}
                     {foods.length === 0 && !msg.message && <p className="text-gray-500 text-[13px]">No items found. Try a different search!</p>}
