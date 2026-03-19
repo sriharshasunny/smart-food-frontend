@@ -355,7 +355,7 @@ const ChatWidget = () => {
                         <>
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
-                                    {msg.type === 'trending_items' ? '🔥 Hot Picks' : msg.type === 'get_offers' ? '🏷️ Deals' : '🍽️ Results'}
+                                    {msg.type === 'trending_items' ? '🔥 Trending' : msg.type === 'get_offers' ? '🏷️ Deals' : '🍽️ Search Results'}
                                 </span>
                                 <div className="flex-1 h-px bg-neutral-800" />
                                 <span className="text-[10px] text-gray-500 font-bold">{foods.length} items</span>
@@ -375,7 +375,7 @@ const ChatWidget = () => {
             return (
                 <div className="w-full flex flex-col gap-2.5">
                     {msg.message && (
-                        <p className="text-[13px] text-gray-700 leading-relaxed">
+                        <p className="text-[13px] text-gray-300 leading-relaxed">
                             {isAI && isLatest ? <Typewriter text={msg.message} onComplete={scrollToBottom} /> : msg.message}
                         </p>
                     )}
@@ -397,7 +397,7 @@ const ChatWidget = () => {
             return (
                 <div className="w-full flex flex-col gap-2.5">
                     {msg.message && (
-                        <p className="text-[13px] text-gray-700 leading-relaxed">
+                        <p className="text-[13px] text-gray-300 leading-relaxed">
                             {isAI && isLatest ? <Typewriter text={msg.message} onComplete={scrollToBottom} /> : msg.message}
                         </p>
                     )}
