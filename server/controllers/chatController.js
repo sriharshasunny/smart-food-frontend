@@ -158,39 +158,85 @@ exports.processChatRequest = async (req, res) => {
                 : '';
 
             const combinedPrompt = `
-You are a food delivery AI assistant. Given the user's message, return a JSON object with:
-- "intent": standard values: search_food, search_restaurant, get_orders, get_offers, trending_items, open_now, general_info
-- "filters": object { food_name(string), veg(boolean), price_max(num), limit(num 1-20, default 6), sort_by: "rating"|"price"|"match" }
-- "friendly_message": a warm 1-sentence response. If search_food, don't mention item count yet.
-- "logic_explanation": why you chose these filters based on user taste if relevant.
+You are an AI query understanding engine for a professional food delivery platform.
+Your only job is to convert the user message into structured query JSON for database search.
 
-Rules:
-- If user mentions biryani (even misspelled like "birayni"), set food_name: "biryani".
-- If user asks for "top", "best", "rated", set "sort_by": "rating".
-- Use the User Profile below to influence your response and filters if ambiguous.
+Return ONLY JSON. No text explanation. No markdown. No comments. STRICT JSON ONLY.
 
-User Profile: ${tasteVector}
-${ctx ? `Recent chat:\n${ctx}\n` : ''}User: "${message}"
+DATABASE STRUCTURE:
+foods { id, name, category, price, rating, restaurant, location, is_veg, is_available, popularity }
+restaurants { id, name, location, rating, delivery_time }
 
-Return ONLY valid JSON.`.trim();
+SUPPORTED INTENTS:
+food_search, mixed_food_search, recommendation, restaurant_search, price_filter, rating_filter, location_filter, category_filter, availability_check, sort_query, combo_search, comparison, greeting, unknown
+
+SUPPORTED FILTERS:
+foods (array), category (veg|nonveg|dessert|drinks), price_max (num), price_min (num), rating_min (num), location, restaurant, sort_by (rating|price_low|price_high|popularity|distance), availability (available|out_of_stock), delivery_time_max (num), quantity (num)
+
+RULES:
+- best/top -> sort_by: rating
+- cheap/budget -> sort_by: price_low
+- veg -> category: veg
+- non veg -> category: nonveg
+- Spelling: biryni->biryani, piza->pizza, frid rice->fried rice. 
+- "I am hungry" -> intent: recommendation
+- Assume user continues previous query if incomplete.
+
+OUTPUT FORMAT:
+{
+"intent":"",
+"foods":[],
+"category":null,
+"price_max":null,
+"price_min":null,
+"rating_min":null,
+"restaurant":null,
+"location":null,
+"sort_by":null,
+"availability":null,
+"delivery_time_max":null,
+"quantity":null
+}
+
+User Query: ${ctx ? `(Context: ${ctx})\n` : ''}"${message}"`.trim();
 
             try {
                 const result = await generateWithRetry(model, combinedPrompt);
-                const parsed = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
+                const raw = result.response.text().replace(/```json|```/g, '').trim();
+                const parsed = JSON.parse(raw);
+                
+                // Map the new structured JSON to internal filters
                 intent = parsed.intent;
-                filters = parsed.filters || {};
-                filters._aiMessage = parsed.friendly_message;
+                filters = {
+                    food_name: (parsed.foods && parsed.foods.length > 0) ? parsed.foods.join(', ') : null,
+                    price_max: parsed.price_max,
+                    price_min: parsed.price_min,
+                    rating_min: parsed.rating_min,
+                    location: parsed.location,
+                    restaurant: parsed.restaurant,
+                    sort_by: parsed.sort_by,
+                    veg: parsed.category === 'veg' ? true : parsed.category === 'nonveg' ? false : null,
+                    limit: parsed.intent === 'mixed_food_search' ? 20 : 12
+                };
 
-                if (intent === 'general_info') {
-                    const reply = parsed.friendly_message || "What are you in the mood for? Try biryani or pizza!";
+                if (intent === 'greeting') {
+                    const reply = "Hey! 👋 I'm **SmartBot** — your AI food guide. What are you craving today?";
                     saveChatHistory(userId, 'assistant', reply);
                     return res.json({ type: 'text', message: reply });
+                }
+
+                // Map specific intents to DB intents
+                if (['food_search', 'mixed_food_search', 'recommendation', 'price_filter', 'rating_filter', 'category_filter', 'sort_query', 'combo_search', 'comparison'].includes(intent)) {
+                    intent = 'search_food';
+                } else if (intent === 'restaurant_search') {
+                    intent = 'search_restaurant';
+                } else if (intent === 'availability_check') {
+                    intent = 'open_now';
                 }
             } catch (aiErr) {
                 console.error('[Chat] Gemini error:', aiErr.message);
                 intent = 'trending_items';
                 filters = { limit: 6 };
-                filters._aiMessage = "Here are some popular items for you! 🍽️";
             }
         }
 
@@ -203,12 +249,11 @@ Return ONLY valid JSON.`.trim();
         else if (intent === 'trending_items') dbResult.available = await getTrendingItems(filters);
         else if (intent === 'open_now') dbResult.available = await searchRestaurants({ ...filters, open_now: true });
 
-        // ── Step 4: Display Data Directly (No Personalization Ranking) ──
+        // ── Step 4: Display Data Directly ──
         let finalData = [...dbResult.available, ...dbResult.similar];
         if (filters.limit) finalData = finalData.slice(0, filters.limit);
 
-        const finalMessage = filters._aiMessage || getFastMessage(intent, filters, finalData.length);
-        delete filters._aiMessage;
+        const finalMessage = getFastMessage(intent, filters, finalData.length);
 
         saveChatHistory(userId, 'assistant', finalMessage);
         return res.json({ type: intent, data: finalData, message: finalMessage });
