@@ -340,18 +340,18 @@ const ChatWidget = () => {
             return (
                 <div className="w-full flex flex-col gap-2.5">
                     {msg.message && (
-                        <p className="text-[13px] text-gray-700 leading-relaxed">
+                        <p className="text-[13px] text-gray-300 leading-relaxed">
                             {isAI && isLatest ? <Typewriter text={msg.message} onComplete={scrollToBottom} /> : msg.message}
                         </p>
                     )}
                     {foods.length > 0 && (
                         <>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">
-                                    {msg.type === 'trending_items' ? '🔥 Trending' : msg.type === 'get_offers' ? '🏷️ Deals' : '🍽️ Found for you'}
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
+                                    {msg.type === 'trending_items' ? '🔥 Hot Picks' : msg.type === 'get_offers' ? '🏷️ Deals' : '🍽️ Results'}
                                 </span>
-                                <div className="flex-1 h-px bg-orange-100" />
-                                <span className="text-[10px] text-gray-400">{foods.length} items</span>
+                                <div className="flex-1 h-px bg-neutral-800" />
+                                <span className="text-[10px] text-gray-500 font-bold">{foods.length} items</span>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 {foods.map((f, i) => <ChatFoodCard key={f.id || i} food={f} index={i} onAdd={addToCart} onViewRestaurant={handleViewRestaurant} />)}
@@ -375,8 +375,8 @@ const ChatWidget = () => {
                     {rests.length > 0 && (
                         <>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">🏪 Restaurants</span>
-                                <div className="flex-1 h-px bg-orange-100" />
+                                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">🏪 Restaurants</span>
+                                <div className="flex-1 h-px bg-neutral-800" />
                             </div>
                             {rests.map((r, i) => <ChatRestaurantCard key={r.id || r._id || i} rest={r} onView={handleViewRestaurant} />)}
                         </>
@@ -397,26 +397,26 @@ const ChatWidget = () => {
                     {orders.length > 0 && (
                         <>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">📦 Recent Orders</span>
-                                <div className="flex-1 h-px bg-orange-100" />
+                                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">📦 Recent Orders</span>
+                                <div className="flex-1 h-px bg-neutral-800" />
                             </div>
                             {orders.map((order, i) => (
-                                <div key={order.id || i} className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+                                <div key={order.id || i} className="bg-neutral-900 border border-neutral-800 rounded-2xl p-3 shadow-md">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-[11px] text-gray-400 font-mono">#{(order.id || '').toString().slice(-8)}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${order.status === 'delivered' ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-orange-50 text-orange-500 border border-orange-200'}`}>
+                                        <span className="text-[11px] text-gray-500 font-mono">#{(order.id || '').toString().slice(-8)}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${order.status === 'delivered' ? 'bg-green-900/20 text-green-400 border border-green-800/30' : 'bg-orange-900/20 text-orange-400 border border-orange-800/30'}`}>
                                             {order.status || 'Pending'}
                                         </span>
                                     </div>
                                     {(order.items || []).slice(0, 3).map((item, j) => (
                                         <div key={j} className="flex justify-between text-[11px] py-0.5">
-                                            <span className="text-gray-600">{item.quantity}× {item.food?.name || 'Item'}</span>
-                                            <span className="text-gray-400">₹{(item.food?.price || 0) * item.quantity}</span>
+                                            <span className="text-gray-300">{item.quantity}× {item.food?.name || 'Item'}</span>
+                                            <span className="text-gray-500">₹{(item.food?.price || 0) * item.quantity}</span>
                                         </div>
                                     ))}
-                                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-50">
-                                        <span className="text-[10px] text-gray-400">{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</span>
-                                        <span className="text-gray-800 font-black text-sm">₹{order.total_amount || 0}</span>
+                                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-neutral-800">
+                                        <span className="text-[10px] text-gray-500">{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</span>
+                                        <span className="text-white font-black text-sm">₹{order.total_amount || 0}</span>
                                     </div>
                                 </div>
                             ))}
@@ -430,11 +430,11 @@ const ChatWidget = () => {
         const content = msg.content || msg.message || '';
         const parseBold = (str) => str.split(/(\*\*.*?\*\*)/g).map((p, i) =>
             p.startsWith('**') && p.endsWith('**')
-                ? <strong key={i} className="font-bold text-gray-900">{p.slice(2, -2)}</strong>
+                ? <strong key={i} className="font-bold text-white">{p.slice(2, -2)}</strong>
                 : <span key={i}>{p}</span>
         );
         return (
-            <p className="text-[13px] leading-relaxed">
+            <p className="text-[13px] leading-relaxed text-gray-300">
                 {isAI && isLatest ? <Typewriter text={content} onComplete={scrollToBottom} /> : parseBold(content)}
             </p>
         );

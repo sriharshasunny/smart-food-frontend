@@ -36,12 +36,30 @@ function extractLimit(text) {
 const { rankFoods } = require('../services/rankingEngine');
 const { getUserPreferences } = require('../services/preferenceEngine');
 
-// ── LOCAL KEYWORD FAST-PATH (Bypassed for Food Items) ─────────────────────
-// Keeping only for basic utility intents to save Gemini calls if needed,
-// but all food search now goes to Gemini for ranked personalization.
+// ── LOCAL KEYWORD FAST-PATH (Instant) ─────────────────────
 function detectIntentLocally(message) {
     const m = message.toLowerCase();
     
+    // Food keywords for instant search
+    const foodKeywords = [
+        'biryani', 'pizza', 'burger', 'chicken', 'rice', 'noodles', 'mandi', 'kabab',
+        'kebab', 'shawarma', 'sandwich', 'pasta', 'sushi', 'roll', 'veg', 'non-veg',
+        'paneer', 'thali', 'dosa', 'idli', 'breakfast', 'lunch', 'dinner', 'snack'
+    ];
+
+    for (const kw of foodKeywords) {
+        if (m.includes(kw)) {
+            return {
+                intent: 'search_food',
+                filters: {
+                    food_name: kw,
+                    price_max: extractPriceMax(message),
+                    limit: extractLimit(message) || 12
+                }
+            };
+        }
+    }
+
     // Non-food strictly utility intents
     if (/my order|past order|order history|previous order|reorder|what did i order|show order/i.test(m))
         return { intent: 'get_orders', filters: {} };
@@ -50,7 +68,7 @@ function detectIntentLocally(message) {
     if (/\boffer|deal|discount|coupon|promo|sale\b/i.test(m))
         return { intent: 'get_offers', filters: {} };
 
-    return null; // Go to Gemini for everything else
+    return null; // Go to Gemini for complex queries
 }
 
 // ── Friendly message for each intent (no Gemini needed) ─────────────────────
@@ -132,13 +150,8 @@ exports.processChatRequest = async (req, res) => {
                 generationConfig: { responseMimeType: 'application/json' }
             });
 
-            // Fetch User Preference Data if available
-            const prefs = userId ? await getUserPreferences(userId) : null;
-            const tasteVector = prefs ? `
-                - Preferences: ${prefs.veg_preference || 'any'}
-                - Favorite Cuisines: ${Object.keys(prefs.cuisine_scores || {}).slice(0, 3).join(', ') || 'N/A'}
-                - Avg Price: ₹${prefs.avg_order_price?.toFixed(0) || '200'}
-            `.trim() : 'Cold start (no history)';
+            // Gemini context (no personalization needed now)
+            const tasteVector = "Manual search (No recommendation influence)";
 
             const ctx = history.length > 0
                 ? history.slice(-4).map(m => `${m.sender === 'user' ? 'User' : 'Bot'}: ${m.content || m.message}`).join('\n')
@@ -190,13 +203,9 @@ Return ONLY valid JSON.`.trim();
         else if (intent === 'trending_items') dbResult.available = await getTrendingItems(filters);
         else if (intent === 'open_now') dbResult.available = await searchRestaurants({ ...filters, open_now: true });
 
-        // ── Step 4: Personalization & Sorting (Preference Batching) ──
+        // ── Step 4: Display Data Directly (No Personalization Ranking) ──
         let finalData = [...dbResult.available, ...dbResult.similar];
-        if (intent === 'search_food' || intent === 'trending_items') {
-            const prefs = userId ? await getUserPreferences(userId) : null;
-            // Use the internal ranking engine to order by personalization matching
-            finalData = rankFoods(finalData, prefs, { limit: filters.limit || 6 });
-        }
+        if (filters.limit) finalData = finalData.slice(0, filters.limit);
 
         const finalMessage = filters._aiMessage || getFastMessage(intent, filters, finalData.length);
         delete filters._aiMessage;
@@ -244,8 +253,8 @@ async function advancedSearchFood(filters) {
         query = query.order('rating', { ascending: false });
     }
 
-    // Fetch a larger pool of candidates (50) for the ranking engine to process
-    let { data, error } = await query.limit(50);
+    // Fetch only exactly what's needed
+    let { data, error } = await query.limit(filters.limit || 12);
     if (error && error.message?.includes('rating')) {
         // rating column not yet added; fall back
         ({ data, error } = await supabase.from('foods').select('*, restaurant:restaurants!inner(*)')
