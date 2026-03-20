@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require('../utils/supabase');
+const { getRecommendations } = require('../services/recommendationEngine');
 
 // ── Retry helper ─────────────────────────────────────────────────────────────
 async function generateWithRetry(model, prompt, maxRetries = 2) {
@@ -44,45 +45,60 @@ function detectIntentLocally(message) {
     ];
 
     for (const kw of foodKeywords) {
-        if (m.includes(kw)) {
+        if (m.includes(kw) && !/(?:suggest|best|top|popular|recommend)/i.test(m)) {
             return {
-                intent: 'search_food',
+                intent: 'food_search',
+                foods_requested: [kw],
                 filters: {
-                    food_name: kw,
-                    price_max: extractPriceMax(message),
+                    price: extractPriceMax(message) || null,
+                    diet: null,
+                    rating: null,
+                    location: null,
                     limit: extractLimit(message) || 12
-                }
+                },
+                search_strategy: {
+                    primary_source: "database",
+                    secondary_source: "recommendation",
+                    ranking_needed: true
+                },
+                reason: "Fast-path exact food match"
             };
         }
     }
 
     // Non-food strictly utility intents
     if (/my order|past order|order history|previous order|reorder|what did i order|show order/i.test(m))
-        return { intent: 'get_orders', filters: {} };
+        return { intent: 'get_orders', foods_requested: [], filters: {}, search_strategy: { primary_source: "database" } };
     if (/open now|open today|open at night|what.?s open/i.test(m))
-        return { intent: 'open_now', filters: {} };
+        return { intent: 'open_now', foods_requested: [], filters: {}, search_strategy: { primary_source: "database" } };
     if (/\boffer|deal|discount|coupon|promo|sale\b/i.test(m))
-        return { intent: 'get_offers', filters: {} };
+        return { intent: 'get_offers', foods_requested: [], filters: {}, search_strategy: { primary_source: "database" } };
 
     return null; // Go to Gemini for complex queries
 }
 
-// ── Friendly message for each intent (no Gemini needed) ─────────────────────
-function getFastMessage(intent, filters, resultCount) {
+// ── Friendly message for each intent ─────────────────────
+function getDynamicMessage(parsed, resultCount) {
     if (resultCount === 0) {
-        return "Hmm, I couldn't find anything matching that right now. Try a different search! 🔍";
+        return "Hmm, I couldn't find anything matching that right now. Try adjusting your search! 🔍";
     }
-    if (intent === 'trending_items') return `Here's what's trending right now 🔥 — ${resultCount} hot picks for you!`;
+    
+    const intent = parsed.intent;
+    const filters = parsed.filters || {};
+    
+    if (intent === 'recommendation' || parsed.reason?.toLowerCase().includes('recommendation')) {
+         return `Here are ${resultCount} great suggestions tailored just for you! ✨`;
+    }
     if (intent === 'get_offers') return `Found ${resultCount} great deals for you! 🏷️ Grab them before they're gone.`;
     if (intent === 'get_orders') return `Here are your recent orders 📦. Want to reorder something?`;
     if (intent === 'open_now') return `These restaurants are open right now! 🏪`;
-    if (intent === 'search_food') {
-        const name = filters?.food_name ? `**${filters.food_name}**` : 'food';
-        const vegLabel = filters?.veg === true ? 'veg' : filters?.veg === false ? 'non-veg' : '';
-        const priceLabel = filters?.price_max ? ` under ₹${filters.price_max}` : '';
-        return `Found ${resultCount} ${vegLabel} ${name} options${priceLabel} 🍽️ — enjoy!`;
-    }
-    return `Here are ${resultCount} great options for you! 🎉`;
+    
+    // Catch-all generic search
+    const foods = Array.isArray(parsed.foods_requested) ? parsed.foods_requested.join(' and ') : 'food';
+    const name = foods && foods.length > 0 ? `**${foods}**` : 'food options';
+    const vegLabel = filters.diet === 'veg' ? 'veg ' : (filters.diet === 'nonveg' ? 'non-veg ' : '');
+    const priceLabel = filters.price ? ` under ₹${filters.price}` : '';
+    return `Found ${resultCount} ${vegLabel}${name}${priceLabel} 🍽️ — enjoy!`;
 }
 
 // ── Save to Supabase (best-effort) ───────────────────────────────────────────
@@ -123,15 +139,10 @@ exports.processChatRequest = async (req, res) => {
 
         saveChatHistory(userId, 'user', message); // non-blocking
 
-        // ── Step 1: Try local detection first (instant) ───────────────────
-        let localIntent = detectIntentLocally(message);
-        let intent, filters;
+        let parsedData = detectIntentLocally(message);
 
-        if (localIntent) {
-            intent = localIntent.intent;
-            filters = localIntent.filters;
-        } else {
-            // ── Step 2: Gemini for Intent ──
+        if (!parsedData) {
+            // ── Step 2: Gemini Intent Engine ──
             const apiKey = process.env.GEMINI_API_KEY;
             if (!apiKey) return res.json({ type: 'text', message: 'AI service offline.' });
 
@@ -141,84 +152,222 @@ exports.processChatRequest = async (req, res) => {
                 generationConfig: { responseMimeType: 'application/json' }
             });
 
-            const ctx = history.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n');
-            const combinedPrompt = `
-You are an AI food query engine. Convert the user message into structured JSON.
-Return ONLY JSON.
+            const combinedPrompt = `You are the intelligence engine of a professional food delivery chatbot.
 
-INTENTS: search_food, search_restaurant, get_orders, get_offers, trending_items, general_info
+Your goal is to understand the user query and decide how to use the existing system components:
+1 Database search (exact food data)
+2 Recommendation system (similar/popular foods)
+3 Ranking logic (best matches)
 
-SCHEMA:
+You must THINK before answering.
+Do not blindly use recommendations.
+Always prioritize user intent.
+
+Your responsibilities:
+STEP 1 Understand the query deeply.
+STEP 2 Extract user intent.
+STEP 3 Decide data source priority.
+STEP 4 Return structured decision output.
+
+Available system data sources:
+DATABASE: Contains exact food items, restaurants, price, rating, availability, location.
+RECOMMENDATION SYSTEM: Contains similar foods, popular foods, personalized foods.
+
+DECISION RULES:
+If user asks specific food: Use DATABASE first.
+If exact matches exist: Return exact matches only.
+If few matches: Fill with similar foods from recommendation system.
+If no matches: Use recommendation system.
+If user asks: best, top, popular, suggest -> Use recommendation system first.
+If user mixes foods: Search each food separately.
+If user gives filters: price, veg/nonveg, rating, location -> Apply filters before returning.
+
+Never dump top 20 foods.
+Never ignore query.
+Never recommend unrelated foods.
+Always prioritize relevance over popularity.
+
+OUTPUT STRUCTURE:
+Return JSON:
 {
-  "intent": "search_food" | "search_restaurant" | "get_orders" | "get_offers" | "trending_items" | "general_info",
-  "filters": { "food_name": "string", "veg": true|false, "price_max": number, "limit": number },
-  "friendly_message": "string (warm acknowledgement)"
+"intent":"",
+"foods_requested":[],
+"filters":{
+  "price":null,
+  "diet":null,
+  "rating":null,
+  "location":null
+},
+"search_strategy":{
+  "primary_source":"",
+  "secondary_source":null,
+  "ranking_needed":true
+},
+"reason":"short reason"
 }
 
-User: "${message}"
-Context: ${ctx}`;
+Search strategy values:
+primary_source: "database", "recommendation", "hybrid"
+secondary_source: "database", "recommendation", null
+
+User query:
+"${message}"
+Think like a senior search engineer from Zomato or Swiggy designing food search ranking logic.`;
 
             try {
                 const result = await generateWithRetry(model, combinedPrompt);
-                const parsed = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
-                intent = parsed.intent;
-                filters = parsed.filters || {};
-                filters._aiMessage = parsed.friendly_message;
-
-                if (intent === 'general_info') {
-                    const reply = parsed.friendly_message || "How can I help you find great food?";
-                    saveChatHistory(userId, 'assistant', reply);
-                    return res.json({ type: 'text', message: reply });
-                }
+                let textResult = result.response.text();
+                // Clean markdown blocking if applied
+                textResult = textResult.replace(/```json/gi, '').replace(/```/g, '').trim();
+                parsedData = JSON.parse(textResult);
             } catch (aiErr) {
                 console.error('[Chat] Gemini error:', aiErr.message);
-                intent = 'trending_items';
-                filters = { limit: 6 };
+                parsedData = {
+                    intent: 'recommendation', // safe fallback
+                    foods_requested: [],
+                    filters: { limit: 8 },
+                    search_strategy: { primary_source: "recommendation", secondary_source: null },
+                    reason: "Fallback to recommendation due to AI parsing error"
+                };
             }
         }
 
-        // ── Step 3: Database ──
-        let dbResult = { available: [], unavailable: [], similar: [] };
-        if (intent === 'search_food') dbResult = await advancedSearchFood(filters);
-        else if (intent === 'search_restaurant') dbResult.available = await searchRestaurants(filters);
-        else if (intent === 'get_orders') dbResult = await advancedGetOrders(userId, filters);
-        else if (intent === 'get_offers') dbResult.available = await getOffers();
-        else if (intent === 'trending_items') dbResult.available = await getTrendingItems();
-        else if (intent === 'open_now') dbResult.available = await searchRestaurants({ open_now: true });
+        // ── Step 3: Execute Search Strategy ──
+        let finalData = [];
+        const intent = parsedData.intent || 'food_search';
+        const search_strategy = parsedData.search_strategy || { primary_source: 'database' };
+        const filters = parsedData.filters || {};
+        const foods_requested = parsedData.foods_requested || [];
+        
+        // Handle Utility Intents first
+        if (intent === 'get_orders') {
+            const dbResult = await advancedGetOrders(userId, filters);
+            finalData = dbResult.available;
+        } else if (intent === 'get_offers') {
+            finalData = await getOffers();
+        } else if (intent === 'open_now') {
+            finalData = await searchRestaurants({ open_now: true });
+        } else {
+            // Data routing for food/recommendation queries
+            const limit = filters.limit || 8;
+            
+            const fetchFromDb = async () => {
+                let dbResults = [];
+                if (foods_requested && foods_requested.length > 0) {
+                    for (const food of foods_requested) {
+                        const res = await advancedSearchFood({ ...filters, food_name: food, limit });
+                        dbResults = [...dbResults, ...res.available];
+                    }
+                } else {
+                    const res = await advancedSearchFood({ ...filters, limit });
+                    dbResults = [...dbResults, ...res.available];
+                }
+                return dbResults;
+            };
 
-        // ── Step 4: Response ──
-        let finalData = [...dbResult.available, ...dbResult.similar];
-        const finalMessage = filters._aiMessage || getFastMessage(intent, filters, finalData.length);
+            const fetchFromRec = async (count = limit) => {
+                try {
+                    const loc = filters.location || null;
+                    const res = await getRecommendations(userId || 'guest', {
+                        city: loc,
+                        limit: count
+                    });
+                    return res.recommendations || [];
+                } catch (err) {
+                    console.error('[Chat] Rec Engine Error:', err.message);
+                    return [];
+                }
+            };
+            
+            const primary = search_strategy.primary_source || "database";
+            
+            if (primary === 'hybrid') {
+                const dbItems = await fetchFromDb();
+                if (dbItems.length < limit) {
+                     const recItems = await fetchFromRec(limit - dbItems.length);
+                     finalData = [...dbItems, ...recItems];
+                } else {
+                     finalData = dbItems;
+                }
+            } else if (primary === 'recommendation') {
+                finalData = await fetchFromRec(limit);
+                // Check secondary
+                if (finalData.length < 3 && search_strategy.secondary_source === 'database') {
+                     const dbItems = await fetchFromDb();
+                     finalData = [...finalData, ...dbItems];
+                }
+            } else { 
+                // default to database
+                finalData = await fetchFromDb();
+                // Check secondary source if few DB matches
+                if (finalData.length < 3 && search_strategy.secondary_source === 'recommendation') {
+                     const recItems = await fetchFromRec(limit - finalData.length);
+                     finalData = [...finalData, ...recItems];
+                }
+            }
+            
+            // Deduplicate across results
+            const uniqueMap = new Map();
+            finalData.forEach(item => { if (item && item.id) uniqueMap.set(item.id, item); });
+            finalData = Array.from(uniqueMap.values()).slice(0, limit);
+        }
+
+        // ── Step 4: Response Format ──
+        const finalMessage = getDynamicMessage(parsedData, finalData.length);
 
         saveChatHistory(userId, 'assistant', finalMessage);
+        
+        let returnType = 'search_food';
+        if (intent === 'get_orders') returnType = 'get_orders';
+        else if (intent === 'open_now') returnType = 'search_restaurant';
+        
         return res.json({
-            type: intent === 'search_restaurant' ? 'search_restaurant' : (intent === 'get_orders' ? 'get_orders' : 'search_food'),
+            type: returnType,
             data: finalData,
-            message: finalMessage
+            message: finalMessage,
+            _debug_intent: parsedData // Hidden debug
         });
 
     } catch (error) {
         console.error('[Chat] Error:', error.message);
-        return res.status(500).json({ type: 'text', message: "Sorry, I hit a snag. Try again? 🙏" });
+        return res.status(500).json({ type: 'text', message: "Sorry, I hit a snag while processing that. Try again? 🙏" });
     }
 };
 
 // ── Helpers ──
-async function advancedSearchFood(filters) {
+async function advancedSearchFood(baseFilters) {
     let query = supabase.from('foods').select('*, restaurant:restaurants!inner(*)').eq('restaurant.is_active', true).eq('available', true);
-    if (filters.food_name) {
-        const words = filters.food_name.split(',').map(w => w.trim()).filter(Boolean);
+    
+    if (baseFilters.food_name) {
+        const words = baseFilters.food_name.split(',').map(w => w.trim()).filter(Boolean);
         const orStr = words.flatMap(w => [`name.ilike.%${w}%`, `category.ilike.%${w}%`]).join(',');
         if (orStr) query = query.or(orStr);
     }
-    if (filters.price_max) query = query.lte('price', filters.price_max);
-    if (typeof filters.veg === 'boolean') query = query.eq('is_veg', filters.veg);
-    const { data, error } = await query.order('rating', { ascending: false }).limit(filters.limit || 8);
+    
+    // Support either old style price_max or new json 'price'
+    const maxPrice = baseFilters.price_max || parseInt(baseFilters.price);
+    if (!isNaN(maxPrice) && maxPrice > 0) query = query.lte('price', maxPrice);
+    
+    // Diet mapping
+    const isVeg = baseFilters.veg !== undefined ? baseFilters.veg : (baseFilters.diet === 'veg' ? true : (baseFilters.diet === 'nonveg' ? false : null));
+    if (isVeg !== null) query = query.eq('is_veg', isVeg);
+    
+    if (baseFilters.rating) {
+        const minRating = parseFloat(baseFilters.rating);
+        if (!isNaN(minRating) && minRating > 0) query = query.gte('rating', minRating);
+    }
+    
+    if (baseFilters.location) {
+        query = query.ilike('restaurant.city', `%${baseFilters.location}%`);
+    }
+
+    const { data, error } = await query.order('rating', { ascending: false }).limit(baseFilters.limit || 8);
     if (error) throw error;
     return { available: data || [], unavailable: [], similar: [] };
 }
 
 async function advancedGetOrders(userId, filters) {
+    if (!userId || userId === 'guest') return { available: [], unavailable: [], similar: [], original_orders: [] };
     const { data: orders, error } = await supabase.from('orders')
         .select('*, items:order_items(*, food:foods(*, restaurant:restaurants(*)))')
         .eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
@@ -245,8 +394,4 @@ async function getOffers() {
         .eq('available', true).eq('restaurant.is_active', true).order('rating', { ascending: false }).limit(8);
     if (error) throw error;
     return data || [];
-}
-
-async function getTrendingItems() {
-    return getOffers(); // Trending and Offers used same fallback in old versions
 }
