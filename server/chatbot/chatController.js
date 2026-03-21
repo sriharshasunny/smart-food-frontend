@@ -164,12 +164,13 @@ exports.processChatRequest = async (req, res) => {
 
         saveChatHistory(userId, 'user', message);
 
-        let parsedData = detectIntentLocally(message);
-
-        if (!parsedData) {
-            const apiKey = process.env.GEMINI_API_KEY;
-            if (!apiKey) return res.json({ type: 'text', message: 'AI service offline.' });
-
+        let parsedData = null;
+        const apiKey = process.env.GEMINI_API_KEY;
+        
+        if (!apiKey) {
+            console.warn('[Chat] No Gemini API key found, bypassing AI and using robust local fallback.');
+            parsedData = detectIntentLocally(message);
+        } else {
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({
                 model: 'gemini-1.5-flash',
@@ -186,6 +187,9 @@ STEP 4 Return EXACT JSON structure.
 
 DECISION RULES:
 - If user asks for RESTAURANTS, PLACES, HOTELS, or CAFES (e.g., "top 3 restuarants", "best places to eat"): intent MUST be "search_restaurant". foods_requested must be [].
+- If user asks for OFFERS, DEALS, DISCOUNTS, PROMOS: intent MUST be "get_offers". foods_requested must be [].
+- If user asks WHAT IS OPEN, LATE NIGHT, OPEN NOW: intent MUST be "open_now". foods_requested must be [].
+- If user asks about MY ORDERS, HISTORY, PREVIOUS ORDERS: intent MUST be "get_orders". foods_requested must be [].
 - If user lists multiple foods ("ice creams and biryani"): foods_requested must be ["ice cream", "biryani"].
 - If user asks specifically ("give top 5 birynains"): foods_requested MUST have ["biryani"].
 - If user asks general "find me biryani": primary_source is "database", secondary is "recommendation".
@@ -194,7 +198,7 @@ DECISION RULES:
 
 OUTPUT STRUCTURE:
 {
-"intent":"food_search" | "recommendation" | "get_orders" | "search_restaurant",
+"intent":"food_search" | "recommendation" | "get_orders" | "search_restaurant" | "get_offers" | "open_now",
 "foods_requested":["item1", "item2"],
 "filters":{
   "price":null,
@@ -221,14 +225,19 @@ User query:
                 parsedData = JSON.parse(textResult);
             } catch (aiErr) {
                 console.error('[Chat] Gemini error:', aiErr.message);
-                parsedData = {
-                    intent: 'recommendation',
-                    foods_requested: extractFoodNamesLocally(message),
-                    filters: { limit: extractLimitString(message) || 5, price: extractPriceMax(message) },
-                    search_strategy: { primary_source: "database", secondary_source: "recommendation" },
-                    reason: "Fallback due to AI parse error"
-                };
+                parsedData = detectIntentLocally(message);
             }
+        }
+        
+        // Final ultimate fallback if both Gemini and the local detection completely crashed or didn't yield
+        if (!parsedData) {
+            parsedData = {
+                intent: 'recommendation',
+                foods_requested: extractFoodNamesLocally(message),
+                filters: { limit: extractLimitString(message) || 5, price: extractPriceMax(message) },
+                search_strategy: { primary_source: "database", secondary_source: "recommendation" },
+                reason: "Absolute fallback"
+            };
         }
 
         // Apply fallback limits & fixes
