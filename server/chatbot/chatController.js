@@ -33,7 +33,7 @@ function extractLimitString(text) {
 
 const FOOD_TERMS = {
     'ice cream': 'ice cream', 'icecream': 'ice cream', 
-    'biryani': 'biryani','biriyani': 'biryani', 'birynain': 'biryani', 'birynains': 'biryani',
+    'biryani': 'biryani','biriyani': 'biryani', 'birynain': 'biryani', 'birynains': 'biryani', 'birayni': 'biryani', 'biraynis': 'biryani',
     'burger':'burger','pizza':'pizza','pasta':'pasta','noodles':'noodles',
     'dosa':'dosa','idli':'idli','sandwich':'sandwich','roll':'roll',
     'momos':'momos','fried rice':'fried rice','manchurian':'manchurian',
@@ -255,7 +255,7 @@ User query:
         } else if (intent === 'get_offers') {
             finalData = await getOffers();
         } else if (intent === 'open_now' || intent === 'search_restaurant') {
-            finalData = await searchRestaurants({ open_now: true });
+            finalData = await searchRestaurants({ open_now: true, limit: filters.limit });
         } else {
             // FOOD SEARCH LOGIC
             // Ensure per-item limiting
@@ -423,7 +423,8 @@ async function advancedGetOrders(userId, filters) {
 async function searchRestaurants(filters = {}) {
     let query = supabase.from('restaurants').select('*, foods(*)').eq('is_active', true);
     if (filters.restaurant_name) query = query.ilike('name', `%${filters.restaurant_name}%`);
-    const { data, error } = await query.order('rating', { ascending: false }).limit(6);
+    const finalLimit = filters.limit ? Math.min(filters.limit, 10) : 6;
+    const { data, error } = await query.order('rating', { ascending: false }).limit(finalLimit);
     if (error) throw error;
     (data || []).forEach(r => { if (r.foods) r.foods = r.foods.filter(f => f.available !== false).slice(0, 3); });
     return data || [];
