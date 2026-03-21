@@ -141,7 +141,17 @@ RECOMMENDATION SYSTEM: Contains similar foods, popular foods, personalized foods
 DECISION RULES:
 If user explicitly asks for "top picks" or "recommendations": Set intent to 'recommendation' and primary_source to 'recommendation'.
 If user asks for a specific food (e.g., "biryanis only under 400"): Set intent to 'food_search', primary_source to 'database'.
-Always extract limit if provided by the user. If no limit is mentioned or implied, default limit MUST be 5.
+If user asks about past orders or history: Set intent to 'get_orders', primary_source to 'database'.
+If user asks what is open now: Set intent to 'open_now', primary_source to 'database'.
+If user asks for offers or deals: Set intent to 'get_offers', primary_source to 'database'.
+
+QUANTITY RULES:
+Always extract the total limit if provided by the user. If no limit is mentioned, default MUST be 5.
+If user asks for a mix of foods (e.g., "1 biryani and 2 ice creams"):
+- Add them to foods_requested as objects: {"name": "biryani", "quantity": 1}, {"name": "ice cream", "quantity": 2}
+- Set the global "limit" to the sum of all quantities (e.g., 3).
+If no quantity is specified for a mixed item, default to 4 for that specific item.
+
 If user mixes foods: Search each food separately.
 If user gives filters: price, veg/nonveg, rating, location -> Apply filters before returning.
 Never recommend unrelated foods. Always prioritize relevance over popularity.
@@ -151,6 +161,8 @@ Examples for bot_message:
 - "Here are some of the best biryanis tailored just for you! ✨"
 - "Here are some top picks for that area! 🍽️"
 - "I've found some great options under your budget limit! 💸"
+
+Generate 2-3 'suggested_queries' that the user can click as follow-ups (e.g., ["Show top rated biryanis", "Trending desserts"]).
 
 OUTPUT STRUCTURE:
 Return JSON:
@@ -170,6 +182,7 @@ Return JSON:
   "ranking_needed":true
 },
 "bot_message":"A professional, tailored message introducing the results",
+"suggested_queries": ["query1", "query2"],
 "reason":"short reason"
 }
 
@@ -195,6 +208,7 @@ Think like a senior search engineer from Zomato or Swiggy designing food search 
                     filters: { limit: 5 },
                     search_strategy: { primary_source: "recommendation", secondary_source: null },
                     bot_message: "Here are some top picks tailored just for you! ✨",
+                    suggested_queries: ["Show trending items", "Any offers today?"],
                     reason: "Fallback to recommendation due to AI parsing error"
                 };
             }
@@ -223,7 +237,9 @@ Think like a senior search engineer from Zomato or Swiggy designing food search 
                 let dbResults = [];
                 if (foods_requested && foods_requested.length > 0) {
                     for (const food of foods_requested) {
-                        const res = await advancedSearchFood({ ...filters, food_name: food, limit });
+                        const foodName = typeof food === 'string' ? food : food.name;
+                        const qty = (typeof food === 'object' && food.quantity) ? food.quantity : limit;
+                        const res = await advancedSearchFood({ ...filters, food_name: foodName, limit: qty });
                         dbResults = [...dbResults, ...res.available];
                     }
                 } else {
@@ -259,25 +275,16 @@ Think like a senior search engineer from Zomato or Swiggy designing food search 
                 }
             } else if (primary === 'recommendation') {
                 finalData = await fetchFromRec(limit);
-                // Check secondary
-                if (finalData.length < 3 && search_strategy.secondary_source === 'database') {
-                     const dbItems = await fetchFromDb();
-                     finalData = [...finalData, ...dbItems];
-                }
             } else { 
-                // default to database
+                // default to database strictly, no arbitrary recommendation fallback here anymore to preserve exact requests
                 finalData = await fetchFromDb();
-                // Check secondary source if few DB matches
-                if (finalData.length < 3 && search_strategy.secondary_source === 'recommendation') {
-                     const recItems = await fetchFromRec(limit - finalData.length);
-                     finalData = [...finalData, ...recItems];
-                }
             }
             
             // Deduplicate across results
             const uniqueMap = new Map();
             finalData.forEach(item => { if (item && item.id) uniqueMap.set(item.id, item); });
-            finalData = Array.from(uniqueMap.values()).slice(0, limit);
+            // Remove the slice(0, limit) constraint here to allow large explicit quantities to surface fully
+            finalData = Array.from(uniqueMap.values());
         }
 
         // ── Step 4: Response Format ──
@@ -293,6 +300,7 @@ Think like a senior search engineer from Zomato or Swiggy designing food search 
             type: returnType,
             data: finalData,
             message: finalMessage,
+            suggested_queries: parsedData.suggested_queries || [],
             _debug_intent: parsedData // Hidden debug
         });
 

@@ -453,6 +453,8 @@ const ChatWidget = () => {
     };
 
     const showQuickPicks = messages.filter(m => m.sender === 'user').length === 0;
+    const lastAI = messages.length > 0 && messages[messages.length - 1].sender === 'ai' ? messages[messages.length - 1] : null;
+    const suggestedQueries = lastAI?.suggested_queries || [];
 
     return (
         <>
@@ -640,6 +642,19 @@ const ChatWidget = () => {
                                         {QUICK_PICKS.map((q, i) => (
                                             <Chip key={i} label={q.label} emoji={q.emoji} active={activeChip === q.label}
                                                 onClick={() => { setActiveChip(q.label); submitMessage(q.query); }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Auto Suggestions ── */}
+                            {suggestedQueries.length > 0 && !loading && (
+                                <div className="px-4 pb-3 shrink-0 bg-black animate-fade-in">
+                                    <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest mb-2 flex items-center gap-1"><Sparkles size={10} /> Suggested</p>
+                                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+                                        {suggestedQueries.map((q, i) => (
+                                            <Chip key={i} label={q} emoji="✨" active={activeChip === q}
+                                                onClick={() => { setActiveChip(q); submitMessage(q); }} />
                                         ))}
                                     </div>
                                 </div>
