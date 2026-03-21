@@ -33,54 +33,18 @@ function extractLimit(text) {
     return m ? parseInt(m[1]) : null;
 }
 
-// ── LOCAL KEYWORD FAST-PATH (Instant) ─────────────────────
-function detectIntentLocally(message) {
-    const m = message.toLowerCase();
-    
-    // Food keywords for instant search
-    const foodKeywords = [
-        'biryani', 'pizza', 'burger', 'chicken', 'rice', 'noodles', 'mandi', 'kabab',
-        'kebab', 'shawarma', 'sandwich', 'pasta', 'sushi', 'roll', 'veg', 'non-veg',
-        'paneer', 'thali', 'dosa', 'idli', 'breakfast', 'lunch', 'dinner', 'snack'
-    ];
-
-    for (const kw of foodKeywords) {
-        if (m.includes(kw) && !/(?:suggest|best|top|popular|recommend)/i.test(m)) {
-            return {
-                intent: 'food_search',
-                foods_requested: [kw],
-                filters: {
-                    price: extractPriceMax(message) || null,
-                    diet: null,
-                    rating: null,
-                    location: null,
-                    limit: extractLimit(message) || 12
-                },
-                search_strategy: {
-                    primary_source: "database",
-                    secondary_source: "recommendation",
-                    ranking_needed: true
-                },
-                reason: "Fast-path exact food match"
-            };
-        }
-    }
-
-    // Non-food strictly utility intents
-    if (/my order|past order|order history|previous order|reorder|what did i order|show order/i.test(m))
-        return { intent: 'get_orders', foods_requested: [], filters: {}, search_strategy: { primary_source: "database" } };
-    if (/open now|open today|open at night|what.?s open/i.test(m))
-        return { intent: 'open_now', foods_requested: [], filters: {}, search_strategy: { primary_source: "database" } };
-    if (/\boffer|deal|discount|coupon|promo|sale\b/i.test(m))
-        return { intent: 'get_offers', foods_requested: [], filters: {}, search_strategy: { primary_source: "database" } };
-
-    return null; // Go to Gemini for complex queries
-}
+// ── LOCAL KEYWORD FAST-PATH REMOVED ─────────────────────
+// We now rely exclusively on Gemini for better intent and message generation.
 
 // ── Friendly message for each intent ─────────────────────
 function getDynamicMessage(parsed, resultCount) {
     if (resultCount === 0) {
         return "Hmm, I couldn't find anything matching that right now. Try adjusting your search! 🔍";
+    }
+    
+    // If Gemini generated a smart, contextual bot message, use that directly
+    if (parsed.bot_message && typeof parsed.bot_message === 'string') {
+        return parsed.bot_message;
     }
     
     const intent = parsed.intent;
@@ -139,7 +103,8 @@ exports.processChatRequest = async (req, res) => {
 
         saveChatHistory(userId, 'user', message); // non-blocking
 
-        let parsedData = detectIntentLocally(message);
+        // Local routing removed, use Gemini exclusively.
+        let parsedData = null;
 
         if (!parsedData) {
             // ── Step 2: Gemini Intent Engine ──
@@ -167,25 +132,25 @@ Your responsibilities:
 STEP 1 Understand the query deeply.
 STEP 2 Extract user intent.
 STEP 3 Decide data source priority.
-STEP 4 Return structured decision output.
+STEP 4 Return structured decision output including a highly professional bot_message.
 
 Available system data sources:
 DATABASE: Contains exact food items, restaurants, price, rating, availability, location.
 RECOMMENDATION SYSTEM: Contains similar foods, popular foods, personalized foods.
 
 DECISION RULES:
-If user asks specific food: Use DATABASE first.
-If exact matches exist: Return exact matches only.
-If few matches: Fill with similar foods from recommendation system.
-If no matches: Use recommendation system.
-If user asks: best, top, popular, suggest -> Use recommendation system first.
+If user explicitly asks for "top picks" or "recommendations": Set intent to 'recommendation' and primary_source to 'recommendation'.
+If user asks for a specific food (e.g., "biryanis only under 400"): Set intent to 'food_search', primary_source to 'database'.
+Always extract limit if provided by the user. If no limit is mentioned or implied, default limit MUST be 5.
 If user mixes foods: Search each food separately.
 If user gives filters: price, veg/nonveg, rating, location -> Apply filters before returning.
+Never recommend unrelated foods. Always prioritize relevance over popularity.
 
-Never dump top 20 foods.
-Never ignore query.
-Never recommend unrelated foods.
-Always prioritize relevance over popularity.
+Generate a highly professional, polite 'bot_message' that will be displayed right above the food cards. Complete sentences and professional tone.
+Examples for bot_message: 
+- "Here are some of the best biryanis tailored just for you! ✨"
+- "Here are some top picks for that area! 🍽️"
+- "I've found some great options under your budget limit! 💸"
 
 OUTPUT STRUCTURE:
 Return JSON:
@@ -196,13 +161,15 @@ Return JSON:
   "price":null,
   "diet":null,
   "rating":null,
-  "location":null
+  "location":null,
+  "limit":5
 },
 "search_strategy":{
   "primary_source":"",
   "secondary_source":null,
   "ranking_needed":true
 },
+"bot_message":"A professional, tailored message introducing the results",
 "reason":"short reason"
 }
 
@@ -225,8 +192,9 @@ Think like a senior search engineer from Zomato or Swiggy designing food search 
                 parsedData = {
                     intent: 'recommendation', // safe fallback
                     foods_requested: [],
-                    filters: { limit: 8 },
+                    filters: { limit: 5 },
                     search_strategy: { primary_source: "recommendation", secondary_source: null },
+                    bot_message: "Here are some top picks tailored just for you! ✨",
                     reason: "Fallback to recommendation due to AI parsing error"
                 };
             }
