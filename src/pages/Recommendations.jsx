@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { API_URL } from '../config';
 import { trackAddToCart } from '../utils/trackActivity';
-import { Rocket, Sparkles, Zap, ShieldCheck, ChevronRight, Info } from 'lucide-react';
+import { Rocket, Sparkles, Zap, ShieldCheck, ChevronRight, Info, MapPin, Star, Bot, Clock, Heart } from 'lucide-react';
 
 // ─── CSS Visual Effects ──────────────────────────────────────────────────────
 const SPACE_CSS = `
@@ -55,10 +55,14 @@ const SPACE_CSS = `
 `;
 
 const StarField = () => (
-  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#020205]">
+  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#020617]">
+    {/* Nebula / Glow Effects */}
+    <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-cyan-500/10 blur-[150px] rounded-full animate-[nebula-flow_20s_ease-in-out_infinite]" />
+    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[150px] rounded-full animate-[nebula-flow_25s_ease-in-out_infinite_reverse]" />
+    
     <div className="absolute inset-0 star-field-animated opacity-40" />
-    <div className="absolute inset-0 star-field-animated opacity-20 scale-150 rotate-12" />
-    <div className="absolute inset-0 bg-gradient-to-b from-blue-950/20 via-transparent to-orange-950/20" />
+    <div className="absolute inset-0 star-field-animated opacity-15 scale-150 rotate-12" />
+    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/5 to-transparent" />
   </div>
 );
 
@@ -205,49 +209,70 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
 
   return (
     <div
-      className="premium-card-mockup group relative bg-[#111114] rounded-[2rem] overflow-hidden 
-                 hover:shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_20px_rgba(6,182,212,0.05)] 
-                 transition-all duration-700 ease-out flex flex-col h-full border border-white/[0.03]"
+      className="group relative bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] overflow-hidden 
+                 border border-white/[0.05] hover:border-themeAccent-500/40
+                 transition-all duration-700 ease-out flex flex-col h-full
+                 hover:shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_30px_rgba(6,182,212,0.1)]"
     >
-      <div className="relative h-[165px] overflow-hidden">
+      <div className="relative h-[200px] overflow-hidden">
         {food.image ? (
           <img
             src={food.image}
             alt={food.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 brightness-[0.8] group-hover:brightness-100"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 brightness-[0.7] group-hover:brightness-105"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl bg-[#1a1a1e]">🍽️</div>
+          <div className="w-full h-full flex items-center justify-center text-4xl bg-[#0a0a0f]">🍽️</div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111114] via-transparent to-transparent opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-100" />
         
-        {/* Match Percentage - Mockup Style */}
+        {/* Match Percentage Pulse */}
         {score && (
-          <div className="absolute top-4 right-4 z-20">
-            <div className="bg-themeAccent-500/10 backdrop-blur-md border border-themeAccent-500/30 text-themeAccent-400 px-3 py-1 rounded-full font-bold text-[9px] shadow-[0_0_15px_rgba(6,182,212,0.1)] tracking-tighter uppercase">
-              {score}% Match
+          <div className="absolute top-5 right-5 z-20">
+            <div className="relative">
+              <div className="absolute inset-0 bg-themeAccent-500/20 blur-xl rounded-full animate-pulse" />
+              <div className="relative premium-glass border-themeAccent-500/30 text-themeAccent-400 px-4 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase flex items-center gap-1.5">
+                <Sparkles size={10} className="animate-spin-slow" />
+                {score}% MATCH
+              </div>
             </div>
           </div>
         )}
+
+        {/* Diet Badge */}
+        <div className="absolute bottom-4 left-5 z-20 flex items-center gap-2">
+            <div className={`w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center ${isVeg ? 'border-green-500/50' : 'border-red-500/50'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_${isVeg ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'}]`}></div>
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{isVeg ? 'Veg' : 'Non-Veg'}</span>
+        </div>
       </div>
 
-      <div className="p-5 flex flex-col flex-grow relative z-10 bg-[#0c0c0e]">
-        <div className="flex justify-between items-start mb-2 gap-2">
-          <h3 className="text-gray-100 font-bold text-[16px] tracking-tight group-hover:text-themeAccent-400 transition-colors line-clamp-1">
+      <div className="p-6 flex flex-col flex-grow relative z-10">
+        <div className="flex justify-between items-start mb-2.5">
+          <h3 className="text-white font-black text-[18px] tracking-tight group-hover:text-themeAccent-400 transition-colors line-clamp-1 text-glow">
             {food.name}
           </h3>
-          <div className={`w-3 h-3 rounded-full border flex items-center justify-center mt-1 scale-90 ${isVeg ? 'border-green-500/30' : 'border-red-500/30'}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          </div>
         </div>
 
-        <p className="text-gray-500 text-[11px] font-medium line-clamp-2 mb-6 leading-relaxed">
+        <div className="flex items-center gap-3 mb-4">
+             <div className="flex items-center gap-1 text-yellow-400/90 font-black text-[11px]">
+                <Star size={10} className="fill-current" />
+                {rating}
+             </div>
+             <div className="w-1 h-1 rounded-full bg-white/10" />
+             <div className="text-white/40 text-[11px] font-bold">
+                {food.category || 'Specialty'}
+             </div>
+        </div>
+
+        <p className="text-gray-400 text-[12px] font-medium line-clamp-2 mb-8 leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
           {food.description || `Exclusives from ${food.restaurant?.name || 'Chef Specialty'}`}
         </p>
 
-        <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/[0.03]">
+        <div className="mt-auto flex items-center justify-between pt-5 border-t border-white/[0.05]">
           <div className="flex flex-col">
             <span className="text-[9px] text-gray-600 font-black uppercase tracking-[0.1em]">Price</span>
             <span className="font-black text-lg text-white tracking-tight">₹{food.price}</span>
@@ -381,7 +406,7 @@ const Recommendations = () => {
   }
 
   return (
-    <div className="theme-ocean min-h-screen bg-[#020205] pb-24 relative overflow-hidden">
+    <div className="theme-ocean min-h-screen bg-[#020617] pb-24 relative overflow-hidden">
       <style>{SPACE_CSS}</style>
       
       {/* Visual Backdrop */}
@@ -390,7 +415,7 @@ const Recommendations = () => {
 
       {/* Scanning Light Effect */}
       <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">
-        <div className="absolute inset-x-0 h-1 bg-themeAccent-500/10 shadow-[0_0_20px_rgba(249,115,22,0.3)] opacity-0 animate-[scan_15s_linear_infinite]" />
+        <div className="absolute inset-x-0 h-1 bg-themeAccent-500/10 shadow-[0_0_20px_rgba(34,211,238,0.2)] opacity-0 animate-[scan_15s_linear_infinite]" />
       </div>
 
       <div className="relative z-20">

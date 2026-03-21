@@ -505,23 +505,24 @@ const ChatWidget = () => {
             {isOpen && (
                 <div className={`
                     fixed bottom-28 right-4 md:right-6 z-50 flex flex-col font-sans
-                    bg-neutral-950 border border-neutral-800 rounded-[2rem] overflow-hidden
+                    ${isOceanTheme ? 'premium-glass' : 'bg-neutral-950 border border-neutral-800'} 
+                    rounded-[2rem] overflow-hidden
                     shadow-[0_8px_32px_rgba(0,0,0,0.5)]
                     transition-all duration-300 animate-slide-up origin-bottom-right
                     ${isExpanded ? 'w-[95vw] md:w-[600px] h-[85vh] max-h-[880px]' : 'w-[92vw] md:w-[420px] h-[680px] max-h-[80vh]'}
                 `}>
 
                     {/* ── Header ── Black & Cyan */}
-                    <div className="flex items-center justify-between px-5 py-4 bg-neutral-900 border-b border-neutral-800 shrink-0">
+                    <div className={`flex items-center justify-between px-5 py-4 ${isOceanTheme ? 'bg-white/[0.03]' : 'bg-neutral-900'} border-b border-white/[0.05] shrink-0`}>
                         <div className="flex items-center gap-3">
                             {/* UFO Bot avatar */}
                             <div className="relative">
                                 <div
-                                    className="w-12 h-12 rounded-full bg-themeAccent-500 flex items-center justify-center shadow-lg shadow-themeAccent-900/40 border-2 border-themeAccent-400/20"
+                                    className={`w-12 h-12 rounded-full ${isOceanTheme ? 'bg-cyan-500/20' : 'bg-themeAccent-500'} flex items-center justify-center shadow-lg shadow-themeAccent-900/40 border-2 border-themeAccent-400/20`}
                                 >
-                                    <Bot size={22} className="text-white" />
+                                    <Bot size={22} className={isOceanTheme ? "text-cyan-400" : "text-white"} />
                                 </div>
-                                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-[2.5px] border-neutral-900 rounded-full shadow-sm" />
+                                <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${isOceanTheme ? 'bg-cyan-400' : 'bg-green-500'} border-[2.5px] border-neutral-900 rounded-full shadow-sm`} />
                             </div>
                             <div>
                                 <h3 className="text-[15px] font-black text-white tracking-tight leading-none uppercase">Smart Assistant</h3>
@@ -602,7 +603,7 @@ const ChatWidget = () => {
                             {/* ── CHAT AREA ── */}
                             <div
                                 data-lenis-prevent
-                                className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-none overscroll-y-contain bg-black"
+                                className={`flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-none overscroll-y-contain ${isOceanTheme ? 'bg-transparent' : 'bg-black'}`}
                                 style={{ scrollbarWidth: 'none' }}
                             >
                                 {messages.map((msg, idx) => {
