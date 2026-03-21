@@ -1,6 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
+const supabase = require('../utils/supabase');
 /**
  * Candidate Engine: Responsible for generating an initial broad pool of 
  * candidate foods before filtering and ranking.

@@ -3,9 +3,7 @@ const rankingEngine = require('./rankingEngine');
 const diversityEngine = require('./diversityEngine');
 const behaviorEngine = require('./behaviorEngine');
 const similarityEngine = require('./similarityEngine');
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
+const supabase = require('../utils/supabase');
 /**
  * Executes a full recommendation pipeline run.
  */
