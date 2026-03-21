@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { useLocation, 
+import { 
     MessageCircle, X, Send, ShoppingBag, Star, MapPin, ChevronRight,
     Bot, Clock, CheckCheck, Zap, History, Sparkles, Flame,
     Minimize2, Maximize2, ArrowLeft, Leaf, Drumstick
@@ -7,7 +7,7 @@ import { useLocation,
 import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const pulseGlow = `
