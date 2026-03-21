@@ -56,9 +56,10 @@ const SPACE_CSS = `
 
 const StarField = () => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#020617]">
-    {/* Nebula / Glow Effects */}
-    <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-cyan-500/10 blur-[150px] rounded-full animate-[nebula-flow_20s_ease-in-out_infinite]" />
-    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[150px] rounded-full animate-[nebula-flow_25s_ease-in-out_infinite_reverse]" />
+    {/* Nebula / Glow Effects - Colorfully Deep Space */}
+    <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] nebula-cyan blur-[120px] rounded-full animate-[nebula-flow_25s_ease-in-out_infinite]" />
+    <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] nebula-purple blur-[150px] rounded-full animate-[nebula-flow_30s_ease-in-out_infinite_reverse]" />
+    <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-indigo-500/5 blur-[100px] rounded-full animate-[nebula-flow_22s_ease-in-out_infinite]" />
     
     <div className="absolute inset-0 star-field-animated opacity-40" />
     <div className="absolute inset-0 star-field-animated opacity-15 scale-150 rotate-12" />
@@ -209,12 +210,12 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
 
   return (
     <div
-      className="group relative bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] overflow-hidden 
+      className="group relative bg-white/[0.02] backdrop-blur-3xl rounded-[1.5rem] overflow-hidden 
                  border border-white/[0.05] hover:border-themeAccent-500/40
                  transition-all duration-700 ease-out flex flex-col h-full
                  hover:shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_30px_rgba(6,182,212,0.1)]"
     >
-      <div className="relative h-[200px] overflow-hidden">
+      <div className="relative h-44 overflow-hidden">
         {food.image ? (
           <img
             src={food.image}
@@ -230,10 +231,10 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
         
         {/* Match Percentage Pulse */}
         {score && (
-          <div className="absolute top-5 right-5 z-20">
+          <div className="absolute top-3 right-3 z-20">
             <div className="relative">
               <div className="absolute inset-0 bg-themeAccent-500/20 blur-xl rounded-full animate-pulse" />
-              <div className="relative premium-glass border-themeAccent-500/30 text-themeAccent-400 px-4 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase flex items-center gap-1.5">
+              <div className="relative premium-glass border-themeAccent-500/30 text-themeAccent-400 px-3 py-1 rounded-full font-black text-[9px] tracking-widest uppercase flex items-center gap-1">
                 <Sparkles size={10} className="animate-spin-slow" />
                 {score}% MATCH
               </div>
@@ -242,37 +243,36 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
         )}
 
         {/* Diet Badge */}
-        <div className="absolute bottom-4 left-5 z-20 flex items-center gap-2">
-            <div className={`w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center ${isVeg ? 'border-green-500/50' : 'border-red-500/50'}`}>
+        <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5">
+            <div className={`w-3.5 h-3.5 rounded-sm border-[1.5px] flex items-center justify-center ${isVeg ? 'border-green-500/50' : 'border-red-500/50'}`}>
                 <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_${isVeg ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'}]`}></div>
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{isVeg ? 'Veg' : 'Non-Veg'}</span>
         </div>
       </div>
 
-      <div className="p-6 flex flex-col flex-grow relative z-10">
-        <div className="flex justify-between items-start mb-2.5">
-          <h3 className="text-white font-black text-[18px] tracking-tight group-hover:text-themeAccent-400 transition-colors line-clamp-1 text-glow">
+      <div className="p-4 flex flex-col flex-grow relative z-10">
+        <div className="flex justify-between items-start mb-1.5">
+          <h3 className="text-white font-black text-[15px] tracking-tight group-hover:text-themeAccent-400 transition-colors line-clamp-1 text-glow">
             {food.name}
           </h3>
         </div>
 
-        <div className="flex items-center gap-3 mb-4">
-             <div className="flex items-center gap-1 text-yellow-400/90 font-black text-[11px]">
+        <div className="flex items-center gap-3 mb-2">
+             <div className="flex items-center gap-1 text-yellow-400/90 font-black text-[10px]">
                 <Star size={10} className="fill-current" />
                 {rating}
              </div>
              <div className="w-1 h-1 rounded-full bg-white/10" />
-             <div className="text-white/40 text-[11px] font-bold">
+             <div className="text-white/40 text-[10px] font-bold">
                 {food.category || 'Specialty'}
              </div>
         </div>
 
-        <p className="text-gray-400 text-[12px] font-medium line-clamp-2 mb-8 leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
+        <p className="text-gray-400 text-[11px] font-medium line-clamp-2 mb-6 leading-relaxed opacity-70 group-hover:opacity-100 transition-opacity">
           {food.description || `Exclusives from ${food.restaurant?.name || 'Chef Specialty'}`}
         </p>
 
-        <div className="mt-auto flex items-center justify-between pt-5 border-t border-white/[0.05]">
+        <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/[0.05]">
           <div className="flex flex-col">
             <span className="text-[9px] text-gray-600 font-black uppercase tracking-[0.1em]">Price</span>
             <span className="font-black text-lg text-white tracking-tight">₹{food.price}</span>

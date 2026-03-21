@@ -1,8 +1,12 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 const Footer = () => {
+    const location = useLocation();
+    const isOceanTheme = location.pathname === '/recommendations';
+
     return (
-        <footer className="bg-gray-900 text-gray-300 py-12">
+        <footer className={`py-12 transition-colors duration-500 ${isOceanTheme ? 'bg-[#020617] border-t border-white/[0.05]' : 'bg-gray-900 text-gray-300'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="col-span-1 md:col-span-2">

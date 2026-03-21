@@ -207,11 +207,16 @@ function rankFoods(foods, prefs, options = {}) {
     const s7 = behaviorBonusScore(food, prefs);
     const bonus = vegMatchBonus(food, prefs) + mealTypeBonus(food, mealType);
 
-    const total = w1*s1 + w2*s2 + w3*s3 + w4*s4 + w5*s5 + w6*s6 + s7 + bonus;
+    // Calculate match percentage (0-100)
+    // weights sum to 1.0, and individual scores are 0-100.
+    // bonuses (s7, bonus) can push it higher, so we cap at 98 for "room to grow"
+    const rawMatch = (w1*s1 + w2*s2 + w3*s3 + w4*s4 + w5*s5 + w6*s6);
+    const boost = s7 + bonus;
+    let percent = Math.min(99, Math.max(30, Math.round(rawMatch + boost)));
 
     return {
       ...food,
-      _score: parseFloat(total.toFixed(4)),
+      _score: percent,
       _scoreBreakdown: {
         cuisineMatch: parseFloat((w1 * s1).toFixed(3)),
         orderSimilarity: parseFloat((w2 * s2).toFixed(3)),

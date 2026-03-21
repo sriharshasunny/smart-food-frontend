@@ -21,9 +21,9 @@ const Navbar = ({ toggleSidebar }) => {
     return (
         <nav className="sticky top-0 z-50 transition-all duration-300 rounded-b-[1.5rem] shadow-lg">
             {/* 1. Gradient Border Layer (The "Light") */}
-            <div className="absolute inset-0 rounded-b-[1.5rem] bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 animate-gradient-x p-[1.5px] shadow-xl shadow-purple-500/20">
-                {/* 2. Inner Background Layer (Solid White) */}
-                <div className="h-full w-full bg-white rounded-b-[calc(1.5rem-1.5px)]"></div>
+            <div className={`absolute inset-0 rounded-b-[1.5rem] bg-gradient-to-r ${location.pathname === '/recommendations' ? 'from-cyan-400 via-teal-500 to-indigo-500 shadow-cyan-500/20' : 'from-orange-400 via-pink-500 to-purple-500 shadow-purple-500/20'} animate-gradient-x p-[1.5px] shadow-xl`}>
+                {/* 2. Inner Background Layer (Solid White or Space Deep) */}
+                <div className={`h-full w-full ${location.pathname === '/recommendations' ? 'bg-[#020617]/40 backdrop-blur-3xl' : 'bg-white'} rounded-b-[calc(1.5rem-1.5px)]`}></div>
             </div>
 
             <div className="max-w-[1600px] mx-auto px-6 w-full relative z-10">
@@ -40,11 +40,11 @@ const Navbar = ({ toggleSidebar }) => {
                         </button>
 
                         <Link to="/home" className="flex items-center gap-2.5 group cursor-pointer select-none">
-                            <div className="bg-gradient-to-tr from-orange-500 to-red-500 p-1.5 rounded-lg shadow-lg shadow-orange-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <div className={`p-1.5 rounded-lg shadow-lg bg-gradient-to-tr ${location.pathname === '/recommendations' ? 'from-cyan-500 to-indigo-500' : 'from-orange-500 to-red-500'} group-hover:scale-105 transition-transform duration-300`}>
                                 <ShoppingBag className="w-4.5 h-4.5 text-white" />
                             </div>
                             {/* Desktop Logo */}
-                            <span className="text-lg md:text-xl font-black bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent hidden sm:block tracking-tighter">
+                            <span className={`text-lg md:text-xl font-black bg-gradient-to-r ${location.pathname === '/recommendations' ? 'from-white to-cyan-300' : 'from-gray-900 to-gray-600'} bg-clip-text text-transparent hidden sm:block tracking-tighter`}>
                                 SmartFood
                             </span>
                             {/* Mobile Page Title */}

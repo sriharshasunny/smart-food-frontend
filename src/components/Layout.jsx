@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
@@ -7,9 +8,11 @@ import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const location = useLocation();
+    const isOceanTheme = location.pathname === '/recommendations';
 
     return (
-        <div className="min-h-screen flex bg-gray-50">
+        <div className={`min-h-screen flex transition-colors duration-700 ${isOceanTheme ? 'theme-ocean bg-[#020617]' : 'bg-gray-50'}`}>
             {/* Sidebar (Fixed/Sticky on Desktop, Absolute on Mobile) */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 

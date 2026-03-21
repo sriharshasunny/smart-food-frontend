@@ -59,26 +59,17 @@ async function getRecommendations(userId, options = {}) {
 
   if (strategy === 'personalized') {
     // ── Personalised path ──────────────────────────────────────────
-    const candidateFoods = await getFoodsInCity(city, { limit: 1000 }); // Increased candidate pool
+    const candidateFoods = await getFoodsInCity(city, { limit: 10000 }); // "Infinite" candidate pool
 
     if (candidateFoods.length === 0) {
       // No local foods — fallback to cold start
       strategy = 'cold_start';
     } else {
-      // Apply veg filter early if strict preference
-      let filtered = candidateFoods;
-      if (prefs.veg_preference === 'veg') {
-        filtered = candidateFoods.filter(f => f.is_veg === true);
-        if (filtered.length < 10) filtered = candidateFoods; // relax if too few
-      } else if (prefs.veg_preference === 'non_veg') {
-        filtered = candidateFoods.filter(f => f.is_veg === false);
-        if (filtered.length < 10) filtered = candidateFoods;
-      }
-
-      const ranked = rankFoods(filtered, prefs, {
+      // 1. Calculate weights/scores for ALL candidates (no strict filtering here)
+      const ranked = rankFoods(candidateFoods, prefs, { // Rank ALL candidates
         userCoords,
         mealType,
-        limit: 1000, // Rank everything in the candidate pool
+        limit: 10000, 
       });
 
       const offset = (page - 1) * limit;
