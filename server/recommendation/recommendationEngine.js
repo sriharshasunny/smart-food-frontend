@@ -30,8 +30,8 @@ class RecommendationEngine {
                 .eq('available', true)
                 .eq('restaurant.is_active', true);
 
-            // Fetch an initial large pool to rank and filter down (e.g. 50 items)
-            const { data: rawCandidates, error } = await query.limit(50);
+            // Fetch an initial large pool to rank and filter down
+            const { data: rawCandidates, error } = await query.limit(5000);
             if (error || !rawCandidates) return [];
 
             // 3. Score and Rank candidates against user preferences

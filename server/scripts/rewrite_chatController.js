@@ -1,4 +1,9 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const fs = require('fs');
+const path = require('path');
+
+const targetFile = path.join(__dirname, '..', 'chatbot', 'chatController.js');
+
+const newCode = `const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require('../utils/supabase');
 const recommendationEngine = require('../recommendation/recommendationEngine');
 
@@ -11,10 +16,10 @@ async function generateWithRetry(model, prompt, maxRetries = 2) {
             const msg = err?.message || '';
             const is503 = err?.status === 503 || msg.includes('503');
             const is429 = err?.status === 429 || msg.includes('Too Many Requests');
-            const retryMatch = msg.match(/retry in (\d+(?:\.\d+)?)s/);
+            const retryMatch = msg.match(/retry in (\\d+(?:\\.\\d+)?)s/);
             if ((is503 || is429) && attempt < maxRetries) {
                 const delay = retryMatch ? Math.min(parseFloat(retryMatch[1]) * 1000, 8000) : attempt * 1500;
-                console.warn(`[Chat] Gemini ${err?.status} try ${attempt}, retry in ${delay}ms`);
+                console.warn(\`[Chat] Gemini \${err?.status} try \${attempt}, retry in \${delay}ms\`);
                 await new Promise(r => setTimeout(r, delay));
             } else throw err;
         }
@@ -22,12 +27,12 @@ async function generateWithRetry(model, prompt, maxRetries = 2) {
 }
 
 function extractPriceMax(text) {
-    const m = text.match(/(?:under|below|less than|max|upto|within|at most)\s*(?:rs\.?|inr|₹)?\s*(\d+)/i);
+    const m = text.match(/(?:under|below|less than|max|upto|within|at most)\\s*(?:rs\\.?|inr|₹)?\\s*(\\d+)/i);
     return m ? parseInt(m[1]) : null;
 }
 
 function extractLimitString(text) {
-    const m = text.match(/\b(?:top|best|show|get|around|first)?\s*(\d{1,2})\b/i);
+    const m = text.match(/\\b(?:top|best|show|get|around|first)?\\s*(\\d{1,2})\\b/i);
     return m ? parseInt(m[1]) : null;
 }
 
@@ -66,7 +71,7 @@ function detectIntentLocally(message) {
     const isCombo = /(?:suggest|best|top|popular|recommend|tasty|and|with)/i.test(m);
 
     // RESTAURANTS
-    if (/\b(?:restuarant|restaurant|place|hotel|cafe|eatery)s?\b/i.test(m)) {
+    if (/\\b(?:restuarant|restaurant|place|hotel|cafe|eatery)s?\\b/i.test(m)) {
         return { 
             intent: 'mixed_query', 
             tasks: [{ type: 'restaurant', name: 'restaurant', intent: 'search_restaurant', quantity: extractLimitString(message) || 5, filters: {}, primary_source: 'database' }]
@@ -84,7 +89,7 @@ function detectIntentLocally(message) {
     }
 
     // OFFERS
-    if (/\b(?:offer|deal|discount|coupon|promo|sale)\b/i.test(m)) {
+    if (/\\b(?:offer|deal|discount|coupon|promo|sale)\\b/i.test(m)) {
         return { intent: 'mixed_query', tasks: [{ type: 'food', name: 'offers', intent: 'get_offers', quantity: 10, filters: {}, primary_source: "database" }] };
     }
 
@@ -127,19 +132,19 @@ function getDynamicMessage(parsed, resultCount) {
     // Quick specific intents based on raw intent string or first task
     const primaryTaskIntent = parsed.tasks && parsed.tasks.length > 0 ? parsed.tasks[0].intent : '';
     
-    if (overallIntent === 'get_offers' || primaryTaskIntent === 'get_offers') return `Found ${resultCount} great deals for you! 🏷️ Grab them before they're gone.`;
-    if (overallIntent === 'get_orders' || primaryTaskIntent === 'get_orders') return `Here are your recent orders 📦. Want to reorder something?`;
-    if (overallIntent === 'open_now' || primaryTaskIntent === 'open_now') return `Found ${resultCount} restaurants open right now! 🏪`;
+    if (overallIntent === 'get_offers' || primaryTaskIntent === 'get_offers') return \`Found \${resultCount} great deals for you! 🏷️ Grab them before they're gone.\`;
+    if (overallIntent === 'get_orders' || primaryTaskIntent === 'get_orders') return \`Here are your recent orders 📦. Want to reorder something?\`;
+    if (overallIntent === 'open_now' || primaryTaskIntent === 'open_now') return \`Found \${resultCount} restaurants open right now! 🏪\`;
     
-    if (hasRests && !hasFoods) return `Found ${resultCount} restaurants for you! 🏪`;
-    if (hasRests && hasFoods) return `Found ${resultCount} results including both great food and top restaurants! 🍽️🏪`;
+    if (hasRests && !hasFoods) return \`Found \${resultCount} restaurants for you! 🏪\`;
+    if (hasRests && hasFoods) return \`Found \${resultCount} results including both great food and top restaurants! 🍽️🏪\`;
     
-    const nameStr = foodNames.length > 0 ? `**${foodNames.join(' and ')}** ` : 'options ';
+    const nameStr = foodNames.length > 0 ? \`**\${foodNames.join(' and ')}** \` : 'options ';
     
     if (overallIntent === 'recommendation' || primaryTaskIntent === 'recommendation' || primaryTaskIntent === 'food_recommendation') {
-         return `Here are ${resultCount} great ${nameStr}suggestions tailored just for you! ✨`;
+         return \`Here are \${resultCount} great \${nameStr}suggestions tailored just for you! ✨\`;
     }
-    return `Found ${resultCount} ${nameStr}🍽️ — enjoy!`;
+    return \`Found \${resultCount} \${nameStr}🍽️ — enjoy!\`;
 }
 
 async function saveChatHistory(userId, role, content) {
@@ -157,7 +162,7 @@ exports.getChatHistory = async (req, res) => {
     if (!userId) return res.json([]);
     try {
         let query = supabase.from('chat_history').select('*').eq('user_id', userId).order('created_at', { ascending: true });
-        if (date) query = query.gte('created_at', `${date}T00:00:00.000Z`).lte('created_at', `${date}T23:59:59.999Z`);
+        if (date) query = query.gte('created_at', \`\${date}T00:00:00.000Z\`).lte('created_at', \`\${date}T23:59:59.999Z\`);
         else query = query.limit(200);
         const { data, error } = await query;
         if (error) throw error;
@@ -187,7 +192,7 @@ exports.processChatRequest = async (req, res) => {
                 generationConfig: { responseMimeType: 'application/json' }
             });
 
-            const combinedPrompt = `You are the intelligence engine of a professional food delivery chatbot similar to Zomato or Swiggy.
+            const combinedPrompt = \`You are the intelligence engine of a professional food delivery chatbot similar to Zomato or Swiggy.
 
 Your job is NOT to randomly recommend foods.
 
@@ -289,12 +294,12 @@ Return JSON ONLY:
 }
 
 User query to analyze:
-${message}`;
+\${message}\`;
 
             try {
                 const result = await generateWithRetry(model, combinedPrompt);
                 let textResult = result.response.text();
-                textResult = textResult.replace(/```json/gi, '').replace(/```/g, '').trim();
+                textResult = textResult.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim();
                 parsedData = JSON.parse(textResult);
             } catch (aiErr) {
                 console.error('[Chat] Gemini error:', aiErr.message);
@@ -446,7 +451,7 @@ async function advancedSearchFood(baseFilters) {
     
     if (baseFilters.food_name && baseFilters.food_name.toLowerCase() !== 'food' && baseFilters.food_name.toLowerCase() !== 'foods') {
         const words = baseFilters.food_name.split(',').map(w => w.trim()).filter(Boolean);
-        const orStr = words.flatMap(w => [`name.ilike.%${w}%`, `category.ilike.%${w}%`]).join(',');
+        const orStr = words.flatMap(w => [\`name.ilike.%\${w}%\`, \`category.ilike.%\${w}%\`]).join(',');
         if (orStr) query = query.or(orStr);
     }
     
@@ -475,7 +480,7 @@ async function advancedSearchFood(baseFilters) {
     }
     
     if (baseFilters.location) {
-        query = query.ilike('restaurant.city', `%${baseFilters.location}%`);
+        query = query.ilike('restaurant.city', \`%\${baseFilters.location}%\`);
     }
 
     const { data, error } = await query.order('rating', { ascending: false }).limit(baseFilters.limit || 10);
@@ -499,7 +504,7 @@ async function advancedGetOrders(userId, filters) {
 
 async function searchRestaurants(filters = {}) {
     let query = supabase.from('restaurants').select('*, foods(*)').eq('is_active', true);
-    if (filters.restaurant_name) query = query.ilike('name', `%${filters.restaurant_name}%`);
+    if (filters.restaurant_name) query = query.ilike('name', \`%\${filters.restaurant_name}%\`);
     const finalLimit = filters.limit ? Math.min(filters.limit, 10) : 6;
     const { data, error } = await query.order('rating', { ascending: false }).limit(finalLimit);
     if (error) throw error;
@@ -513,3 +518,7 @@ async function getOffers() {
     if (error) throw error;
     return data || [];
 }
+`;
+
+fs.writeFileSync(targetFile, newCode);
+console.log('Successfully rewrote chatController.js');
