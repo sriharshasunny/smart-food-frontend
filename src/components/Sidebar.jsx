@@ -48,29 +48,27 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 className={`fixed top-0 left-0 h-full w-[280px] z-[60] transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
                     } shrink-0`}
             >
-                <div className={`h-full w-full relative overflow-hidden rounded-tr-[2.5rem] shadow-2xl flex flex-col ${location.pathname === '/recommendations' ? 'sidebar-glass' : 'bg-white'}`}>
+                <div className={`h-full w-full relative overflow-hidden rounded-tr-2xl shadow-2xl flex flex-col ${location.pathname === '/recommendations' ? 'bg-[#0a0a14]/90 backdrop-blur-3xl border-r border-white/5' : 'bg-white'}`}>
 
-                    {/* Header with Gradient Border */}
-                    <div className="relative rounded-tr-[2.5rem] shrink-0">
-                        {/* Gradient Border */}
-                        <div className={`absolute inset-0 bg-gradient-to-r ${location.pathname === '/recommendations' ? 'from-cyan-400 via-teal-500 to-indigo-500' : 'from-orange-400 via-pink-500 to-purple-500'} p-[1.5px] rounded-tr-[2.5rem]`}>
-                            <div className={`h-full w-full ${location.pathname === '/recommendations' ? 'bg-[#020617]/40' : 'bg-white'} rounded-tr-[calc(2.5rem-1.5px)]`}></div>
-                        </div>
-
+                    {/* Header with HUD Border */}
+                    <div className="relative shrink-0">
+                        {/* HUD Border Segment */}
+                        <div className={`absolute bottom-0 left-0 right-0 h-px ${location.pathname === '/recommendations' ? 'bg-white/10' : 'bg-gray-100'}`} />
+                        
                         <div className="relative p-6 flex items-center justify-between">
-                            <div className="flex items-center gap-2 group">
-                                <div className={`p-1.5 bg-gradient-to-tr ${location.pathname === '/recommendations' ? 'from-cyan-500 to-indigo-500' : 'from-orange-500 to-red-500'} rounded-lg shadow-md`}>
-                                    <Zap className="w-5 h-5 text-white fill-current" />
+                            <div className="flex items-center gap-3 group">
+                                <div className={`p-2 rounded-sm shadow-lg ${location.pathname === '/recommendations' ? 'bg-themeAccent-500/20 border border-themeAccent-500/30' : 'bg-gradient-to-tr from-orange-500 to-red-500'}`}>
+                                    <Zap className={`w-5 h-5 ${location.pathname === '/recommendations' ? 'text-themeAccent-400' : 'text-white'} fill-current`} />
                                 </div>
-                                <span className={`text-xl font-black bg-gradient-to-r ${location.pathname === '/recommendations' ? 'from-white to-cyan-300' : 'from-gray-900 to-gray-600'} bg-clip-text text-transparent`}>
+                                <span className={`text-xl font-black uppercase tracking-tighter ${location.pathname === '/recommendations' ? 'text-white' : 'text-gray-900'}`}>
                                     SmartFood
                                 </span>
                             </div>
                             <button
                                 onClick={toggleSidebar}
-                                className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-all active:scale-90"
+                                className={`p-2 rounded-full transition-all active:scale-90 ${location.pathname === '/recommendations' ? 'hover:bg-white/5 text-white/40 hover:text-white' : 'hover:bg-red-50 text-gray-400 hover:text-red-500'}`}
                             >
-                                <X className="w-6 h-6" />
+                                <X className="w-6 h-6" strokeWidth={1} />
                             </button>
                         </div>
                     </div>
@@ -87,16 +85,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                     onClick={toggleSidebar}
                                     className="relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group"
                                 >
-                                    {/* Liquid Background Animation */}
+                                    {/* HUD Active Indicator */}
                                     {isActive && (
                                         <motion.div
-                                            layoutId="sidebar-active-pill"
-                                            className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg shadow-orange-500/30"
+                                            layoutId="sidebar-active-hud"
+                                            className={`absolute inset-0 rounded-sm border-l-2 ${location.pathname === '/recommendations' 
+                                                ? 'bg-themeAccent-500/10 border-themeAccent-500 shadow-[inset_10px_0_20px_rgba(34,211,238,0.05)]' 
+                                                : 'bg-orange-500/10 border-orange-500'}`}
                                             transition={{
                                                 type: "spring",
-                                                stiffness: 350,
-                                                damping: 30,
-                                                mass: 0.8
+                                                stiffness: 400,
+                                                damping: 30
                                             }}
                                         />
                                     )}
@@ -123,28 +122,27 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         })}
                     </nav>
 
-                    {/* Footer */}
-                    <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-                        {/* Premium Member Card */}
-                        <div className="relative mb-4 overflow-hidden rounded-2xl">
-                            {/* Gradient Border */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-pink-500 to-purple-500 p-[2px] rounded-2xl">
-                                <div className="h-full w-full bg-gradient-to-br from-gray-900 to-gray-800 rounded-[calc(1rem-2px)]"></div>
-                            </div>
-
-                            <div className="relative p-4 text-white">
-                                <p className="text-sm font-bold mb-1">Premium Member</p>
-                                <p className="text-xs opacity-70">Free delivery on all orders</p>
+                    {/* Footer - Strategic Info */}
+                    <div className={`p-5 border-t ${location.pathname === '/recommendations' ? 'border-white/5 bg-transparent' : 'border-gray-100 bg-gray-50/50'}`}>
+                        {/* Premium Member Card - HUD Style */}
+                        <div className="relative mb-6 overflow-hidden">
+                            <div className={`absolute inset-0 opacity-20 ${location.pathname === '/recommendations' ? 'bg-themeAccent-500' : 'bg-gradient-to-br from-orange-400 to-red-500'}`} />
+                            <div className={`relative p-4 border ${location.pathname === '/recommendations' ? 'border-themeAccent-500/30 bg-[#0a0a14]' : 'border-gray-200 bg-white shadow-sm'} rounded-sm`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${location.pathname === '/recommendations' ? 'bg-themeAccent-400' : 'bg-orange-500'}`} />
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${location.pathname === '/recommendations' ? 'text-white' : 'text-gray-900'}`}>Premium Tier</p>
+                                </div>
+                                <p className="text-[9px] font-bold opacity-50 uppercase tracking-tighter">unlimited logistics active</p>
                             </div>
                         </div>
 
                         {/* Logout Button */}
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-2.5 px-3 py-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg w-full transition-all text-xs font-bold group"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-sm w-full transition-all text-[10px] font-black uppercase tracking-widest group ${location.pathname === '/recommendations' ? 'text-white/30 hover:text-red-400 hover:bg-white/5' : 'text-gray-500 hover:text-red-600 hover:bg-red-50'}`}
                         >
-                            <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                            Log Out
+                            <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={1} />
+                            Terminate Session
                         </button>
                     </div>
                 </div>

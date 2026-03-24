@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
     const isOceanTheme = location.pathname === '/recommendations';
 
     return (
-        <div className={`min-h-screen flex transition-colors duration-700 ${isOceanTheme ? 'theme-ocean bg-[#020617]' : 'bg-gray-50'}`}>
+        <div className={`min-h-screen flex transition-colors duration-700 ${isOceanTheme ? 'theme-ocean bg-[#02040a]' : 'bg-gray-50'}`}>
             {/* Sidebar (Fixed/Sticky on Desktop, Absolute on Mobile) */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 

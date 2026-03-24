@@ -114,7 +114,7 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
         <div className="absolute inset-x-0 h-px bg-themeAccent-400/30 blur-[2px] animate-[scan-hud_2s_linear_infinite]" />
       </div>
 
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-40 overflow-hidden">
         {food.image ? (
           <img
             src={food.image}
@@ -150,20 +150,20 @@ const FoodGridCard = ({ food, userId, onAdd }) => {
         </div>
       </div>
 
-      <div className="p-5 flex flex-col flex-grow relative z-10">
-        <div className="mb-2">
-          <h3 className="text-white font-black text-lg tracking-tight group-hover:text-themeAccent-400 transition-colors line-clamp-1 uppercase text-hud">
+      <div className="p-4 flex flex-col flex-grow relative z-10">
+        <div className="mb-1">
+          <h3 className="text-white font-black text-base tracking-tight group-hover:text-themeAccent-400 transition-colors line-clamp-1 uppercase text-hud">
             {food.name}
           </h3>
         </div>
 
-        <div className="flex items-center gap-4 mb-3 border-b border-white/5 pb-3">
-             <div className="flex items-center gap-1.5 text-yellow-500 font-bold text-[11px] text-hud">
-                <Star size={12} className="fill-current" />
+        <div className="flex items-center gap-3 mb-2 border-b border-white/5 pb-2">
+             <div className="flex items-center gap-1 text-yellow-500 font-bold text-[10px] text-hud">
+                <Star size={10} className="fill-current" />
                 {rating}
              </div>
-             <div className="w-px h-3 bg-white/10" />
-             <div className="text-white/40 text-[10px] font-black uppercase tracking-wider text-hud">
+             <div className="w-px h-2.5 bg-white/10" />
+             <div className="text-white/40 text-[9px] font-black uppercase tracking-wider text-hud">
                 {food.category || 'Specialty'}
              </div>
         </div>
@@ -338,7 +338,7 @@ const Recommendations = () => {
                 Strategic Intelligence Linked
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase text-hud">
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase text-hud">
               {strategyLabel.split(' ').slice(1).join(' ')}
             </h1>
           </div>
@@ -413,7 +413,7 @@ const Recommendations = () => {
 
       {/* Grid */}
       <div className="px-4 md:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {loading && foods.length === 0
             ? Array(8).fill(0).map((_, i) => <Skeleton key={i} />)
             : filtered.map(food => (

@@ -16,28 +16,12 @@
   --theme-500: 6 182 212;  /* cyan-500 */
   --theme-600: 13 148 136; /* teal-500 */
   --theme-900: 8 51 68;    /* deep cyan-900 */
-  --bg-deep: 2 6 23;        /* slate-950 */
-  --glass-bg: rgba(8, 51, 68, 0.4);
-  --glass-border: rgba(34, 211, 238, 0.15);
+  --bg-deep: 2 4 10;        /* #02040a */
+  --glass-bg: rgba(10, 10, 20, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
-/* Global Theme Scoping: Navbar and Sidebar transformation */
-.theme-ocean nav {
-  background: rgba(2, 6, 23, 0.7) !important;
-  backdrop-filter: blur(25px) !important;
-  -webkit-backdrop-filter: blur(25px) !important;
-  border-bottom: 1px solid rgba(6, 182, 212, 0.2) !important;
-}
-
-.theme-ocean nav .bg-white {
-  background: transparent !important;
-}
-
-.theme-ocean .sidebar-glass {
-  background: rgba(2, 6, 23, 0.8) !important;
-  backdrop-filter: blur(30px) !important;
-  border-right: 1px solid rgba(6, 182, 212, 0.1) !important;
-}
+/* Clean component-level HUD styling used instead of global overrides */
 
 .theme-ocean .text-gray-900, 
 .theme-ocean .text-gray-800,
