@@ -496,11 +496,11 @@ const ChatWidget = () => {
             {!isOpen && (
                 <button
                     onClick={() => { setIsOpen(true); setUnread(0); }}
-                    className="fixed bottom-6 right-6 z-[60] w-14 h-14 flex items-center justify-center rounded-2xl
+                    className="fixed z-[60] w-14 h-14 flex items-center justify-center rounded-2xl
                                bg-gradient-to-br from-orange-500 via-orange-600 to-red-600
                                shadow-[0_8px_32px_rgba(249,115,22,0.45)] hover:shadow-[0_12px_40px_rgba(249,115,22,0.65)]
                                active:scale-95 transition-all duration-300 group border border-orange-400/30"
-                    style={{ animation: 'float-orb 4s ease-in-out infinite' }}
+                    style={{ bottom: '30px', right: '20px', animation: 'float-orb 4s ease-in-out infinite' }}
                 >
                     <span className="absolute inset-0 rounded-2xl border-2 border-orange-400 opacity-40"
                         style={{ animation: 'pulse-glow 2s ease-out infinite' }} />
@@ -519,13 +519,15 @@ const ChatWidget = () => {
 
             {isOpen && (
                 <div className={`
-                    fixed bottom-28 right-4 md:right-6 z-50 flex flex-col font-sans
+                    fixed z-50 flex flex-col font-sans
                     bg-[#0a0a0f] border border-orange-500/20
                     rounded-[2rem] overflow-hidden
                     shadow-[0_20px_60px_rgba(0,0,0,0.6),0_0_0_1px_rgba(249,115,22,0.1)]
                     transition-all duration-300 animate-slide-up origin-bottom-right
                     ${isExpanded ? 'w-[95vw] md:w-[600px] h-[85vh] max-h-[880px]' : 'w-[92vw] md:w-[420px] h-[570px] max-h-[75vh]'}
-                `}>
+                `}
+                style={{ bottom: '100px', right: '20px' }}
+                >
                     {/* Top glow line */}
                     <div className="absolute top-0 left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
 

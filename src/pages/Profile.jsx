@@ -3,7 +3,7 @@ import { API_URL } from '../config';
 import {
     User, Mail, Phone, MapPin, Save, LogOut, ChevronLeft,
     Camera, Check, Edit3, Package, Heart, Star,
-    Shield, Clock, ChevronRight, Sparkles
+    Shield, Clock, ChevronRight, Sparkles, Building, ListOrdered
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -24,23 +24,6 @@ const FIELD_CSS = `
   .field-input:read-only { background: #f5f5f5; color: #999; cursor: not-allowed; }
 `;
 
-/* ── Field Component ─────────────────────────────────────────────────── */
-const Field = ({ label, icon: Icon, badge, children }) => (
-    <div className="space-y-1.5">
-        <div className="flex items-center justify-between px-0.5">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">{label}</label>
-            {badge}
-        </div>
-        <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <Icon className="w-4 h-4 text-gray-300" />
-            </div>
-            {children}
-        </div>
-    </div>
-);
-
-/* ── Main Page ───────────────────────────────────────────────────────── */
 const Profile = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -50,52 +33,26 @@ const Profile = () => {
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        address: user?.address || ''
+        address: user?.address || '',
+        city: user?.city || ''
     });
     const [avatarPreview, setAvatarPreview] = useState(null);
-    const [loadingLocation, setLoadingLocation] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'orders'
 
-    /* Fetch profile */
     useEffect(() => {
-        if (!user?._id) return;
-        fetch(`${API_URL}/api/user/${user._id}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.user) setFormData(prev => ({
-                    ...prev,
-                    name: data.user.name || prev.name,
-                    email: data.user.email || prev.email,
-                    phone: data.user.phone || prev.phone,
-                    address: data.user.addresses?.find(a => a.isDefault)?.street || data.user.addresses?.[0]?.street || prev.address
-                }));
-            }).catch(() => {});
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                email: user.email || '',
+                phone: user.phone || '',
+                address: user.address || '',
+                city: user.city || ''
+            });
+        }
     }, [user]);
 
-    /* Auto-detect address once */
-    useEffect(() => {
-        if (!formData.address) handleGetLocation();
-    }, []);
-
-    const handleGetLocation = () => {
-        if (!navigator.geolocation) return;
-        setLoadingLocation(true);
-        navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-            try {
-                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}&zoom=18&addressdetails=1`, { headers: { 'User-Agent': 'SmartFoodApp/1' } });
-                const d = await r.json();
-                if (d.address) {
-                    const a = d.address;
-                    const parts = [...new Set(['road','suburb','city','town','state','postcode'].map(k => a[k]).filter(Boolean))];
-                    setFormData(prev => ({ ...prev, address: parts.join(', ') || d.display_name }));
-                }
-            } catch {} finally { setLoadingLocation(false); }
-        }, () => setLoadingLocation(false), { enableHighAccuracy: true, timeout: 10000 });
-    };
-
-    const handleImageChange = e => {
+    const handleImageUpload = e => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -106,7 +63,7 @@ const Profile = () => {
     const handleChange = e => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
     const handleSubmit = async e => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         let currentUser = user || (() => { try { return JSON.parse(localStorage.getItem('user')); } catch { return null; } })();
         if (!currentUser?._id) { alert('Please login again.'); return; }
         setSaving(true);
@@ -117,7 +74,13 @@ const Profile = () => {
             const res = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: formData.name, email: formData.email, phone: formData.phone, address: formData.address })
+                body: JSON.stringify({ 
+                    name: formData.name, 
+                    email: formData.email, 
+                    phone: formData.phone, 
+                    address: formData.address,
+                    city: formData.city
+                })
             });
             const data = await res.json();
             if (res.ok) {
@@ -134,179 +97,189 @@ const Profile = () => {
         navigate('/');
     };
 
-    const initials = formData.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
-    const memberSince = user?.createdAt
-        ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-        : 'Valued Member';
-
     return (
-        <div className="min-h-screen bg-[#f7f7f9] pb-20">
+        <div className="min-h-screen bg-[#f8f9fc] pb-20 overflow-x-hidden">
             <style>{FIELD_CSS}</style>
+            
+            {/* Mesh Gradient Hero Section */}
+            <div className="relative h-80 md:h-96 w-full overflow-hidden bg-[#0D0D14]">
+                {/* Dynamic Glows */}
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[120%] bg-gradient-to-br from-orange-600/20 to-transparent blur-[120px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[100%] bg-gradient-to-tl from-indigo-600/20 to-transparent blur-[100px] rounded-full" />
+                
+                {/* Pattern Overlay */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
 
-            {/* ── Top Hero Banner ── */}
-            <div className="relative h-52 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-orange-500 to-red-500" />
-                {/* Mesh overlay */}
-                <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 800 200" preserveAspectRatio="none">
-                    <path d="M0,100 C200,0 600,200 800,100 L800,200 L0,200Z" fill="white" />
-                </svg>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.15),transparent_60%)]" />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-12 relative z-10">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8"
+                    >
+                        {/* Avatar */}
+                        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-[2.5rem] blur opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
+                            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-[2.2rem] bg-neutral-900 border-4 border-white overflow-hidden shadow-2xl">
+                                <img
+                                    src={avatarPreview || user?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop"}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                                    <Camera className="text-white w-8 h-8" />
+                                </div>
+                            </div>
+                            <input type="file" ref={fileInputRef} className="hidden" onChange={handleImageUpload} accept="image/*" />
+                        </div>
 
-                {/* Back + title */}
-                <div className="relative z-10 flex items-center justify-between px-4 sm:px-8 pt-6">
-                    <button onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-bold">
-                        <ChevronLeft className="w-5 h-5" /> Back
-                    </button>
-                    <span className="text-white/60 text-xs font-bold uppercase tracking-[0.2em]">My Account</span>
+                        <div className="text-center md:text-left flex-1 pb-2">
+                            <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                                <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-black uppercase tracking-[0.2em] text-orange-400">Executive Tier</span>
+                                <div className="h-1 w-12 bg-orange-500 rounded-full" />
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-2">
+                                {formData.name || "Foodie Explorer"}
+                            </h1>
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
+                                <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {formData.email}</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-600 hidden md:block" />
+                                <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> {formData.phone || "No phone added"}</span>
+                            </div>
+                        </div>
+
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}
+                            className="px-8 py-3.5 bg-white text-gray-900 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:shadow-orange-500/20 transition-all flex items-center gap-2"
+                        >
+                            Edit Credentials <ChevronRight className="w-4 h-4" />
+                        </motion.button>
+                    </motion.div>
+                </div>
+                
+                {/* Wave Cut */}
+                <div className="absolute bottom-0 left-0 w-full leading-none z-10">
+                    <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
+                        <path d="M0 120L1440 120L1440 0C1440 0 1120 120 720 120C320 120 0 0 0 0L0 120Z" fill="#f8f9fc"/>
+                    </svg>
                 </div>
             </div>
 
-            {/* ── Content ── */}
-            <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-24 pb-8 relative z-10">
-
-                {/* Avatar card */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                    className="bg-white rounded-3xl shadow-xl shadow-black/8 border border-white p-6 mb-4">
-
-                    <div className="flex items-end gap-5 mb-5">
-                        {/* Avatar */}
-                        <div className="relative group cursor-pointer shrink-0" onClick={() => fileInputRef.current?.click()}>
-                            <div className="w-24 h-24 rounded-2xl ring-4 ring-white shadow-lg overflow-hidden bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                                {avatarPreview
-                                    ? <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
-                                    : <span className="text-3xl font-black text-white">{initials}</span>}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+                {/* Left Side: Stats & Navigation */}
+                <div className="lg:col-span-4 space-y-8">
+                    {/* Stats HUD */}
+                    <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100/50">
+                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-8 text-center md:text-left">Operational Snapshot</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-orange-50/50 rounded-3xl p-6 text-center border border-orange-100">
+                                <p className="text-3xl font-black text-orange-600 mb-1">12</p>
+                                <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Orders</p>
                             </div>
-                            <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200">
-                                <Camera className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl bg-orange-500 border-2 border-white flex items-center justify-center shadow-md">
-                                <Edit3 className="w-3 h-3 text-white" />
-                            </div>
-                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                        </div>
-
-                        {/* Name / email / joined */}
-                        <div className="flex-1 min-w-0 pb-1">
-                            <h1 className="text-xl font-black text-gray-900 leading-tight truncate">{formData.name || 'Your Name'}</h1>
-                            <p className="text-sm text-gray-400 font-medium truncate mt-0.5">{formData.email}</p>
-                            <div className="flex items-center gap-1.5 mt-2">
-                                <Clock className="w-3 h-3 text-gray-300" />
-                                <span className="text-[11px] text-gray-400 font-medium">Member since {memberSince}</span>
+                            <div className="bg-indigo-50/50 rounded-3xl p-6 text-center border border-indigo-100">
+                                <p className="text-3xl font-black text-indigo-600 mb-1">4.8</p>
+                                <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Rank</p>
                             </div>
                         </div>
-
-                        {/* Sign out */}
-                        <button onClick={handleLogout}
-                            className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-red-500 font-bold text-xs uppercase tracking-wider transition-all duration-300 group">
-                            <LogOut className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-                            Sign Out
-                        </button>
                     </div>
 
-                    {/* Divider */}
-                    <div className="h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent mb-5" />
-
-                    {/* Quick stats */}
-                    <div className="grid grid-cols-3 gap-3">
+                    {/* Quick Access List */}
+                    <div className="bg-white rounded-[2.5rem] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100/50 overflow-hidden">
                         {[
-                            { icon: Package, label: 'Orders', value: '24', accent: '#f97316' },
-                            { icon: Heart,   label: 'Saved',  value: '12', accent: '#ec4899' },
-                            { icon: Star,    label: 'Reviews', value: '8', accent: '#f59e0b' },
-                        ].map(({ icon: Icon, label, value, accent }) => (
-                            <div key={label} className="flex flex-col items-center justify-center py-3 rounded-2xl bg-gray-50 border border-gray-100/80 hover:bg-gray-100 transition-colors cursor-pointer">
-                                <Icon className="w-4 h-4 mb-1" style={{ color: accent }} />
-                                <p className="text-lg font-black text-gray-900 leading-none">{value}</p>
-                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{label}</p>
-                            </div>
+                            { icon: ListOrdered, label: "Order History", link: "/orders" },
+                            { icon: Heart, label: "Wishlist Area", link: "/wishlist" },
+                            { icon: User, label: "Personal Config", active: true },
+                            { icon: Shield, label: "Security & Keys" },
+                            { icon: LogOut, label: "Terminate Session", color: "text-red-500", onClick: handleLogout }
+                        ].map((item, idx) => (
+                            <button
+                                key={idx}
+                                onClick={item.onClick || (() => item.link && navigate(item.link))}
+                                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all group ${item.active ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'hover:bg-gray-50'}`}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <item.icon className={`w-5 h-5 ${item.active ? 'text-white' : item.color || 'text-gray-400 group-hover:text-orange-500'}`} />
+                                    <span className={`text-[11px] font-black uppercase tracking-[0.15em] ${item.active ? 'text-white' : 'text-gray-900'}`}>{item.label}</span>
+                                </div>
+                                <ChevronRight className={`w-4 h-4 ${item.active ? 'text-white' : 'text-gray-300 group-hover:text-orange-500'}`} />
+                            </button>
                         ))}
                     </div>
-                </motion.div>
+                </div>
 
-                {/* Form card */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                    className="bg-white rounded-3xl shadow-xl shadow-black/8 border border-white overflow-hidden">
+                {/* Right Side: Identity Form */}
+                <div className="lg:col-span-8">
+                    <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_60px_rgba(0,0,0,0.05)] border border-gray-100 relative overflow-hidden">
+                        {/* Form HUD Header */}
+                        <div className="flex items-center justify-between mb-12">
+                            <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                                <User className="w-6 h-6 text-orange-500" /> Identity Matrix
+                            </h2>
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Authenticated Write</span>
+                            </div>
+                        </div>
 
-                    {/* Card header */}
-                    <div className="px-6 py-5 border-b border-gray-50 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
-                            <User className="w-4.5 h-4.5 text-orange-500" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-black text-gray-900">Personal Details</h2>
-                            <p className="text-[11px] text-gray-400 font-medium mt-0.5">Update your info and delivery address</p>
-                        </div>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                            {/* Input Fields */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block">Name / Callsign</label>
+                                <div className="relative group">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-orange-500 transition-colors" />
+                                    <input name="name" value={formData.name} onChange={handleChange} className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 transition-all" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block">Mobile / Comm</label>
+                                <div className="relative group">
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-orange-500 transition-colors" />
+                                    <input name="phone" value={formData.phone} onChange={handleChange} className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 transition-all" />
+                                </div>
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block">Base Sector / Address</label>
+                                <div className="relative group">
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-orange-500 transition-colors" />
+                                    <input name="address" value={formData.address} onChange={handleChange} className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 transition-all" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block">City / Coordinate</label>
+                                <div className="relative group">
+                                    <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-orange-500 transition-colors" />
+                                    <input name="city" value={formData.city} onChange={handleChange} className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 transition-all" />
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2 pt-8 flex items-center justify-between border-t border-gray-50 mt-4">
+                                <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest italic">
+                                    Identity Verification Sequence Active
+                                </p>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    disabled={saving}
+                                    type="submit"
+                                    className={`relative px-12 py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-xl transition-all flex items-center gap-3
+                                        ${saved 
+                                            ? 'bg-emerald-500 text-white shadow-emerald-500/30' 
+                                            : 'bg-gray-900 text-white hover:bg-orange-600 shadow-gray-900/10'}`}
+                                >
+                                    {saving ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : saved ? (
+                                        <Check className="w-4 h-4" />
+                                    ) : (
+                                        <Save className="w-4 h-4" />
+                                    )}
+                                    {saving ? 'Processing...' : saved ? 'Credentials Saved' : 'Sync Identity'}
+                                </motion.button>
+                            </div>
+                        </form>
                     </div>
-
-                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Full Name" icon={User}>
-                                <input type="text" name="name" value={formData.name} onChange={handleChange}
-                                    className="field-input" placeholder="John Doe" />
-                            </Field>
-                            <Field label="Email" icon={Mail} badge={<span className="text-[9px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">Read-only</span>}>
-                                <input type="email" name="email" value={formData.email} readOnly
-                                    className="field-input" />
-                            </Field>
-                        </div>
-
-                        <Field label="Phone" icon={Phone}>
-                            <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
-                                className="field-input" placeholder="+91 98765 43210" />
-                        </Field>
-
-                        <Field label="Delivery Address" icon={MapPin}
-                            badge={
-                                <button type="button" onClick={handleGetLocation} disabled={loadingLocation}
-                                    className="flex items-center gap-1 text-[9px] font-black text-orange-500 hover:text-orange-600 uppercase tracking-wider disabled:opacity-50">
-                                    <MapPin className="w-3 h-3" />{loadingLocation ? 'Locating…' : 'Auto-detect'}
-                                </button>
-                            }>
-                            <textarea name="address" value={formData.address} onChange={handleChange} rows="2"
-                                className="field-input resize-none" style={{ paddingTop: 14, paddingBottom: 14 }}
-                                placeholder="123 Main Street, City, Country" />
-                        </Field>
-
-                        {/* Save */}
-                        <div className="pt-2">
-                            <button type="submit" disabled={saving}
-                                className={`w-full py-4 rounded-2xl font-black text-sm tracking-wide transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
-                                    saved
-                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/25'
-                                        : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5'
-                                }`}>
-                                {saved ? (
-                                    <><Check className="w-4 h-4" />Saved!</>
-                                ) : saving ? (
-                                    <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving…</>
-                                ) : (
-                                    <><Save className="w-4 h-4" />Save Changes</>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-                </motion.div>
-
-                {/* Quick nav links */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="mt-4 grid grid-cols-2 gap-3">
-                    {[
-                        { label: 'My Orders', sub: 'Track & reorder', to: '/orders', icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
-                        { label: 'AI Picks',  sub: 'Tailored for you', to: '/recommendations', icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-50' },
-                    ].map(({ label, sub, to, icon: Icon, color, bg }) => (
-                        <Link key={to} to={to}
-                            className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-100 transition-all group active:scale-[0.98]">
-                            <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
-                                <Icon className={`w-4 h-4 ${color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-black text-gray-900">{label}</p>
-                                <p className="text-[10px] text-gray-400 font-medium">{sub}</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all" />
-                        </Link>
-                    ))}
-                </motion.div>
+                </div>
             </div>
         </div>
     );

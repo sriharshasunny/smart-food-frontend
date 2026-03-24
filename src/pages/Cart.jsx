@@ -17,75 +17,18 @@ const Cart = () => {
     // --- Safety Sanitize ---
     const safeCart = Array.isArray(cart) ? cart.filter(item => item && typeof item === 'object' && item.id) : [];
 
-    // Recalculate totals locally to be safe if context is weird, or just trust safeCart
+    // Recalculate totals locally
     const safeCartTotal = safeCart.reduce((total, item) => total + (item.price || 0) * (item.quantity || 1), 0);
 
-    // Use the safe total for fee calculations
     const deliveryFee = safeCartTotal > 500 ? 0 : 40;
     const taxes = safeCartTotal * 0.05;
     const platformFee = 5;
     const finalTotal = safeCartTotal + deliveryFee + taxes + platformFee;
 
-    // --- Empty Cart State ---
-    if (safeCart.length === 0) {
-        return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 relative overflow-hidden">
-                {/* Background Decor - Subtle */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gray-100/50 rounded-full blur-[80px]" />
-                </div>
-
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", bounce: 0.5 }}
-                    className="relative z-10 mb-8"
-                >
-                    <div className="w-48 h-48 bg-gray-50 rounded-full flex items-center justify-center relative">
-                        <ShoppingBag className="w-20 h-20 text-gray-300" strokeWidth={1.5} />
-
-                        {/* Floating Elements */}
-                        <motion.div
-                            animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute top-6 right-8 bg-white p-3 rounded-2xl shadow-lg border border-gray-100"
-                        >
-                            <span className="text-2xl">🍔</span>
-                        </motion.div>
-                        <motion.div
-                            animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                            className="absolute bottom-6 left-8 bg-white p-3 rounded-2xl shadow-lg border border-gray-100"
-                        >
-                            <span className="text-2xl">🍕</span>
-                        </motion.div>
-                    </div>
-                </motion.div>
-
-                <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-3 tracking-tight text-center relative z-10">Good food is waiting</h2>
-                <p className="text-gray-500 mb-8 font-medium text-center max-w-md relative z-10">
-                    Your cart is empty. Add something delicious from the menu!
-                </p>
-
-                <Link to="/home" className="relative z-10">
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="px-8 py-3.5 bg-orange-500 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all flex items-center gap-2 group"
-                    >
-                        Browse Restaurants <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </motion.button>
-                </Link>
-            </div>
-        );
-    }
-
     const handleDodoPayment = async () => {
         setIsPaymentLoading(true);
         try {
-            // Strictly require Logged In User
             let userToUse = authUser;
-
             if (!userToUse) {
                 const userString = localStorage.getItem('user');
                 try {
@@ -93,7 +36,6 @@ const Cart = () => {
                 } catch (e) { console.error("Error parsing stored user", e); }
             }
 
-            // Enforce Login
             if (!userToUse || !userToUse.email) {
                 setIsPaymentLoading(false);
                 if (confirm('You must be logged in to place an order. Proceed to login?')) {
@@ -101,12 +43,6 @@ const Cart = () => {
                 }
                 return;
             }
-
-            console.log("Payment User Config:", {
-                id: userToUse._id,
-                name: userToUse.name,
-                email: userToUse.email
-            });
 
             const response = await fetch(`${API_URL}/api/payment/create-payment`, {
                 method: 'POST',
@@ -122,7 +58,6 @@ const Cart = () => {
             });
 
             const data = await response.json();
-
             if (data.payment_link) {
                 window.location.href = data.payment_link;
             } else {
@@ -136,182 +71,209 @@ const Cart = () => {
         }
     };
 
+    if (safeCart.length === 0) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 relative overflow-hidden">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gray-100/50 rounded-full blur-[80px]" />
+                </div>
+
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="relative z-10 mb-8"
+                >
+                    <div className="w-48 h-48 bg-gray-50 rounded-full flex items-center justify-center relative">
+                        <ShoppingBag className="w-20 h-20 text-gray-300" strokeWidth={1.5} />
+                    </div>
+                </motion.div>
+
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-3 tracking-tight text-center relative z-10 uppercase">Your Bag is Empty</h2>
+                <p className="text-gray-500 mb-8 font-medium text-center max-w-md relative z-10 font-bold uppercase tracking-widest text-[10px]">
+                    Good food is just a few selections away
+                </p>
+
+                <Link to="/home" className="relative z-10">
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-10 py-4 bg-gray-900 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-full shadow-xl transition-all flex items-center gap-3 group"
+                    >
+                        Browse Gallery <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </motion.button>
+                </Link>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative min-h-screen">
-            {/* Page Header */}
-            <div className="flex items-end justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">My Cart</h1>
-                    <p className="text-gray-500 font-medium">Review and manage your selected items</p>
-                </div>
-                <div className="hidden md:block text-right">
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total Items</p>
-                    <p className="text-2xl font-black text-orange-600">{safeCart.reduce((acc, item) => acc + (item.quantity || 0), 0)}</p>
-                </div>
+        <div className="min-h-screen bg-[#fcfcfd] pb-32">
+            {/* Premium Background Background */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-100/20 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-red-50/30 blur-[100px] rounded-full" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 relative z-10">
+                {/* Checkout Step Indicator */}
+                <div className="flex items-center justify-center mb-16">
+                    <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-3 rounded-2xl border border-gray-100 shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black">1</div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">Review Items</span>
+                        </div>
+                        <div className="w-8 h-px bg-gray-200" />
+                        <div className="flex items-center gap-2 opacity-30">
+                            <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[10px] font-black">2</div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Address</span>
+                        </div>
+                        <div className="w-8 h-px bg-gray-200" />
+                        <div className="flex items-center gap-2 opacity-30">
+                            <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[10px] font-black">3</div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Payment</span>
+                        </div>
+                    </div>
+                </div>
 
-                {/* --- Left Column: Cart Items --- */}
-                <div className="lg:col-span-2 space-y-4">
-                    <AnimatePresence mode='popLayout'>
-                        {safeCart.map((item) => (
-                            <motion.div
-                                key={item.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                                className="bg-white rounded-[2rem] p-4 pr-6 flex gap-4 md:gap-6 items-center group shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all duration-300 border border-gray-100 relative overflow-hidden"
-                            >
-                                {/* Image */}
-                                <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
-                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
-                                </div>
+                <div className="flex flex-col lg:flex-row gap-12 items-start">
+                    {/* Left: Cart Items */}
+                    <div className="w-full lg:w-[62%] space-y-6">
+                        <div className="flex items-end justify-between mb-8 px-2">
+                            <div>
+                                <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Your <span className="text-orange-500">Selections</span></h1>
+                                <p className="text-gray-400 text-xs md:text-sm font-bold uppercase tracking-[0.2em] mt-2 opacity-70">
+                                    {safeCart.length} premium items curated for you
+                                </p>
+                            </div>
+                        </div>
 
-                                {/* Info */}
-                                <div className="flex-grow min-w-0 z-10">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate pr-4">{item.name}</h3>
-                                        <div className="font-bold text-lg text-gray-900">₹{(item.price * item.quantity).toFixed(0)}</div>
+                        <AnimatePresence mode='popLayout'>
+                            {safeCart.map((item) => (
+                                <motion.div
+                                    key={item.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="bg-white rounded-[2.5rem] p-5 pr-8 flex gap-6 items-center shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-500 border border-gray-100/50 group"
+                                >
+                                    <div className="w-32 h-32 shrink-0 rounded-[2rem] overflow-hidden shadow-inner relative border border-gray-50">
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
-                                    <p className="text-gray-400 text-sm font-medium mb-4 truncate">{item.description || "Perfectly prepared for you"}</p>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex-grow min-w-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <h3 className="text-xl font-black text-gray-900 truncate pr-4 tracking-tight uppercase">{item.name}</h3>
+                                            <div className="text-xl font-black text-gray-900">₹{(item.price * item.quantity).toFixed(0)}</div>
+                                        </div>
+                                        <p className="text-gray-400 text-[10px] font-black uppercase mb-6 tracking-widest opacity-60">Prepared by {item.restaurant?.name || "Premium Kitchen"}</p>
 
-                                        {/* Quantity Control */}
-                                        <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100">
+                                                <button
+                                                    onClick={() => updateQuantity(item.id, -1)}
+                                                    className="w-9 h-9 flex items-center justify-center bg-white rounded-xl shadow-sm hover:text-red-500 transition-all active:scale-90 border border-transparent hover:border-red-100"
+                                                >
+                                                    <Minus size={14} />
+                                                </button>
+                                                <span className="w-6 text-center font-black text-gray-900 text-sm">{item.quantity}</span>
+                                                <button
+                                                    onClick={() => updateQuantity(item.id, 1)}
+                                                    className="w-9 h-9 flex items-center justify-center bg-white rounded-xl shadow-sm hover:text-orange-500 transition-all active:scale-90 border border-transparent hover:border-orange-100"
+                                                >
+                                                    <Plus size={14} />
+                                                </button>
+                                            </div>
+
                                             <button
-                                                onClick={() => updateQuantity(item.id, -1)}
-                                                className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm hover:scale-110 active:scale-90 transition-all text-gray-600 hover:text-red-500"
+                                                onClick={() => removeFromCart(item.id)}
+                                                className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                                             >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="w-8 text-center font-bold text-gray-900 text-sm">{item.quantity}</span>
-                                            <button
-                                                onClick={() => updateQuantity(item.id, 1)}
-                                                className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm hover:scale-110 active:scale-90 transition-all text-gray-600 hover:text-green-600"
-                                            >
-                                                <Plus className="w-4 h-4" />
+                                                <Trash2 size={20} />
                                             </button>
                                         </div>
-
-                                        {/* Delete */}
-                                        <button
-                                            onClick={() => removeFromCart(item.id)}
-                                            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                                            title="Remove item"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
                                     </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-                </div>
-
-                {/* --- Right Column: Summary Card --- */}
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="lg:sticky lg:top-24 space-y-6"
-                >
-                    {/* Bill Details Card */}
-                    <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-gray-100 relative overflow-hidden">
-                        {/* Decorative Gradient Blob */}
-                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-orange-100 to-yellow-50 rounded-full blur-3xl opacity-60" />
-
-                        <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2 relative z-10">
-                            Bill Details <Utensils className="w-4 h-4 text-orange-500" />
-                        </h3>
-
-                        {/* Line Items */}
-                        <div className="space-y-3 mb-6 relative z-10">
-                            <div className="flex justify-between text-gray-500 font-medium text-sm">
-                                <span>Item Total</span>
-                                <span className="text-gray-900">₹{safeCartTotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-500 font-medium text-sm">
-                                <span className="flex items-center gap-1">Delivery Fee {deliveryFee === 0 && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">FREE</span>}</span>
-                                <span className={deliveryFee === 0 ? "text-green-600 font-bold" : "text-gray-900"}>
-                                    {deliveryFee === 0 ? "₹0" : `₹${deliveryFee}`}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-gray-500 font-medium text-sm">
-                                <span>Platform Fee</span>
-                                <span className="text-gray-900">₹{platformFee}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-500 font-medium text-sm">
-                                <span>GST and Restaurant Charges</span>
-                                <span className="text-gray-900">₹{taxes.toFixed(2)}</span>
-                            </div>
-                        </div>
-
-                        {/* Divider */}
-                        <div className="border-t-2 border-dashed border-gray-100 my-6 relative z-10" />
-
-                        {/* Total */}
-                        <div className="flex justify-between items-center mb-8 relative z-10">
-                            <span className="text-gray-900 font-black text-lg">To Pay</span>
-                            <span className="text-3xl font-black text-gray-900">₹{finalTotal.toFixed(0)}</span>
-                        </div>
-
-                        {/* Promo Code Input (Visual Only) */}
-                        <div className="mb-6 relative z-10">
-                            <div className="flex gap-2">
-                                <div className="relative flex-grow">
-                                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Promo Code"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-9 pr-4 py-3 text-sm font-bold text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                                    />
-                                </div>
-                                <button className="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 transition-colors">
-                                    APPLY
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Checkout Button */}
-                        <motion.button
-                            onClick={handleDodoPayment}
-                            disabled={isPaymentLoading}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 group relative overflow-hidden z-10 disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            <span className="relative z-10 flex items-center gap-2">
-                                {isPaymentLoading ? 'Processing...' : 'Pay with Dodo'} <ChevronRight className="w-5 h-5" />
-                            </span>
-                            {/* Shimmer Effect */}
-                            {!isPaymentLoading && <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-2xl" />}
-                        </motion.button>
-
-                        <p className="text-[10px] text-gray-400 text-center mt-4 font-medium relative z-10">
-                            Safe and secure payments. 100% Authentic Food.
-                        </p>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </div>
 
-                    {/* Savings Note (Optional) */}
-                    {deliveryFee === 0 && (
-                        <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-center gap-3 overflow-hidden relative">
-                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0 text-green-600 font-bold text-lg">₹</div>
-                            <div>
-                                <p className="text-green-800 font-bold text-sm">You saved ₹40 on delivery!</p>
-                                <p className="text-green-600 text-xs font-medium">Free delivery applied.</p>
+                    {/* Right: Summary Sidebar */}
+                    <div className="w-full lg:w-[38%] sticky top-24">
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="bg-white rounded-[3rem] p-10 shadow-[0_30px_60px_rgba(0,0,0,0.06)] border border-gray-100 relative overflow-hidden"
+                        >
+                            <div className="absolute top-[-20%] right-[-20%] w-64 h-64 bg-orange-100/40 blur-[80px] rounded-full" />
+
+                            <div className="relative z-10">
+                                <h3 className="text-2xl font-black text-gray-900 mb-10 flex items-center justify-between uppercase tracking-tighter">
+                                    Bill Details <div className="w-10 h-1 bg-orange-500 rounded-full" />
+                                </h3>
+
+                                <div className="space-y-5 mb-10">
+                                    <div className="flex justify-between items-center group">
+                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Subtotal</span>
+                                        <span className="text-gray-900 font-black text-sm">₹{safeCartTotal.toFixed(0)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
+                                            Delivery
+                                            {deliveryFee === 0 && <span className="text-[8px] bg-emerald-500 text-white px-2 py-0.5 rounded-full">FREE</span>}
+                                        </span>
+                                        <span className={`text-sm font-black ${deliveryFee === 0 ? 'text-emerald-500' : 'text-gray-900'}`}>
+                                            {deliveryFee === 0 ? "₹0" : `₹${deliveryFee}`}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Taxes & Service</span>
+                                        <span className="text-gray-900 font-black text-sm">₹{(taxes + platformFee).toFixed(0)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="h-px bg-gray-50 mb-8" />
+
+                                <div className="flex justify-between items-end mb-12">
+                                    <div>
+                                        <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Grant Total</p>
+                                        <p className="text-4xl font-black text-gray-900 tracking-tighter">₹{finalTotal.toFixed(0)}</p>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-2xl">
+                                        <Utensils className="text-gray-300 w-6 h-6" />
+                                    </div>
+                                </div>
+
+                                <div className="relative group mb-8">
+                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors w-4 h-4" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="PROMO CODE" 
+                                        className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 text-[10px] font-black tracking-widest focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 transition-all uppercase placeholder:text-gray-300" 
+                                    />
+                                </div>
+
+                                <motion.button
+                                    onClick={handleDodoPayment}
+                                    disabled={isPaymentLoading}
+                                    whileHover={{ scale: 1.02, y: -2 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white h-16 rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl shadow-orange-500/30 flex items-center justify-center gap-3 group disabled:opacity-50 relative overflow-hidden"
+                                >
+                                    <span className="relative z-10 flex items-center gap-3">
+                                        {isPaymentLoading ? 'Securing Link...' : 'Proceed to Checkout'}
+                                        {!isPaymentLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                                    </span>
+                                    <div className="absolute inset-0 bg-white/20 -translate-x-full skew-x-12 group-hover:translate-x-[200%] transition-transform duration-1000" />
+                                </motion.button>
                             </div>
-                        </div>
-                    )}
-                </motion.div>
-            </div>
+                        </motion.div>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 };
 
 export default Cart;
-
-

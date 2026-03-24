@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { Star, Clock, MapPin, Heart } from 'lucide-react';
+import { Star, Clock, MapPin, Heart, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -12,41 +12,40 @@ const RestaurantCard = memo(({ restaurant }) => {
     const { isInWishlist, toggleWishlist } = useShop();
     const [imageLoaded, setImageLoaded] = useState(false);
 
-    // Derived state
     const isWishlisted = isInWishlist(id);
-
     const cuisineText = Array.isArray(cuisine) ? cuisine.join(', ') : (cuisine || (Array.isArray(categories) ? categories.join(', ') : "Restaurant"));
-
     const fallbackImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4";
 
     return (
-        <Link to={`/restaurant/${id}`} className="block min-w-[260px] w-[260px] snap-start hover:z-10 group">
-            <div
-                className="bg-white rounded-[1.5rem] shadow-sm transition-colors duration-300 ease-out overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 hover:border-orange-200"
-                style={{ transform: 'translateZ(0)' }} // Hardware acceleration without heavy classes
+        <Link to={`/restaurant/${id}`} className="block group">
+            <motion.div
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white rounded-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 overflow-hidden flex flex-col cursor-pointer relative h-full border border-gray-100 group-hover:border-orange-200"
             >
                 {/* Image Section */}
-                <div className="relative h-32 md:h-40 overflow-hidden shrink-0 bg-gray-100">
+                <div className="relative h-44 overflow-hidden shrink-0 bg-gray-50">
                     {!imageLoaded && (
-                        <div className="absolute inset-0 bg-gray-200" />
+                        <div className="absolute inset-0 bg-gray-100 animate-pulse" />
                     )}
                     <img
-                        src={optimizeImage(image || fallbackImage, 500)}
+                        src={optimizeImage(image || fallbackImage, 600)}
                         alt={name}
                         loading="lazy"
-                        decoding="async"
                         onLoad={() => setImageLoaded(true)}
-                        className={`w-full h-full object-cover relative z-10 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        className={`w-full h-full object-cover relative z-10 transition-all duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     />
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60" />
+                    {/* Glossy Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 z-20" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-20" />
 
-                    {/* Time Badge */}
-                    <div className="absolute top-3 left-3 bg-white/95 px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm flex items-center gap-1 text-gray-800">
-                        <Clock className="w-3 h-3 text-orange-500" />
-                        {deliveryTime || "30m"}
+                    {/* Time Badge - Glassmorphism */}
+                    <div className="absolute top-4 left-4 z-30 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] font-black shadow-lg flex items-center gap-1.5 text-gray-800 border border-white/40">
+                        <Clock className="w-3.5 h-3.5 text-orange-500" />
+                        {deliveryTime || "25-30"} MIN
                     </div>
+
                     {/* Wishlist Button */}
                     <button
                         onClick={(e) => {
@@ -54,46 +53,49 @@ const RestaurantCard = memo(({ restaurant }) => {
                             e.stopPropagation();
                             toggleWishlist(restaurant);
                         }}
-                        className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors duration-300 shadow-sm border border-white/20 ${isWishlisted
-                            ? 'bg-red-500/90 text-white'
-                            : 'bg-white/90 text-gray-400 hover:text-red-500'
+                        className={`absolute top-4 right-4 z-30 p-2.5 rounded-full transition-all duration-300 shadow-xl border border-white/30 backdrop-blur-md ${isWishlisted
+                            ? 'bg-red-500 text-white border-red-400'
+                            : 'bg-white/60 text-gray-400 hover:text-red-500 hover:bg-white'
                             }`}
                     >
                         <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
                     </button>
 
-                    {/* Prominent Rating */}
-                    <div className="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1.5 rounded-lg text-yellow-400 text-[11px] font-black flex items-center gap-1.5">
-                        {rating || 4.5} <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {/* Rating Badge - Premium HUD style */}
+                    <div className="absolute bottom-4 left-4 z-30 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-yellow-400 text-[11px] font-black flex items-center gap-1.5 shadow-2xl">
+                        <span className="flex items-center gap-1">
+                            {rating || 4.2} <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                        </span>
+                        <div className="w-px h-3 bg-white/20 mx-1" />
+                        <span className="text-white/60 text-[9px] uppercase tracking-tighter self-end">Premium</span>
                     </div>
                 </div>
 
                 {/* Content Section */}
-                <div className="p-4 flex flex-col flex-1 relative bg-white">
-                    <div className="flex justify-between items-start gap-1 mb-1">
-                        <h3 className="text-[17px] font-black text-gray-900 line-clamp-1 flex-1 tracking-tight group-hover:text-gray-600 transition-colors">
+                <div className="p-5 pt-6 flex flex-col flex-1 relative bg-white">
+                    <div className="flex justify-between items-start gap-2 mb-1.5 text-ellipsis overflow-hidden">
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight group-hover:text-orange-600 transition-colors leading-tight">
                             {name || "Restaurant Name"}
                         </h3>
-                        <div className="bg-gray-50 rounded-full p-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                        </div>
                     </div>
 
-                    <p className="text-gray-500 text-[11px] font-medium line-clamp-1 mb-3">
+                    <p className="text-gray-400 text-xs font-bold line-clamp-1 mb-4 uppercase tracking-wider opacity-60">
                         {tags ? tags.slice(0, 3).join(" • ") : cuisineText}
                     </p>
 
-                    <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-md uppercase tracking-wider">
-                            Free Delivery
-                        </span>
-
-                        <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                            Visit <span className="text-lg leading-none mb-0.5">›</span>
-                        </span>
+                    <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                            <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">
+                                Free Delivery
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] font-black text-gray-300 group-hover:text-orange-500 transition-all uppercase tracking-widest">
+                            Explore <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </Link>
     );
 });
