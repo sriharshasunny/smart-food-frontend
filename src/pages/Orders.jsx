@@ -1,70 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Clock, CheckCircle, XCircle, Trash2, ArrowRight, ShoppingBag, Zap, Receipt, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Package, Clock, CheckCircle, XCircle, Trash2, ArrowRight, ShoppingBag, Receipt, Zap, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 
 /* ─── Status Config ─────────────────────────────────────────────────────────── */
 const statusConfig = {
-    Delivered:  { color: 'text-emerald-400',  bg: 'bg-emerald-500/15',  border: 'border-emerald-500/40',  bar: 'bg-emerald-500',  glow: '0 0 16px rgba(52,211,153,0.35)', icon: CheckCircle },
-    Confirmed:  { color: 'text-orange-400',   bg: 'bg-orange-500/15',   border: 'border-orange-500/40',   bar: 'bg-orange-500',   glow: '0 0 16px rgba(249,115,22,0.35)',  icon: Zap },
-    Pending:    { color: 'text-amber-400',    bg: 'bg-amber-500/15',    border: 'border-amber-500/40',    bar: 'bg-amber-500',    glow: '0 0 16px rgba(245,158,11,0.35)',  icon: Clock },
-    Cancelled:  { color: 'text-red-400',      bg: 'bg-red-500/15',      border: 'border-red-500/40',      bar: 'bg-red-500',      glow: '0 0 16px rgba(239,68,68,0.35)',   icon: XCircle },
+    Delivered:  { color: 'text-green-700',  bg: 'bg-green-50',   border: 'border-green-200', bar: 'bg-gradient-to-b from-green-400 to-green-500',  dot: 'bg-green-500',  icon: CheckCircle },
+    Confirmed:  { color: 'text-orange-700', bg: 'bg-orange-50',  border: 'border-orange-200',bar: 'bg-gradient-to-b from-orange-400 to-orange-500', dot: 'bg-orange-500', icon: Zap },
+    Pending:    { color: 'text-amber-700',  bg: 'bg-amber-50',   border: 'border-amber-200', bar: 'bg-gradient-to-b from-amber-400 to-amber-500',   dot: 'bg-amber-500',  icon: Clock },
+    Cancelled:  { color: 'text-red-700',    bg: 'bg-red-50',     border: 'border-red-200',   bar: 'bg-gradient-to-b from-red-400 to-red-500',       dot: 'bg-red-500',    icon: XCircle },
 };
-
 const getStatus = (s) => statusConfig[s] || statusConfig.Pending;
-
-/* ─── CSS ───────────────────────────────────────────────────────────────────── */
-const ORDERS_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
-  @keyframes float-orb {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50%       { transform: translate(3%, 4%) scale(1.05); }
-  }
-  @keyframes shimmer-sweep {
-    0%   { transform: translateX(-120%) skewX(-20deg); }
-    100% { transform: translateX(220%) skewX(-20deg); }
-  }
-  @keyframes badge-glow-pulse {
-    0%, 100% { opacity: 0.7; }
-    50%       { opacity: 1; }
-  }
-  .mono { font-family: 'JetBrains Mono', monospace; }
-  .card-shimmer { position: relative; overflow: hidden; }
-  .card-shimmer::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
-    animation: shimmer-sweep 4s ease-in-out infinite;
-    pointer-events: none;
-  }
-  .badge-glow { animation: badge-glow-pulse 2.5s ease-in-out infinite; }
-  .timeline-dot::before {
-    content: '';
-    position: absolute;
-    left: -1px; top: 100%;
-    width: 2px;
-    background: linear-gradient(to bottom, rgba(255,165,0,0.4), transparent);
-    height: 2rem;
-  }
-`;
 
 /* ─── Skeleton ───────────────────────────────────────────────────────────────── */
 const OrderSkeleton = () => (
-    <div className="bg-white/4 border border-white/8 rounded-2xl p-6 animate-pulse">
+    <div className="bg-white border border-gray-100 rounded-2xl p-6 animate-pulse shadow-sm">
         <div className="flex justify-between mb-5">
             <div className="flex gap-4 items-center">
-                <div className="w-12 h-12 rounded-xl bg-white/10" />
+                <div className="w-11 h-11 rounded-xl bg-gray-100" />
                 <div className="space-y-2">
-                    <div className="h-4 w-36 bg-white/10 rounded-full" />
-                    <div className="h-3 w-24 bg-white/10 rounded-full" />
+                    <div className="h-4 w-32 bg-gray-100 rounded-full" />
+                    <div className="h-3 w-24 bg-gray-100 rounded-full" />
                 </div>
             </div>
-            <div className="h-8 w-24 bg-white/10 rounded-full" />
+            <div className="h-8 w-20 bg-gray-100 rounded-full" />
         </div>
-        <div className="flex gap-2 mt-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-7 w-28 bg-white/8 rounded-full" />)}
+        <div className="flex gap-2 mt-4 flex-wrap">
+            {[1, 2, 3].map(i => <div key={i} className="h-7 w-28 bg-gray-100 rounded-full" />)}
         </div>
     </div>
 );
@@ -79,93 +43,77 @@ const OrderCard = ({ order, index }) => {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 24, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: index * 0.07, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.07, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="relative group"
         >
             {/* Timeline connector */}
             {index > 0 && (
-                <div className="absolute -top-6 left-[27px] w-0.5 h-6 bg-gradient-to-b from-orange-500/30 to-transparent" />
+                <div className="absolute -top-6 left-[22px] w-0.5 h-6 bg-gradient-to-b from-orange-200 to-transparent" />
             )}
 
-            <div
-                className="relative bg-[#111118]/80 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden
-                           hover:border-orange-500/30 transition-all duration-500 card-shimmer
-                           hover:shadow-[0_8px_40px_rgba(0,0,0,0.6)]"
-            >
+            <div className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-orange-100 transition-all duration-300">
                 {/* Left accent bar */}
-                <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${cfg.bar} rounded-l-2xl`}
-                     style={{ boxShadow: cfg.glow }} />
+                <div className={`absolute left-0 top-0 bottom-0 w-[3.5px] ${cfg.bar} rounded-l-2xl`} />
 
-                {/* Inner content */}
                 <div className="p-5 pl-6">
-
-                    {/* Header row */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                        <div className="flex items-center gap-4">
-                            {/* Icon circle */}
-                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${cfg.bg} ${cfg.border} badge-glow`}
-                                 style={{ boxShadow: cfg.glow }}>
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3">
+                            {/* Status icon */}
+                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${cfg.bg} ${cfg.border}`}>
                                 <StatusIcon className={`w-5 h-5 ${cfg.color}`} />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <h3 className="mono font-black text-white text-sm tracking-tight">
-                                        #{order._id.slice(-8).toUpperCase()}
+                                    <h3 className="font-black text-gray-900 text-sm tracking-tight">
+                                        Order #{order._id.slice(-8).toUpperCase()}
                                     </h3>
-                                    {/* Status Badge */}
-                                    <span
-                                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border mono ${cfg.color} ${cfg.bg} ${cfg.border}`}
-                                        style={{ boxShadow: cfg.glow }}
-                                    >
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${cfg.color} ${cfg.bg} ${cfg.border}`}>
                                         {order.orderStatus}
                                     </span>
                                 </div>
-                                <p className="text-[11px] text-gray-500 font-medium mt-0.5 flex items-center gap-1.5">
+                                <p className="text-xs text-gray-400 font-medium mt-0.5 flex items-center gap-1.5">
                                     <Clock className="w-3 h-3" />
                                     {dateStr} · {timeStr}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Total Amount */}
+                        {/* Total */}
                         <div className="text-right shrink-0">
-                            <p className="text-[10px] text-gray-600 uppercase tracking-widest mono mb-0.5">Total</p>
-                            <p className="text-2xl font-black text-white mono">₹{order.totalAmount}</p>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">Total</p>
+                            <p className="text-2xl font-black text-gray-900">₹{order.totalAmount}</p>
                         </div>
                     </div>
 
-                    {/* Items as chips */}
-                    <div className="flex flex-wrap gap-2 mb-5">
+                    {/* Item chips */}
+                    <div className="flex flex-wrap gap-2 mb-4">
                         {order.items.map((item, i) => (
                             <div
                                 key={i}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10
-                                           hover:border-orange-500/30 hover:bg-orange-500/5 transition-colors duration-300"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 transition-colors duration-200"
                             >
-                                <span className="mono text-[10px] font-black text-orange-400">{item.quantity}×</span>
-                                <span className="text-[11px] font-semibold text-gray-300">{item.name}</span>
-                                <span className="mono text-[10px] text-gray-600">₹{item.price * item.quantity}</span>
+                                <span className="text-[10px] font-black text-orange-500">{item.quantity}×</span>
+                                <span className="text-[11px] font-semibold text-gray-700">{item.name}</span>
+                                <span className="text-[10px] text-gray-400 font-medium">₹{item.price * item.quantity}</span>
                             </div>
                         ))}
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-white/8">
-                        <div className="flex items-center gap-2">
-                            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                            <span className="text-xs text-emerald-500 font-semibold">Payment Confirmed</span>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                        <div className="flex items-center gap-1.5">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                            <span className="text-xs text-green-600 font-semibold">Payment Successful</span>
                         </div>
                         <Link
                             to={`/orders/${order._id || order.id}/invoice`}
-                            className="group/inv flex items-center gap-1.5 px-4 py-2 rounded-full
-                                       bg-orange-500/10 hover:bg-orange-500 border border-orange-500/30 hover:border-orange-400
-                                       text-orange-400 hover:text-black text-[11px] font-black uppercase tracking-wider mono
-                                       transition-all duration-300 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]"
+                            className="group/inv flex items-center gap-1.5 px-4 py-2 rounded-full bg-orange-50 hover:bg-orange-500 border border-orange-200 hover:border-orange-500 text-orange-600 hover:text-white text-xs font-black uppercase tracking-wider transition-all duration-300 hover:shadow-lg hover:shadow-orange-200 active:scale-95"
                         >
-                            <Receipt className="w-3 h-3" />
-                            Invoice
+                            <Receipt className="w-3.5 h-3.5" />
+                            View Invoice
                             <ArrowRight className="w-3 h-3 group-hover/inv:translate-x-0.5 transition-transform" />
                         </Link>
                     </div>
@@ -209,8 +157,7 @@ const Orders = () => {
     /* ── Loading ── */
     if (fetchLoading || authLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-[#0c0c14] via-[#111118] to-[#0c0c14] pt-24 px-4">
-                <style>{ORDERS_CSS}</style>
+            <div className="min-h-screen bg-gray-50 pt-24 px-4">
                 <div className="max-w-3xl mx-auto space-y-4">
                     {[1, 2, 3].map(i => <OrderSkeleton key={i} />)}
                 </div>
@@ -219,56 +166,43 @@ const Orders = () => {
     }
 
     return (
-        <div className="min-h-screen relative overflow-hidden pb-20 pt-24 px-4 sm:px-6 lg:px-8"
-             style={{ background: 'linear-gradient(135deg, #0c0c14 0%, #111118 50%, #0c0c14 100%)' }}>
-            <style>{ORDERS_CSS}</style>
+        <div className="min-h-screen bg-gray-50 pb-20 pt-24 px-4 sm:px-6 lg:px-8">
 
-            {/* Ambient glow blobs */}
-            <div className="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] bg-orange-500/5 blur-[160px] rounded-full pointer-events-none"
-                 style={{ animation: 'float-orb 30s ease-in-out infinite' }} />
-            <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/5 blur-[140px] rounded-full pointer-events-none"
-                 style={{ animation: 'float-orb 40s ease-in-out infinite reverse' }} />
-
-            <div className="max-w-3xl mx-auto relative z-10">
+            <div className="max-w-3xl mx-auto">
 
                 {/* ── Page Header ── */}
                 <motion.div
-                    initial={{ opacity: 0, y: -16 }}
+                    initial={{ opacity: 0, y: -12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="mb-10"
+                    transition={{ duration: 0.45 }}
+                    className="mb-8"
                 >
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center gap-2 mb-1">
                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                <span className="mono text-[10px] font-black text-orange-500/70 uppercase tracking-[0.3em]">
+                                <span className="text-[10px] font-black text-orange-500/70 uppercase tracking-[0.3em]">
                                     Order History
                                 </span>
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-black tracking-tight"
-                                style={{ background: 'linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.5))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                                Your Orders
-                            </h1>
+                            <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Your Orders</h1>
                             {orders.length > 0 && (
-                                <p className="text-gray-500 text-sm mt-2 mono">
-                                    {orders.length} order{orders.length !== 1 ? 's' : ''} · ₹{totalSpent.toLocaleString('en-IN')} total spent
+                                <p className="text-gray-500 text-sm mt-1">
+                                    {orders.length} order{orders.length !== 1 ? 's' : ''} · <span className="font-bold text-orange-500">₹{totalSpent.toLocaleString('en-IN')}</span> total spent
                                 </p>
                             )}
                         </div>
 
-                        {/* Stats chip + Clear */}
-                        <div className="flex flex-col items-end gap-3 shrink-0">
+                        <div className="flex flex-col items-end gap-2 shrink-0">
                             {orders.length > 0 && (
                                 <>
-                                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-                                        <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
-                                        <span className="mono text-[11px] font-black text-orange-300">{orders.length} Orders</span>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-100">
+                                        <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
+                                        <span className="text-xs font-black text-orange-600">{orders.length} Orders</span>
                                     </div>
                                     <button
                                         onClick={clearHistory}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20
-                                                   text-red-400 hover:bg-red-500/20 transition-all text-[10px] font-bold mono uppercase tracking-wider"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-red-200 text-red-500 hover:bg-red-50 transition-all text-[10px] font-bold uppercase tracking-wider"
                                     >
                                         <Trash2 className="w-3 h-3" />
                                         Clear
@@ -282,31 +216,28 @@ const Orders = () => {
                 {/* ── Empty State ── */}
                 {orders.length === 0 ? (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.97 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center justify-center py-28 text-center"
+                        className="bg-white rounded-[2rem] p-12 text-center shadow-lg border border-gray-100"
                     >
-                        <div className="relative mb-8">
-                            <div className="w-28 h-28 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                                <ShoppingBag className="w-12 h-12 text-orange-500/60" />
+                        <div className="relative w-24 h-24 mx-auto mb-6">
+                            <div className="w-24 h-24 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center">
+                                <ShoppingBag className="w-10 h-10 text-orange-400" />
                             </div>
-                            <div className="absolute inset-0 rounded-full border border-orange-500/10 animate-ping" />
+                            <div className="absolute inset-0 rounded-full border-2 border-orange-200 animate-ping opacity-30" />
                         </div>
-                        <h2 className="text-2xl font-black text-white mb-2">No Orders Yet</h2>
-                        <p className="text-gray-500 text-sm mb-8 max-w-xs leading-relaxed">
-                            Your order history will appear here once you place your first order.
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">No orders yet</h2>
+                        <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                            Hungry? Explore our menu and place your first order today!
                         </p>
                         <Link
                             to="/restaurants"
-                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-black text-sm
-                                       bg-orange-500 hover:bg-orange-400 text-black transition-all
-                                       hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] active:scale-95"
+                            className="inline-flex items-center gap-2 px-8 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all hover:scale-105 shadow-lg shadow-orange-500/25 active:scale-95"
                         >
                             Browse Food <ArrowRight className="w-4 h-4" />
                         </Link>
                     </motion.div>
                 ) : (
-                    /* ── Order List ── */
                     <div className="space-y-6">
                         {orders.map((order, index) => (
                             <OrderCard key={order._id} order={order} index={index} />

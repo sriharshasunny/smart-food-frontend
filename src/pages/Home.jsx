@@ -367,161 +367,149 @@ const Home = () => {
                     </div>
 
 
-                    {/* ══ Right: Premium Trending Picks ══ */}
-                    <div className="w-full xl:w-[430px] shrink-0 rounded-[1.5rem] relative overflow-hidden flex flex-col h-auto xl:h-full"
-                         style={{ background: 'linear-gradient(160deg, #0e0e18 0%, #141420 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {/* ══ Right: Trending Picks ══ */}
+                    <div className="w-full xl:w-[430px] shrink-0 bg-white rounded-[1.25rem] border border-orange-100 shadow-sm relative overflow-hidden flex flex-col h-[390px] xl:h-full">
 
-                        {/* Ambient glow */}
-                        <div className="absolute top-0 right-0 w-56 h-56 bg-orange-500/10 blur-[80px] rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/8 blur-[60px] rounded-full -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+                        {/* Subtle background blob */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/60 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
-                        {/* Top gradient border line */}
-                        <div className="absolute top-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
-
-                        {/* ── Panel Header ── */}
-                        <div className="flex justify-between items-center p-4 pb-2 relative z-10 shrink-0">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center"
-                                     style={{ boxShadow: '0 0 16px rgba(249,115,22,0.25)' }}>
-                                    <Flame className="w-4 h-4 text-orange-400" />
+                        {/* ── Header (fixed) ── */}
+                        <div className="flex justify-between items-center px-4 pt-4 pb-2 relative z-10 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-sm shadow-orange-300">
+                                    <Flame className="w-3.5 h-3.5 text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-black text-white tracking-tight leading-none">Trending Picks</h2>
+                                    <h2 className="text-sm font-black text-gray-900 leading-none">Trending Picks</h2>
                                     <div className="flex items-center gap-1 mt-0.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                                        <span className="text-[9px] font-bold text-orange-400/70 uppercase tracking-[0.2em]">Live · AI Curated</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                        <span className="text-[9px] font-bold text-orange-500/80 uppercase tracking-[0.2em]">Live · AI Curated</span>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => navigate('/recommendations')}
-                                className="group/allbtn text-[10px] font-black text-orange-400 hover:text-black flex items-center gap-1 transition-all duration-300
-                                           bg-orange-500/10 hover:bg-orange-500 px-4 py-2 rounded-full border border-orange-500/30 hover:border-orange-400
-                                           hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] uppercase tracking-wide"
+                                className="group/allbtn text-xs font-black text-orange-600 hover:text-white flex items-center gap-1 transition-all duration-300 bg-orange-50 hover:bg-orange-500 px-4 py-2 rounded-full shadow-sm hover:shadow-orange-500/30"
                             >
-                                View All <ChevronRight size={12} className="group-hover/allbtn:translate-x-0.5 transition-transform" />
+                                View All <ChevronRight size={14} className="group-hover/allbtn:translate-x-0.5 transition-transform" />
                             </button>
                         </div>
 
-                        {/* ── Cards List ── */}
-                        <div className="flex flex-col gap-2.5 px-3 pb-3 relative z-10 overflow-y-auto hide-scrollbar xl:overflow-hidden" style={{ maxHeight: '100%' }}>
-
+                        {/* ── Scrollable cards area ── */}
+                        <div
+                            ref={trendingContainerRef}
+                            data-lenis-prevent
+                            className="flex-1 overflow-y-auto px-3 pt-1 pb-2 flex flex-col gap-2 hide-scrollbar scroll-smooth overscroll-contain"
+                        >
                             {(loadingData || loadingRecs) ? (
                                 Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={`skel-h-${i}`} className="h-[80px] shrink-0 rounded-xl bg-white/5 animate-pulse" />
+                                    <div key={`skel-h-${i}`} className="h-[82px] shrink-0">
+                                        <SkeletonCard variant="horizontal" />
+                                    </div>
                                 ))
-                            ) : (
-                                (() => {
-                                    const sourceItems = trendingRecs.length > 0 ? trendingRecs : filteredData.dishes;
-                                    const visibleItems = sourceItems.slice(0, trendingVisible);
-                                    const hasMore = trendingVisible < sourceItems.length;
-                                    const seenAll = !hasMore && sourceItems.length > 0;
+                            ) : (() => {
+                                const sourceItems = trendingRecs.length > 0 ? trendingRecs : filteredData.dishes;
+                                const visibleItems = sourceItems.slice(0, trendingVisible);
+                                const hasMore = trendingVisible < sourceItems.length;
 
-                                    return (
-                                        <>
-                                            {visibleItems.map((dish, idx) => (
-                                                <motion.div
-                                                    key={dish.id || dish._id || idx}
-                                                    initial={{ opacity: 0, y: 10, scale: 0.97 }}
-                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                    transition={{ delay: idx * 0.06, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                                                    className="group/item relative flex gap-3 items-center p-2.5 rounded-xl cursor-pointer shrink-0 transition-all duration-300"
-                                                    style={{
-                                                        background: 'rgba(255,255,255,0.04)',
-                                                        border: '1px solid rgba(255,255,255,0.08)',
-                                                    }}
-                                                    onMouseEnter={e => {
-                                                        e.currentTarget.style.background = 'rgba(249,115,22,0.08)';
-                                                        e.currentTarget.style.border = '1px solid rgba(249,115,22,0.3)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 24px rgba(249,115,22,0.12)';
-                                                    }}
-                                                    onMouseLeave={e => {
-                                                        e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                                                        e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)';
-                                                        e.currentTarget.style.boxShadow = 'none';
-                                                    }}
-                                                >
-                                                    {/* Rank badge */}
-                                                    <div className="absolute top-2 left-2 w-4 h-4 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center z-10">
-                                                        <span className="text-[7px] font-black text-orange-400">{idx + 1}</span>
-                                                    </div>
+                                return (
+                                    <>
+                                        {visibleItems.map((dish, idx) => (
+                                            <motion.div
+                                                key={dish.id || dish._id || idx}
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                                className="bg-white relative overflow-hidden rounded-[1.1rem] p-2 flex gap-3 border border-gray-100
+                                                           hover:border-orange-200 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200
+                                                           group/item items-center shrink-0 cursor-pointer"
+                                            >
+                                                {/* Glossy border overlay */}
+                                                <div className="absolute inset-0 rounded-[1.1rem] border border-white/60 pointer-events-none z-20" />
 
-                                                    {/* Dish image */}
-                                                    <div className="h-[62px] w-[62px] rounded-xl overflow-hidden relative shrink-0 shadow-lg">
-                                                        <img
-                                                            src={dish.image}
-                                                            alt={dish.name}
-                                                            loading="lazy"
-                                                            className="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-700 ease-out brightness-90"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                                                        <div className="absolute bottom-0.5 left-0 right-0 flex justify-center">
-                                                            <span className="text-[7px] font-bold text-white">⭐ {dish.rating || 4.5}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Content */}
-                                                    <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
-                                                        <div>
-                                                            {dish._score != null && (
-                                                                <span className="text-[8px] font-black text-orange-400/80 uppercase tracking-widest">
-                                                                    Match {Math.round(dish._score)}%
-                                                                </span>
-                                                            )}
-                                                            <h4 className="font-black text-white text-[13px] leading-tight line-clamp-1 group-hover/item:text-orange-300 transition-colors">
-                                                                {dish.name}
-                                                            </h4>
-                                                            <p className="text-[9px] text-gray-500 font-medium mt-0.5">
-                                                                {dish.category || dish.cuisine} · {(dish.isVeg || dish.is_veg) ? '🟢 Veg' : '🔴 Non-Veg'}
-                                                            </p>
-                                                        </div>
-
-                                                        <div className="flex justify-between items-center mt-1.5">
-                                                            <div>
-                                                                <span className="text-[9px] text-gray-600 line-through">₹{Math.round(dish.price * 1.18)}</span>
-                                                                <span className="text-white font-black text-sm ml-1">₹{dish.price}</span>
-                                                            </div>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
-                                                                className="h-7 px-3.5 rounded-full text-[10px] font-black uppercase tracking-wide transition-all duration-300
-                                                                           bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-black
-                                                                           border border-orange-500/30 hover:border-orange-400 active:scale-95"
-                                                            >
-                                                                Add +
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-
-                                            {/* Load More button */}
-                                            {hasMore && (
-                                                <motion.button
-                                                    initial={{ opacity: 0 }}
-                                                    animate={{ opacity: 1 }}
-                                                    onClick={() => setTrendingVisible(v => v + TRENDING_STEP)}
-                                                    className="w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-orange-400
-                                                               border border-orange-500/20 hover:border-orange-500/50
-                                                               bg-orange-500/5 hover:bg-orange-500/15 transition-all duration-300 flex items-center justify-center gap-2
-                                                               hover:shadow-[0_0_16px_rgba(249,115,22,0.2)] active:scale-98"
-                                                >
-                                                    <ChevronDown className="w-3.5 h-3.5" />
-                                                    Load More · {Math.min(TRENDING_STEP, sourceItems.length - trendingVisible)} more
-                                                </motion.button>
-                                            )}
-
-                                            {/* Seen all */}
-                                            {seenAll && (
-                                                <div className="text-center py-2 text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-                                                    ✓ All {sourceItems.length} picks shown
+                                                {/* Rank badge */}
+                                                <div className="absolute top-1.5 left-1.5 w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center z-10 shadow-sm">
+                                                    <span className="text-[7px] font-black text-white">{idx + 1}</span>
                                                 </div>
-                                            )}
-                                        </>
-                                    );
-                                })()
-                            )}
+
+                                                {/* Image */}
+                                                <div className="h-[4.5rem] w-[4.5rem] rounded-2xl overflow-hidden relative shrink-0 shadow-sm group-hover/item:shadow-md transition-all">
+                                                    <img
+                                                        src={dish.image}
+                                                        alt={dish.name}
+                                                        loading="lazy"
+                                                        className="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-700 ease-out"
+                                                    />
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1 pt-3 flex justify-center">
+                                                        <span className="text-[8px] font-bold text-white">⭐ {dish.rating || 4.5}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5 gap-1.5">
+                                                    <div>
+                                                        {dish._score != null && (
+                                                            <span className="text-[9px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md inline-block tracking-wider uppercase mb-0.5">
+                                                                Match {Math.round(dish._score)}%
+                                                            </span>
+                                                        )}
+                                                        <h4 className="font-bold text-gray-900 text-[14px] leading-tight line-clamp-1 group-hover/item:text-orange-600 transition-colors">
+                                                            {dish.name}
+                                                        </h4>
+                                                        <p className="text-[10px] text-gray-400 font-medium line-clamp-1 mt-0.5">
+                                                            {dish.category || dish.cuisine} · {(dish.isVeg || dish.is_veg) ? 'Veg' : 'Non-Veg'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-end">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-gray-400 line-through decoration-orange-300/50 decoration-2">₹{Math.round(dish.price * 1.2)}</span>
+                                                            <span className="text-gray-900 font-black text-sm leading-none">₹{dish.price}</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
+                                                            className="h-8 px-4 rounded-full bg-gray-50 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 text-gray-600 hover:text-white text-xs font-bold transition-all shadow-sm hover:shadow-orange-200 hover:shadow-lg active:scale-95 flex items-center gap-1 group/btn border border-gray-100 hover:border-transparent"
+                                                        >
+                                                            ADD <span className="text-sm font-extrabold group-hover/btn:rotate-90 transition-transform duration-300 ml-0.5">+</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+
+                                        {/* End spacer so last card isn't cut off */}
+                                        <div className="h-1 shrink-0" />
+                                    </>
+                                );
+                            })()}
                         </div>
-                    </div>
+
+                        {/* ── Load More — pinned at bottom of panel ── */}
+                        {!loadingData && !loadingRecs && (() => {
+                            const sourceItems = trendingRecs.length > 0 ? trendingRecs : filteredData.dishes;
+                            const hasMore = trendingVisible < sourceItems.length;
+                            const seenAll = !hasMore && sourceItems.length > 0;
+                            return (
+                                <div className="px-3 pb-3 pt-1 shrink-0 relative z-10">
+                                    {hasMore ? (
+                                        <button
+                                            onClick={() => setTrendingVisible(v => v + TRENDING_STEP)}
+                                            className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-orange-600
+                                                       border border-orange-200 hover:border-orange-400 bg-orange-50 hover:bg-orange-500 hover:text-white
+                                                       transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-orange-200 active:scale-[0.98]"
+                                        >
+                                            <ChevronDown className="w-3.5 h-3.5" />
+                                            Load More Picks
+                                        </button>
+                                    ) : seenAll ? (
+                                        <div className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest py-1">
+                                            ✓ All {sourceItems.length} picks shown · <button onClick={() => navigate('/recommendations')} className="text-orange-500 hover:underline">View Full AI Page</button>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            );
+                        })()}
+                    </div> {/* Close Trending Picks panel */}
                 </div> {/* Close Recs + Top Section */}
 
 
