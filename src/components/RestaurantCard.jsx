@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { Star, Clock, MapPin, Heart } from 'lucide-react';
+import { Star, Clock, MapPin, Heart, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
