@@ -20,6 +20,34 @@ const SIDEBAR_CSS = `
     pointer-events: none;
   }
 
+  /* Refined Item Container */
+  .nav-item-container {
+    border: 1px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 10;
+  }
+  .nav-item-container.active-border {
+    border-color: rgba(251, 146, 60, 0.25);
+  }
+  .is-space .nav-item-container.active-border {
+    border-color: rgba(34, 211, 238, 0.25);
+  }
+
+  /* Subtle Glossy Overlay for each button */
+  .glossy-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(255,255,255,0.04) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .group:hover .glossy-overlay {
+    opacity: 1;
+  }
+
   @keyframes pill-glow {
     0%, 100% { box-shadow: 0 4px 20px rgba(249,115,22,0.3), inset 0 1px 0 rgba(255,255,255,0.25); }
     50%       { box-shadow: 0 4px 30px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.4); }
@@ -176,83 +204,89 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     </div>
 
                     {/* ── NAVIGATION ── */}
-                    <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-0.5 no-scrollbar">
+                    <nav className={`flex-1 overflow-y-auto py-2 px-3 space-y-2 no-scrollbar ${isSpaceTheme ? 'is-space' : ''}`}>
                         {menuItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
 
                             return (
-                                <Link
+                                <motion.div
                                     key={item.label}
-                                    to={item.path}
-                                    onClick={toggleSidebar}
-                                    className="relative flex items-center gap-3 px-3 py-3 rounded-xl group overflow-hidden"
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="relative"
                                 >
-                                    {/* Glossy sliding active pill — layoutId works because sidebar stays mounted */}
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="sidebar-active-pill"
-                                            className={`absolute inset-0 rounded-xl glossy-pill ${isSpaceTheme
-                                                ? 'bg-gradient-to-r from-cyan-600/30 to-indigo-700/30 border border-cyan-500/25 pill-glow-space'
-                                                : 'bg-gradient-to-r from-orange-500 to-red-500 pill-glow'
-                                            }`}
-                                            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                                        />
-                                    )}
+                                    <Link
+                                        to={item.path}
+                                        onClick={toggleSidebar}
+                                        className={`relative flex items-center gap-3 px-3 py-3 rounded-xl group overflow-hidden nav-item-container
+                                            ${isActive ? 'active-border' : 'border-gray-100/50 hover:border-gray-200'}
+                                            ${isSpaceTheme && !isActive ? 'border-white/5 hover:border-white/20' : ''}
+                                        `}
+                                    >
+                                        {/* Glossy Overlay for each button */}
+                                        <div className="glossy-overlay" />
 
-                                    {/* Hover bg */}
-                                    {!isActive && (
-                                        <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isSpaceTheme ? 'bg-white/5' : 'bg-gray-50'}`} />
-                                    )}
+                                        {/* Glossy sliding active pill — layoutId works because sidebar stays mounted */}
+                                        {isActive && (
+                                            <motion.div
+                                                layoutId="sidebar-active-pill"
+                                                className={`absolute inset-0 rounded-xl glossy-pill ${isSpaceTheme
+                                                    ? 'bg-gradient-to-r from-cyan-600/35 to-indigo-700/35 border border-cyan-500/30 pill-glow-space'
+                                                    : 'bg-gradient-to-r from-orange-500 to-red-500 pill-glow shadow-lg shadow-orange-500/20'
+                                                }`}
+                                                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                                            />
+                                        )}
 
-                                    {/* Icon box */}
-                                    <div className={`relative z-10 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300
-                                        ${isActive
-                                            ? isSpaceTheme ? 'bg-cyan-500/20' : 'bg-white/20'
-                                            : isSpaceTheme ? 'bg-transparent group-hover:bg-white/5' : 'bg-transparent group-hover:bg-gray-100'
-                                        }`}>
-                                        <Icon className={`w-4 h-4 transition-all duration-300 ${isActive
-                                            ? isSpaceTheme ? 'text-cyan-300' : 'text-white'
-                                            : isSpaceTheme ? 'text-white/30 group-hover:text-white/70' : 'text-gray-400 group-hover:text-orange-500'
-                                        }`} strokeWidth={isActive ? 2 : 1.5} />
-                                    </div>
+                                        {/* Hover bg (extra layer for smoothness) */}
+                                        {!isActive && (
+                                            <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${isSpaceTheme ? 'bg-white/5' : 'bg-orange-50/40'}`} />
+                                        )}
 
-                                    {/* Text */}
-                                    <div className="relative z-10 flex flex-col min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-[13px] font-bold transition-all duration-300 ${isActive
-                                                ? 'text-white'
-                                                : isSpaceTheme ? 'text-white/50 group-hover:text-white/90' : 'text-gray-600 group-hover:text-gray-900'
+                                        {/* Icon box */}
+                                        <div className={`relative z-10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300
+                                            ${isActive
+                                                ? isSpaceTheme ? 'bg-cyan-500/30' : 'bg-white/25 shadow-sm'
+                                                : isSpaceTheme ? 'bg-white/5 border border-white/10 group-hover:bg-white/10' : 'bg-gray-50 border border-gray-100 group-hover:bg-white'
                                             }`}>
-                                                {item.label}
-                                            </span>
-                                            {item.isBeta && (
-                                                <span className={`px-1.5 py-0.5 text-[8px] font-black rounded-full border ${isActive
-                                                    ? 'bg-white/20 border-white/20 text-white'
-                                                    : 'bg-purple-500/15 border-purple-500/30 text-purple-400'}`}>
-                                                    BETA
-                                                </span>
-                                            )}
+                                            <Icon className={`w-4.5 h-4.5 transition-all duration-300 ${isActive
+                                                ? isSpaceTheme ? 'text-cyan-300' : 'text-white'
+                                                : isSpaceTheme ? 'text-white/40 group-hover:text-white/80' : 'text-gray-400 group-hover:text-orange-500'
+                                            }`} strokeWidth={isActive ? 2.5 : 1.5} />
                                         </div>
-                                        <span className={`text-[10px] font-medium truncate transition-all duration-300 ${isActive
-                                            ? 'text-white/60'
-                                            : isSpaceTheme ? 'text-white/25 group-hover:text-white/45' : 'text-gray-400 group-hover:text-gray-500'
-                                        }`}>
-                                            {item.subtitle}
-                                        </span>
-                                    </div>
 
-                                    {/* Active indicator */}
-                                    {isActive && (
-                                        <motion.div
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            className="relative z-10 shrink-0"
-                                        >
-                                            <ChevronRight className="w-3.5 h-3.5 text-white/50" strokeWidth={2.5} />
-                                        </motion.div>
-                                    )}
-                                </Link>
+                                        {/* Text */}
+                                        <div className="relative z-10 flex flex-col min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[13px] font-bold tracking-tight transition-all duration-300 ${isActive
+                                                    ? 'text-white'
+                                                    : isSpaceTheme ? 'text-white/60 group-hover:text-white/95' : 'text-gray-600 group-hover:text-gray-950'
+                                                }`}>
+                                                    {item.label}
+                                                </span>
+                                                {item.isBeta && (
+                                                    <span className={`px-1.5 py-0.5 text-[8px] font-black rounded-full border ${isActive
+                                                        ? 'bg-white/20 border-white/30 text-white'
+                                                        : 'bg-purple-500/15 border-purple-500/30 text-purple-400'}`}>
+                                                        BETA
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className={`text-[10px] font-medium truncate transition-all duration-300 ${isActive
+                                                ? 'text-white/70'
+                                                : isSpaceTheme ? 'text-white/30 group-hover:text-white/50' : 'text-gray-400 group-hover:text-gray-600'
+                                            }`}>
+                                                {item.subtitle}
+                                            </span>
+                                        </div>
+
+                                        {/* Active/Arrow indicator */}
+                                        <div className="relative z-10 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <ChevronRight className={`w-3.5 h-3.5 transition-colors ${isActive ? 'text-white/60' : 'text-gray-300'}`} strokeWidth={2.5} />
+                                        </div>
+                                    </Link>
+                                </motion.div>
                             );
                         })}
                     </nav>
