@@ -341,18 +341,13 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
         console.log(`\n=== EMAIL OTP for ${cleanEmail} (${type || 'unknown'}) ===\nCode: ${otp}\n=============================\n`);
 
-        try {
-            await emailService.sendOTP(cleanEmail, otp);
-            console.log(`Email sent successfully to ${cleanEmail}`);
-            res.json({ message: 'OTP sent successfully' });
-        } catch (mailError) {
-            console.error("Email send failed (Continuing with Dev Mode Console OTP):", mailError);
-            // In dev, if email fails (like unverified Resend domain), still return success so the frontend moves to Step 2
-            res.json({
-                message: 'OTP requested (check server console in dev mode)',
-                devMode: true
-            });
-        }
+        // Fire and forget: Dispatch email asynchronously to prevent UI blocking
+        emailService.sendOTP(cleanEmail, otp)
+            .then(() => console.log(`[Fast Path] Email dispatched seamlessly to ${cleanEmail}`))
+            .catch(mailError => console.error("[Fast Path] Setup Email send failed:", mailError));
+
+        // Immediately respond to user
+        res.json({ message: 'OTP sent successfully (Fast Dispatch)' });
     } catch (error) {
         res.status(500).json({ message: 'Error sending OTP', error: error.message });
     }
