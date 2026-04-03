@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Food Delivery - Academic Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            background-color: #ffffff;
+            color: #000000;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 50px;
+            font-weight: bold;
+        }
+
+        .diagram-container {
+            border: 1px solid #000000;
+            padding: 20px;
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            border-bottom: 1px solid #000000;
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button.download-btn {
+            background-color: #f0f0f0;
+            color: #000000;
+            border: 1px solid #000;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: { curve: 'linear' },
+            class: { useMaxWidth: false }
+        });
+
+        function downloadImage(wrapperId, filename) {
+            const wrapper = document.getElementById(wrapperId);
+            const svg = wrapper.querySelector('svg');
+
+            if (!svg) {
+                alert("Diagram is still loading...");
+                return;
+            }
+
+            const clonedSvg = svg.cloneNode(true);
+            const style = document.createElement('style');
+            style.textContent = `
+                * { font-family: Arial, sans-serif !important; }
+                .edgePath path { stroke: #000 !important; }
+            `;
+            clonedSvg.insertBefore(style, clonedSvg.firstChild);
+
+            const svgData = new XMLSerializer().serializeToString(clonedSvg);
+            const canvas = document.createElement("canvas");
+            const svgSize = svg.getBoundingClientRect();
+
+            const scale = 5;
+            canvas.width = svgSize.width * scale;
+            canvas.height = svgSize.height * scale;
+
+            const ctx = canvas.getContext("2d");
+            ctx.scale(scale, scale);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const img = new Image();
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function () {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+
+                const a = document.createElement("a");
+                a.download = filename + ".png";
+                a.href = canvas.toDataURL("image/png", 1.0);
+                a.click();
+            };
+            img.src = url;
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>Smart Food Delivery (Academic Format)</h1>
+
+    <!-- 1. System Architecture -->
+    <div class="diagram-container">
+        <h2>1. System Architecture Diagram <button class="download-btn" onclick="downloadImage('diagram-1', 'Architecture')">Download PNG</button></h2>
+        <div id="diagram-1" class="mermaid">
+            graph TD
+            classDef default fill:#fff,stroke:#000,stroke-width:1px,color:#000
+            
+            subgraph Client Browser
+                UI["React Components"]
+                State["Global State"]
+            end
+
+            subgraph Backend Node.js
+                API["REST APIs"]
+                Auth["Authentication"]
+                Rec["Recommendation"]
+                Pay["Payment Interface"]
+            end
+
+            subgraph Database & External
+                DB[("Supabase\nPostgreSQL")]
+                AI{"Google Gemini"}
+                PaymentHub["Dodo Payments"]
+            end
+
+            UI --> API
+            API --> Auth
+            API --> Rec
+            API --> Pay
+            
+            Auth --> DB
+            Rec --> DB
+            Pay --> PaymentHub
+            API --> AI
+        </div>
+    </div>
+
+    <!-- 2. Class Diagram -->
+    <div class="diagram-container">
+        <h2>2. Class Diagram <button class="download-btn" onclick="downloadImage('diagram-2', 'ClassDiagram')">Download PNG</button></h2>
+        <div id="diagram-2" class="mermaid">
+            classDiagram
+            class User {
+                -String id
+                -String name
+                -String email
+                -String password
+                +register()
+                +login()
+            }
+            class Restaurant {
+                -String id
+                -String name
+                -String city
+                -Array cuisines
+                +getMenu()
+            }
+            class FoodItem {
+                -String id
+                -String rest_id
+                -String name
+                -Float price
+                -Boolean is_veg
+            }
+            class Order {
+                -String id
+                -String user_id
+                -Float total_amount
+                -String status
+                +checkout()
+            }
+            class OrderItem {
+                -String order_id
+                -String food_id
+                -Integer quantity
+                -Float price
+            }
+            class ChatHistory {
+                -String user_id
+                -String content
+                -String role
+            }
+
+            User "1" -- "*" Order : places
+            User "1" -- "*" ChatHistory : generates
+            Restaurant "1" -- "*" FoodItem : offers
+            Order "1" -- "*" OrderItem : contains
+            OrderItem "*" -- "1" FoodItem : ref
+        </div>
+    </div>
+
+    <!-- 3. Use Case Diagram -->
+    <div class="diagram-container">
+        <h2>3. Use Case Diagram <button class="download-btn" onclick="downloadImage('diagram-3', 'UseCase')">Download PNG</button></h2>
+        <div id="diagram-3" class="mermaid">
+            flowchart LR
+            classDef default fill:#fff,stroke:#000,stroke-width:1px,color:#000
+            classDef actor fill:#fff,stroke:#000,stroke-width:0px,color:#000
+
+            Customer((Customer)):::actor
+            Restaurant((Restaurant)):::actor
+
+            subgraph Smart Food Management System
+                direction TB
+                Login([Login / Register])
+                Browse([Browse Menu])
+                Chat([Chat with AI])
+                Checkout([Place Order])
+                Manage([Manage Inventory])
+            end
+
+            Customer --> Login
+            Customer --> Browse
+            Customer --> Chat
+            Customer --> Checkout
+
+            Restaurant --> Login
+            Restaurant --> Manage
+            
+            Checkout -.-> |"«include»"| Login
+        </div>
+    </div>
+
+    <!-- 4. Activity Diagram -->
+    <div class="diagram-container">
+        <h2>4. Activity Diagram <button class="download-btn" onclick="downloadImage('diagram-4', 'Activity')">Download PNG</button></h2>
+        <div id="diagram-4" class="mermaid">
+            flowchart TD
+            classDef default fill:#fff,stroke:#000,stroke-width:1px,color:#000
+            classDef startend fill:#000,stroke:#000,color:#fff,shape:circle
+
+            Start((Start)):::startend
+            Login["User Logs In"]
+            Select["Add Items to Cart"]
+            Pay["Initiate Checkout"]
+            AuthCheck{"Payment Successful?"}
+            Save["Save Order to DB"]
+            Fail["Show Error Message"]
+            End((End)):::startend
+
+            Start --> Login
+            Login --> Select
+            Select --> Pay
+            Pay --> AuthCheck
+
+            AuthCheck -->|"Yes"| Save
+            Save --> End
+
+            AuthCheck -->|"No"| Fail
+            Fail --> Pay
+        </div>
+    </div>
+
+</body>
+</html>
