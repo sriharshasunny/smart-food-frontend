@@ -8,168 +8,159 @@ const LandingPage = () => {
     const canvasRef = useRef(null);
     const scrollRef = useRef(null);
 
-    // --- NEW DELTA-TIME PHYSICS ENGINE (v2.2 - Robust Edition) ---
+    // --- CANVAS ENGINE v3.0 — Depth + Scroll Follow + Fire Trail + Asteroids ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
-        // Safety: Ensure Context
         const ctx = canvas.getContext('2d', { alpha: true });
         if (!ctx) return;
 
         let animationFrameId;
 
-        // Assets
-        // Assets - Curated High-Quality Food Emojis
         const FOOD_EMOJIS = ['🍔', '🍕', '🍩', '🌮', '🍱', '🍜', '🍤', '🥩', '🥑', '🥞', '🥨', '🍗', '🌭', '🥪'];
-        const CORE_ITEMS = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱', '🍜', '🍤'];
+        const CORE_ITEMS  = ['🍕', '🍔', '🍩', '🥗', '🌮', '🍱', '🍜', '🍤'];
         const UFO_MESSAGES = ["Hungry? 😋", "Warp Speed! 🚀", "Pizza Time? 🍕", "Order Now!", "Zoom! ✨"];
 
-        // State Targets
-        let width = window.innerWidth;
+        // --- dimensions ---
+        let width  = window.innerWidth;
         let height = window.innerHeight;
-        let isMobile = width < 768; // New Flag
+        let isMobile = width < 768;
         let centerX = width * 0.75;
         let centerY = height * 0.5;
-        let scale = Math.min(width, height) * 0.0013;
+        let scale   = Math.min(width, height) * 0.0013;
 
-        // Entity: UFO
+        // --- scroll tracking (lightweight, no DOM reads in rAF) ---
+        let scrollY    = 0; // current smooth scroll
+        let rawScrollY = window.scrollY;
+        let scrollVel  = 0; // for star warp effect
+        const onScroll = () => { rawScrollY = window.scrollY; };
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        // --- UFO entity ---
         const ufo = {
-            pos: { x: -100, y: 100 },
+            pos: { x: 120, y: 150 },
             vel: { x: 0, y: 0 },
-            target: { x: 0, y: 0 },
-            state: 'IDLE', // IDLE, WARP_TO_SUN, RESPAWNING
-            rotation: 0,
-            opacity: 1,
-            scale: 1,
-            trail: [],      // fire trail particles
-            msgIndex: 0,
-            msgTimer: 0,
-            showMsg: true,
-            idleTimer: 0,
-            floatOffset: 0
+            target: { x: 120, y: 150 },
+            state: 'IDLE',
+            rotation: 0, opacity: 1, scale: 1,
+            trail: [], sparks: [],
+            msgIndex: 0, msgTimer: 0, showMsg: true,
+            idleTimer: 0, floatOffset: 0
         };
 
-        // Inputs - Smoothed for 3D feel
+        // --- input ---
         let targetMouse = { x: 0, y: 0 };
-        let mouse = { x: 0, y: 0 }; // Current smoothed pos
+        let mouse = { x: 0, y: 0 };
 
+        const onMouseMove = (e) => {
+            if (width > 0 && height > 0) {
+                targetMouse.x = (e.clientX / width)  - 0.5;
+                targetMouse.y = (e.clientY / height) - 0.5;
+            }
+        };
         const handleInteraction = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const logicX = clientX - rect.left;
-            const logicY = clientY - rect.top;
-
-            // Parallax Input
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const lx = cx - rect.left, ly = cy - rect.top;
             if (width > 0 && height > 0) {
-                targetMouse.x = (clientX / width) - 0.5;
-                targetMouse.y = (clientY / height) - 0.5;
+                targetMouse.x = cx / width  - 0.5;
+                targetMouse.y = cy / height - 0.5;
             }
-
-            const dist = Math.hypot(logicX - ufo.pos.x, logicY - ufo.pos.y);
-            if (dist < 100 && ufo.state === 'IDLE') {
+            if (Math.hypot(lx - ufo.pos.x, ly - ufo.pos.y) < 80 && ufo.state === 'IDLE') {
                 ufo.state = 'WARP_TO_SUN';
             }
         };
 
         const resize = () => {
             if (!canvas) return;
-            width = window.innerWidth;
+            width  = window.innerWidth;
             height = window.innerHeight;
-
-            // OPTIMIZATION: Max Speed on Mobile (Cap DPR at 1.0)
             const mobileView = width < 768;
             const dpr = mobileView ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.5);
-
-            canvas.width = width * dpr;
+            canvas.width  = width  * dpr;
             canvas.height = height * dpr;
-            // Force CSS dimensions
-            canvas.style.width = width + 'px';
+            canvas.style.width  = width  + 'px';
             canvas.style.height = height + 'px';
-
             ctx.scale(dpr, dpr);
-
-            if (width >= 768) {
-                isMobile = false;
-                centerX = width * 0.75;
-                centerY = height * 0.5;
-                scale = Math.min(width, height) * 0.0013;
-            } else {
-                isMobile = true;
-                centerX = width * 0.5;
-                centerY = height * 0.75; // Lower 3/4th of screen for mobile
-                scale = Math.min(width, height) * 0.001;
-            }
-            if (ufo.state === 'IDLE') {
-                ufo.target.x = width * (isMobile ? 0.5 : 0.2);
-            }
+            isMobile = mobileView;
+            if (isMobile) { centerX = width * 0.5; centerY = height * 0.75; scale = Math.min(width, height) * 0.001; }
+            else          { centerX = width * 0.75; centerY = height * 0.5;  scale = Math.min(width, height) * 0.0013; }
         };
 
+        // --- STARS — 3-layer depth with scroll parallax ---
+        const starCount = isMobile ? 20 : 55;
+        const stars = Array.from({ length: starCount }, () => {
+            const layer = Math.floor(Math.random() * 3); // 0=far, 1=mid, 2=near
+            return {
+                x: Math.random() * width,
+                y: Math.random() * height,
+                layer,
+                size: 0.4 + layer * 0.6 + Math.random() * 0.6,
+                baseOpacity: 0.25 + layer * 0.25 + Math.random() * 0.2,
+                speed: 8 + layer * 18,     // scroll parallax speed
+                phase: Math.random() * Math.PI * 2,
+            };
+        });
 
-        // Mobile Optimization: Significantly reduce counts
-        const starCount = isMobile ? 15 : 40;
-        const stars = Array.from({ length: starCount }, () => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            z: Math.random() * 2 + 0.5, // Deeper Z range
-            size: Math.random() * 1.5 + 0.5,
-            baseOpacity: Math.random() * 0.6 + 0.4,
-            phase: Math.random() * Math.PI * 2,
-            speed: 50 + Math.random() * 80 // MUCHO FASTER
-        }));
-
-        // Entities: Shooting Stars
+        // --- SHOOTING STARS ---
         let shootingStars = [];
         const spawnShootingStar = () => {
-            if (isMobile && Math.random() > 0.3) return; // Less frequent on mobile
-            shootingStars.push({
-                x: Math.random() * width,
-                y: -50,
-                length: Math.random() * 80 + 40,
-                speed: Math.random() * 20 + 20,
-                angle: (Math.PI / 4) + (Math.random() * 0.2 - 0.1), // Angled down-right
-                opacity: 1,
-                life: 1
+            if (isMobile && Math.random() > 0.4) return;
+            shootingStars.push({ x: Math.random() * width, y: -50,
+                length: 60 + Math.random() * 80, speed: 18 + Math.random() * 22,
+                angle: Math.PI / 4 + (Math.random() * 0.3 - 0.15), life: 1 });
+        };
+
+        // --- DUST ---
+        const dustCount = isMobile ? 12 : 35;
+        const dust = Array.from({ length: dustCount }, () => ({
+            x: Math.random() * width, y: Math.random() * height,
+            size: Math.random() * 1.5 + 0.5,
+            vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+            opacity: Math.random() * 0.2 + 0.05
+        }));
+
+        // --- ORBITING SATELLITES ---
+        const orbitingCount = isMobile ? 2 : 3;
+        const orbitingFood = Array.from({ length: orbitingCount }, (_, i) => ({
+            emoji: FOOD_EMOJIS[(i * 3) % FOOD_EMOJIS.length],
+            angle: (i / orbitingCount) * Math.PI * 2,
+            radius: (isMobile ? 85 : 125) + i * 28,
+            speed: 0.7 + i * 0.35,
+            size: isMobile ? 24 : 33
+        }));
+
+        // --- FOOD ASTEROIDS (new!) ---
+        let asteroids = [];
+        let asteroidTimer = 0;
+        const MAX_ASTEROIDS = isMobile ? 4 : 7;
+        const spawnAsteroid = () => {
+            if (asteroids.length >= MAX_ASTEROIDS) return;
+            const fromLeft = Math.random() < 0.5;
+            const size = 18 + Math.random() * 18;
+            const ay    = size + Math.random() * (height - size * 2);
+            const speed = 35 + Math.random() * 45;         // px/s — gentle
+            asteroids.push({
+                x: fromLeft ? -size : width + size,
+                y: ay,
+                vx: fromLeft ? speed : -speed,
+                vy: (Math.random() - 0.5) * 20,
+                rot: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 1.5,
+                emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
+                size,
+                trail: [],
+                opacity: 0,  // fade in
             });
         };
 
-        // Entities: Space Dust
-        const dustCount = isMobile ? 15 : 40;
-        const dust = Array.from({ length: dustCount }, () => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            size: Math.random() * 2 + 1,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            opacity: Math.random() * 0.3 + 0.1
-        }));
-
-        // Entities: Orbiting Food (Satellites)
-        const orbitingCount = 2;
-        const orbitingFood = Array.from({ length: orbitingCount }, (_, i) => ({
-            emoji: FOOD_EMOJIS[i % FOOD_EMOJIS.length],
-            angle: (i / orbitingCount) * Math.PI * 2,
-            radius: (isMobile ? 80 : 120) + (i % 2) * 30, // Staggered radii
-            speed: 0.8 + (i % 2) * 0.4,
-            size: isMobile ? 25 : 35
-        }));
-
-        // Entities: Food Meteorites (Disabled as requested)
-        let foodMeteorites = [];
-        let meteoriteTimer = 0;
-        const spawnMeteorite = () => {
-            // Disabled
-        };
-
-        // Entities: Emitted Food (Disabled as requested)
+        // --- EMITTED & METEORITE (kept as stubs) ---
         let emittedFoods = [];
-        const spawnFoodBurst = () => {
-            // Disabled
-        };
+        let foodMeteorites = [];
+        const spawnFoodBurst = () => {};
 
-
-        // Timing
+        // --- TIMING ---
         let lastTime = 0;
         let coreIndex = 0;
         let coreTimer = 0;
@@ -204,60 +195,68 @@ const LandingPage = () => {
                     spawnFoodBurst(); // Trigger burst on change (Both views)
                 }
 
-                // Update Orbiting Food (Enable on both Mobile and Desktop)
-                orbitingFood.forEach(o => {
-                    o.angle += o.speed * dt;
-                });
+                // Orbiting satellites
+                orbitingFood.forEach(o => { o.angle += o.speed * dt; });
 
-                // Food Meteorite Logic REMOVED
+                // --- FOOD ASTEROIDS UPDATE ---
+                asteroidTimer += dt;
+                const spawnInterval = isMobile ? 4.5 : 2.8;
+                if (asteroidTimer > spawnInterval) { spawnAsteroid(); asteroidTimer = 0; }
 
-                // Update Emitted Food
+                for (let i = asteroids.length - 1; i >= 0; i--) {
+                    const a = asteroids[i];
+                    a.opacity = Math.min(1, a.opacity + dt * 1.5);
+                    a.x += a.vx * dt;
+                    a.y += a.vy * dt;
+                    a.vy += 8 * dt;   // very gentle gravity
+                    a.rot += a.rotSpeed * dt;
+                    // trail
+                    a.trail.push({ x: a.x, y: a.y, life: 1 });
+                    if (a.trail.length > 10) a.trail.shift();
+                    a.trail.forEach(t => { t.life -= dt * 4; });
+                    // cull when off-screen
+                    if (a.x < -120 || a.x > width + 120 || a.y > height + 120) asteroids.splice(i, 1);
+                }
+
+                // emitted food (kept, no-op spawnFoodBurst)
                 for (let i = emittedFoods.length - 1; i >= 0; i--) {
                     const f = emittedFoods[i];
-                    f.x += f.vx * dt;
-                    f.y += f.vy * dt;
-                    f.life -= 0.5 * dt; // 2 seconds life
-                    f.scale += 0.5 * dt; // Grow slightly
-                    f.rot += f.rotSpeed * dt;
+                    f.x += f.vx * dt; f.y += f.vy * dt;
+                    f.life -= 0.5 * dt; f.scale += 0.5 * dt; f.rot += f.rotSpeed * dt;
                     if (f.life <= 0) emittedFoods.splice(i, 1);
                 }
 
-                // UFO Logic
+                // --- UFO Logic (scroll-following) ---
+                // Smoothly track scroll: map scrollY fraction into vertical position band
+                scrollVel += (rawScrollY - scrollY) * 0.08;
+                scrollVel *= 0.85;
+                scrollY  += scrollVel;
+
                 ufo.floatOffset += dt * 2;
                 if (ufo.state === 'IDLE') {
                     ufo.idleTimer += dt;
-                    ufo.msgTimer += dt;
+                    ufo.msgTimer  += dt;
                     if (ufo.msgTimer > 3) {
                         ufo.msgIndex = (ufo.msgIndex + 1) % UFO_MESSAGES.length;
-                        ufo.msgTimer = 0;
-                        ufo.showMsg = true;
+                        ufo.msgTimer = 0; ufo.showMsg = true;
                     }
 
-                    // Mobile: Roam actively with Zig-Zag and Flybys
-                    const roamChance = isMobile ? 2.0 : 1.0;
-                    if (Math.random() < roamChance * dt) {
-                        if (isMobile) {
-                            // Mobile Logic: 60% Bottom Zone, 40% Full Flyby
-                            if (Math.random() < 0.6) {
-                                // Bottom Zone (Safe)
-                                ufo.target.x = Math.random() * width;
-                                ufo.target.y = height * 0.65 + Math.random() * (height * 0.25);
-                            } else {
-                                // Flyby (Zig-Zag)
-                                ufo.target.x = Math.random() * width;
-                                ufo.target.y = Math.random() * height;
-                            }
+                    // --- SCROLL FOLLOW ---
+                    // Convert rawScrollY to a vertical position on canvas, clamped within safe zone
+                    const maxScroll = Math.max(1, document.body.scrollHeight - window.innerHeight);
+                    const scrollFrac = Math.min(rawScrollY / maxScroll, 1);
+                    // UFO floats in left 35% of screen, vertically tracks scroll
+                    const scrollTargetY = height * 0.12 + scrollFrac * (height * 0.72);
+                    const scrollTargetX = width * (isMobile ? 0.5 : 0.15) + Math.sin(ufo.floatOffset * 0.5) * (isMobile ? 60 : 90);
 
-                            // AVOID CENTER (Food)
-                            const distToCenter = Math.hypot(ufo.target.x - centerX, ufo.target.y - centerY);
-                            if (distToCenter < 150) {
-                                // Push away from center
-                                ufo.target.x += (ufo.target.x < centerX ? -150 : 150);
-                            }
-                        } else {
-                            // Desktop Standard
-                            ufo.target.x = Math.random() * width;
-                            ufo.target.y = Math.random() * (height * 0.6);
+                    // Only re-target if not already heading somewhere interesting
+                    const roamChance = isMobile ? 1.2 : 0.6;
+                    if (Math.random() < roamChance * dt) {
+                        ufo.target.x = scrollTargetX + (Math.random() - 0.5) * 80;
+                        ufo.target.y = scrollTargetY + (Math.random() - 0.5) * 60;
+                        // avoid center food sun
+                        if (Math.hypot(ufo.target.x - centerX, ufo.target.y - centerY) < 160) {
+                            ufo.target.x = scrollTargetX - 180;
                         }
                     }
 
@@ -354,105 +353,70 @@ const LandingPage = () => {
                     if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
                 }
 
-                // Update Shooting Stars
-                if (Math.random() < (isMobile ? 0.005 : 0.01)) spawnShootingStar();
-                shootingStars.forEach((star, index) => {
-                    star.x += Math.cos(star.angle) * star.speed * dt * 50;
-                    star.y += Math.sin(star.angle) * star.speed * dt * 50;
-                    star.life -= dt * 0.8;
-                    if (star.life <= 0 || star.y > height + 100 || star.x > width + 100) {
-                        shootingStars.splice(index, 1);
-                    }
-                });
+                // Shooting Stars
+                if (Math.random() < (isMobile ? 0.004 : 0.009)) spawnShootingStar();
+                for (let i = shootingStars.length - 1; i >= 0; i--) {
+                    const s = shootingStars[i];
+                    s.x += Math.cos(s.angle) * s.speed * dt * 50;
+                    s.y += Math.sin(s.angle) * s.speed * dt * 50;
+                    s.life -= dt * 0.9;
+                    if (s.life <= 0 || s.y > height + 100) shootingStars.splice(i, 1);
+                }
 
-                // Update Dust
+                // Dust
                 dust.forEach(d => {
-                    d.x += d.vx * dt * 50;
-                    d.y += d.vy * dt * 50;
+                    d.x += d.vx * dt * 50; d.y += d.vy * dt * 50;
                     if (d.x < 0) d.x = width; if (d.x > width) d.x = 0;
                     if (d.y < 0) d.y = height; if (d.y > height) d.y = 0;
                 });
 
-                // Update Meteorites
-                meteoriteTimer += dt;
-                if (meteoriteTimer > (isMobile ? 7 : 4)) {
-                    spawnMeteorite();
-                    meteoriteTimer = 0;
-                }
 
-                foodMeteorites.forEach((m, index) => {
-                    m.x += m.vx * dt;
-                    m.y += m.vy * dt;
-                    m.rot += m.rotSpeed * dt;
-
-                    m.trail.push({ x: m.x, y: m.y, life: 1 });
-                    if (m.trail.length > 15) m.trail.shift();
-                    m.trail.forEach(t => t.life -= dt * 2);
-
-                    if (m.y > height + 200 || m.x < -200 || m.x > width + 200) {
-                        foodMeteorites.splice(index, 1);
-                    }
-                });
-
-
-                // 2. DRAW
-                // Standard Clear
+                // === 2. DRAW ===
                 ctx.clearRect(0, 0, width, height);
 
-                // Draw Nebulas (Restored)
+                // Nebulas
                 const nebulaCount = isMobile ? 1 : 2;
-                ctx.save();
-                ctx.globalCompositeOperation = 'screen';
+                ctx.save(); ctx.globalCompositeOperation = 'screen';
                 for (let i = 0; i < nebulaCount; i++) {
-                    const nx = width * (0.2 + i * 0.5) + Math.sin(coreTimer * 0.2 + i) * 100;
-                    const ny = height * (0.3 + i * 0.4) + Math.cos(coreTimer * 0.1 + i) * 100;
+                    const nx = width * (0.2 + i * 0.5) + Math.sin(coreTimer * 0.18 + i) * 100;
+                    const ny = height * (0.3 + i * 0.4) + Math.cos(coreTimer * 0.1  + i) * 100;
                     const nGrad = ctx.createRadialGradient(nx, ny, 0, nx, ny, width * 0.4);
-                    nGrad.addColorStop(0, i === 0 ? 'rgba(80, 20, 150, 0.15)' : 'rgba(20, 80, 150, 0.15)');
+                    nGrad.addColorStop(0, i === 0 ? 'rgba(80,20,150,0.13)' : 'rgba(20,80,150,0.13)');
                     nGrad.addColorStop(1, 'rgba(0,0,0,0)');
                     ctx.fillStyle = nGrad;
                     ctx.beginPath(); ctx.arc(nx, ny, width * 0.4, 0, Math.PI * 2); ctx.fill();
                 }
                 ctx.restore();
-                // 0. SMOOTH INPUT (Lerp) - Improved Responsiveness for Parallax
-                // factor 0.1 gives a nice weight/delay to the movement
-                mouse.x += (targetMouse.x - mouse.x) * 0.1;
-                mouse.y += (targetMouse.y - mouse.y) * 0.1;
 
-                // 1. UPDATE PHYSICS (Safeguarded)
-                coreTimer += dt;
+                // smooth input
+                mouse.x += (targetMouse.x - mouse.x) * 0.08;
+                mouse.y += (targetMouse.y - mouse.y) * 0.08;
 
-                // ... (existing core updates)
-
-                // Stars
-                // Mobile: 3D Radial Warp | Desktop: Vertical Scroll with Parallax
-                ctx.fillStyle = "white";
+                // --- STARS — 3-layer depth with scroll-driven parallax warp ---
+                // warp factor: stronger when scrolling fast
+                const scrollWarpFactor = Math.min(Math.abs(scrollVel) / 12, 1.0);
+                ctx.fillStyle = 'white';
                 stars.forEach(s => {
-                    if (isMobile) {
-                        // 3D Radial Move
-                        const dx = s.x - centerX;
-                        const dy = s.y - centerY;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        const angle = Math.atan2(dy, dx);
-                        const speed = s.speed * (dist / 100) * dt * 2.5; // Faster near edges
+                    const layerSpeed = [0.04, 0.14, 0.32][s.layer];   // parallax multiplier
+                    const parallaxY  = (rawScrollY * layerSpeed) % height;
 
-                        s.x += Math.cos(angle) * speed;
-                        s.y += Math.sin(angle) * speed;
+                    let rx = s.x + mouse.x * s.layer * 18;
+                    let ry = (s.y - parallaxY + height) % height;
 
-                        // Reset if out of bounds
-                        if (s.x < 0 || s.x > width || s.y < 0 || s.y > height) {
-                            s.x = Math.random() * width;
-                            s.y = Math.random() * height;
-                            if (Math.hypot(s.x - centerX, s.y - centerY) < 50) s.x += 100;
-                        }
+                    // scroll-warp streak: near stars streak more
+                    if (scrollWarpFactor > 0.05 && s.layer > 0) {
+                        const streakLen = scrollWarpFactor * s.layer * 22;
+                        ctx.globalAlpha = s.baseOpacity * 0.7;
+                        ctx.lineWidth   = s.size * 0.8;
+                        ctx.strokeStyle = 'white';
+                        ctx.beginPath();
+                        ctx.moveTo(rx, ry);
+                        ctx.lineTo(rx, ry + (scrollVel > 0 ? streakLen : -streakLen));
+                        ctx.stroke();
                     } else {
-                        // Draw Static Stars (No Vertical Scroll/Parallax Math)
-                        let renderX = s.x;
-                        let renderY = s.y;
-
-                        // Render
                         ctx.globalAlpha = s.baseOpacity;
                         ctx.beginPath();
-                        ctx.arc(renderX, renderY, s.size, 0, Math.PI * 2);
+                        ctx.arc(rx, ry, s.size, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 });
@@ -479,75 +443,125 @@ const LandingPage = () => {
                 });
                 ctx.globalAlpha = 1;
 
-                // UFO - FIRE TRAIL (drawn before UFO body, below it)
-                if (ufo.opacity > 0 && ufo.trail.length > 0) {
+                // ===== FOOD ASTEROID DRAW (below UFO) =====
+                asteroids.forEach(a => {
+                    // asteroid fire trail
+                    if (a.trail.length > 1) {
+                        ctx.save(); ctx.lineCap = 'round';
+                        for (let i = 1; i < a.trail.length; i++) {
+                            const prog = i / a.trail.length;
+                            const lt   = a.trail[i - 1], rt = a.trail[i];
+                            ctx.globalAlpha = a.trail[i].life * 0.55 * a.opacity;
+                            ctx.strokeStyle  = `rgba(255,${Math.floor(60 + prog * 180)},0,1)`;
+                            ctx.lineWidth    = a.size * 0.28 * prog;
+                            ctx.beginPath(); ctx.moveTo(lt.x, lt.y); ctx.lineTo(rt.x, rt.y); ctx.stroke();
+                        }
+                        ctx.globalAlpha = 1; ctx.restore();
+                    }
+                    // asteroid emoji
+                    ctx.save();
+                    ctx.translate(a.x, a.y); ctx.rotate(a.rot);
+                    ctx.globalAlpha = a.opacity;
+                    ctx.font = `${a.size}px Arial`;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(a.emoji, 0, 0);
+                    ctx.restore();
+                    ctx.globalAlpha = 1;
+                });
+
+                // ===== UFO FIRE TRAIL (enhanced multi-pass) =====
+                if (ufo.opacity > 0 && ufo.trail.length > 1) {
+                    const tLen = ufo.trail.length;
                     ufo.trail.forEach((p, idx) => {
-                        const prog = idx / ufo.trail.length; // 0=oldest, 1=newest
-                        const alpha = p.life * ufo.opacity * 0.85;
-                        // Outer glow pass
+                        const prog  = idx / tLen;          // 0=oldest 1=newest
+                        const alpha = p.life * ufo.opacity;
+
+                        // Layer 1: wide soft outer corona (orange)
                         ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(${p.r}, ${Math.floor(p.g * 0.6)}, 0, ${alpha * 0.25})`;
+                        ctx.arc(p.x, p.y, p.size * 3.2, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255,80,0,${alpha * 0.12})`;
                         ctx.fill();
-                        // Core fire particle
+
+                        // Layer 2: mid glow (orange→yellow gradient by progress)
+                        const gMid = Math.floor(30 + prog * 180);
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size * 1.7, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255,${gMid},0,${alpha * 0.45})`;
+                        ctx.fill();
+
+                        // Layer 3: hot core (deep red→white-yellow)
+                        const gCore = Math.floor(60 + prog * 220);
                         ctx.beginPath();
                         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                        // shift from deep red (old) → bright yellow (new)
-                        const g = Math.floor(40 + prog * 200);
-                        ctx.fillStyle = `rgba(255, ${g}, 0, ${alpha})`;
+                        ctx.fillStyle = `rgba(255,${gCore},${Math.floor(prog * 80)},${alpha * 0.95})`;
                         ctx.fill();
+
+                        // Layer 4: random sparks (lightweight — only on newer particles)
+                        if (prog > 0.6 && Math.random() < 0.35) {
+                            const sx = p.x + (Math.random() - 0.5) * p.size * 4;
+                            const sy = p.y + (Math.random() - 0.5) * p.size * 4;
+                            ctx.beginPath();
+                            ctx.arc(sx, sy, p.size * 0.3, 0, Math.PI * 2);
+                            ctx.fillStyle = `rgba(255,240,80,${alpha * 0.8})`;
+                            ctx.fill();
+                        }
                     });
                 }
 
-                // UFO body
+                // ===== UFO BODY =====
                 if (ufo.opacity > 0) {
                     ctx.save();
                     ctx.translate(ufo.pos.x, ufo.pos.y);
                     ctx.rotate(ufo.rotation);
                     ctx.scale(ufo.scale, ufo.scale);
+                    ctx.globalAlpha = ufo.opacity;
 
-                    // Orange/fire glow ring instead of cyan
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(255, 140, 0, 0.55)"; ctx.lineWidth = 3; ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(255, 80, 0, 0.18)"; ctx.lineWidth = 9; ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
-                    // Inner hot white core ring
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(255, 220, 80, 0.35)"; ctx.lineWidth = 2; ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.stroke();
+                    // Pulsing undercarriage glow (fire-amber)
+                    const glowPulse = 0.4 + 0.3 * Math.sin(ufo.floatOffset * 3);
+                    ctx.beginPath();
+                    ctx.arc(0, 6, 34, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255,110,0,${glowPulse * 0.15})`;
+                    ctx.fill();
 
-                    ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                    ctx.fillText("🛸", 0, 0);
+                    // Outer fire ring
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255,140,0,${0.4 + glowPulse * 0.3})`;
+                    ctx.lineWidth = 2.5; ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
+                    // Halo diffuse
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255,60,0,${0.1 + glowPulse * 0.12})`;
+                    ctx.lineWidth = 10; ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+                    // Inner hot ring
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255,220,80,${0.25 + glowPulse * 0.2})`;
+                    ctx.lineWidth = 1.5; ctx.arc(0, 0, 19, 0, Math.PI * 2); ctx.stroke();
 
-                    if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.8) {
+                    // UFO emoji
+                    ctx.font = '40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('🛸', 0, 0);
+
+                    // Message bubble (fire-themed)
+                    if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.7) {
                         ctx.rotate(-ufo.rotation);
                         const msg = UFO_MESSAGES[ufo.msgIndex];
-                        ctx.font = "bold 12px sans-serif";
-
-                        const metrics = ctx.measureText(msg);
-                        const pad = 12;
-                        const boxW = metrics.width + pad * 2;
-
-                        // Fire-themed HUD Bubble
-                        const offsetX = 45;
-                        ctx.fillStyle = "rgba(20, 8, 0, 0.88)";
-                        ctx.strokeStyle = "rgba(255, 140, 0, 0.75)";
+                        ctx.font = 'bold 12px sans-serif';
+                        const mw = ctx.measureText(msg).width;
+                        const pad = 12, bw = mw + pad * 2, bh = 30;
+                        const ox = 46;
+                        // bubble bg
+                        ctx.fillStyle = 'rgba(18,6,0,0.9)';
+                        ctx.strokeStyle = 'rgba(255,140,0,0.8)';
                         ctx.lineWidth = 1.5;
-
-                        ctx.beginPath();
-                        ctx.roundRect(offsetX, -30, boxW, 34, 4);
-                        ctx.fill();
-                        ctx.stroke();
-
-                        // Connector Triangle
-                        ctx.beginPath();
-                        ctx.moveTo(offsetX, -5);
-                        ctx.lineTo(30, 0);
-                        ctx.lineTo(offsetX, 5);
-                        ctx.fillStyle = "rgba(255, 140, 0, 0.75)";
-                        ctx.fill();
-
-                        // Fire-colored text
-                        ctx.fillStyle = "#ffaa00";
-                        ctx.font = "bold 13px 'Courier New', monospace";
-                        ctx.fillText(msg, offsetX + boxW / 2, -30 + 17);
+                        ctx.beginPath(); ctx.roundRect(ox, -bh / 2, bw, bh, 5); ctx.fill(); ctx.stroke();
+                        // connector
+                        ctx.beginPath(); ctx.moveTo(ox, -5); ctx.lineTo(30, 0); ctx.lineTo(ox, 5);
+                        ctx.fillStyle = 'rgba(255,140,0,0.8)'; ctx.fill();
+                        // text
+                        ctx.fillStyle = '#ffb020';
+                        ctx.font = "bold 12px 'Courier New', monospace";
+                        ctx.fillText(msg, ox + bw / 2, 1);
                     }
+                    ctx.globalAlpha = 1;
                     ctx.restore();
                 }
 
@@ -598,8 +612,6 @@ const LandingPage = () => {
                 }
                 ctx.restore();
 
-                ctx.restore();
-
                 // Draw Orbiting Food (Restored)
                 orbitingFood.forEach(satellite => {
                     satellite.angle += satellite.speed * dt;
@@ -623,58 +635,19 @@ const LandingPage = () => {
                     ctx.restore();
                 });
 
-                // Draw Food Meteorites
-                // Draw Food Meteorites (Realistic Burn Effect)
-                foodMeteorites.forEach(m => {
-                    // Trail - Tapered and Fading
-                    ctx.save();
-                    ctx.lineCap = 'round';
-                    m.trail.forEach((t, i) => {
-                        const progress = i / m.trail.length;
-                        ctx.beginPath();
-                        if (i === 0) ctx.moveTo(t.x, t.y);
-                        else ctx.lineTo(t.x, t.y);
-                        // Hot Orange/Red Trail
-                        ctx.strokeStyle = `rgba(255, ${Math.floor(100 + progress * 155)}, 50, ${t.life * 0.5})`;
-                        ctx.lineWidth = m.size * (0.2 + progress * 0.6); // Tapering
-                        ctx.stroke();
-                    });
-                    ctx.restore();
-
-                    // Meteor Head with Glow
-                    ctx.save();
-                    ctx.translate(m.x, m.y);
-                    ctx.rotate(m.rot);
-
-                    // Atmospheric Burn Glow (Optimized - Removed shadowBlur)
-
-                    ctx.font = `${m.size}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(m.emoji, 0, 0);
-                    ctx.restore();
-                });
-            } catch (err) {
-                console.error("Animation Loop Error", err);
-            }
+                // (legacy meteorites — empty array, no cost)
+            } catch (err) { /* silent */ }
             animationFrameId = requestAnimationFrame(loop);
         };
 
         // Resize & Start
         let resizeTimeout;
-        const debouncedResize = () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(resize, 100); };
+        const debouncedResize = () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(resize, 150); };
         window.addEventListener('resize', debouncedResize);
         window.addEventListener('mousedown', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
-        window.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            if (width > 0 && height > 0) {
-                targetMouse.x = ((e.clientX - rect.left) / width) - 0.5;
-                targetMouse.y = ((e.clientY - rect.top) / height) - 0.5;
-            }
-        });
+        window.addEventListener('touchstart', handleInteraction, { passive: true });
+        window.addEventListener('mousemove', onMouseMove);
 
-        // Init
         resize();
         animationFrameId = requestAnimationFrame(loop);
 
@@ -682,6 +655,8 @@ const LandingPage = () => {
             window.removeEventListener('resize', debouncedResize);
             window.removeEventListener('mousedown', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('scroll', onScroll);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
