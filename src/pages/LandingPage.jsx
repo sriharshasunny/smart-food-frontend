@@ -42,7 +42,7 @@ const LandingPage = () => {
             rotation: 0,
             opacity: 1,
             scale: 1,
-            trail: [],
+            trail: [],      // fire trail particles
             msgIndex: 0,
             msgTimer: 0,
             showMsg: true,
@@ -333,6 +333,27 @@ const LandingPage = () => {
                 ufo.pos.x += ufo.vel.x * dt * 3.5;
                 ufo.pos.y += ufo.vel.y * dt * 3.5;
 
+                // --- UFO FIRE TRAIL UPDATE ---
+                const speed = Math.hypot(ufo.vel.x, ufo.vel.y);
+                if (speed > 0.3 && ufo.opacity > 0) {
+                    ufo.trail.push({
+                        x: ufo.pos.x,
+                        y: ufo.pos.y,
+                        size: (3 + Math.random() * 5) * ufo.scale,
+                        life: 1.0,
+                        // fire color: randomly hot orange, yellow, or deep red
+                        r: 255,
+                        g: Math.floor(Math.random() * 160),
+                        b: 0
+                    });
+                    if (ufo.trail.length > 28) ufo.trail.shift();
+                }
+                for (let i = ufo.trail.length - 1; i >= 0; i--) {
+                    ufo.trail[i].life -= dt * 3.5;
+                    ufo.trail[i].size *= 0.94;
+                    if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
+                }
+
                 // Update Shooting Stars
                 if (Math.random() < (isMobile ? 0.005 : 0.01)) spawnShootingStar();
                 shootingStars.forEach((star, index) => {
@@ -458,16 +479,38 @@ const LandingPage = () => {
                 });
                 ctx.globalAlpha = 1;
 
-                // UFO
+                // UFO - FIRE TRAIL (drawn before UFO body, below it)
+                if (ufo.opacity > 0 && ufo.trail.length > 0) {
+                    ufo.trail.forEach((p, idx) => {
+                        const prog = idx / ufo.trail.length; // 0=oldest, 1=newest
+                        const alpha = p.life * ufo.opacity * 0.85;
+                        // Outer glow pass
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${p.r}, ${Math.floor(p.g * 0.6)}, 0, ${alpha * 0.25})`;
+                        ctx.fill();
+                        // Core fire particle
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        // shift from deep red (old) → bright yellow (new)
+                        const g = Math.floor(40 + prog * 200);
+                        ctx.fillStyle = `rgba(255, ${g}, 0, ${alpha})`;
+                        ctx.fill();
+                    });
+                }
+
+                // UFO body
                 if (ufo.opacity > 0) {
                     ctx.save();
                     ctx.translate(ufo.pos.x, ufo.pos.y);
                     ctx.rotate(ufo.rotation);
                     ctx.scale(ufo.scale, ufo.scale);
 
-                    // No Shadow, just stroke
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(0, 255, 255, 0.5)"; ctx.lineWidth = 3; ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
-                    ctx.beginPath(); ctx.strokeStyle = "rgba(0, 255, 255, 0.15)"; ctx.lineWidth = 8; ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+                    // Orange/fire glow ring instead of cyan
+                    ctx.beginPath(); ctx.strokeStyle = "rgba(255, 140, 0, 0.55)"; ctx.lineWidth = 3; ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
+                    ctx.beginPath(); ctx.strokeStyle = "rgba(255, 80, 0, 0.18)"; ctx.lineWidth = 9; ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+                    // Inner hot white core ring
+                    ctx.beginPath(); ctx.strokeStyle = "rgba(255, 220, 80, 0.35)"; ctx.lineWidth = 2; ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.stroke();
 
                     ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                     ctx.fillText("🛸", 0, 0);
@@ -481,10 +524,10 @@ const LandingPage = () => {
                         const pad = 12;
                         const boxW = metrics.width + pad * 2;
 
-                        // Sci-Fi HUD Bubble (Offset x=45 to clear UFO radius)
+                        // Fire-themed HUD Bubble
                         const offsetX = 45;
-                        ctx.fillStyle = "rgba(0, 15, 30, 0.85)"; // Dark transparent background
-                        ctx.strokeStyle = "rgba(0, 255, 255, 0.6)"; // Cyan border
+                        ctx.fillStyle = "rgba(20, 8, 0, 0.88)";
+                        ctx.strokeStyle = "rgba(255, 140, 0, 0.75)";
                         ctx.lineWidth = 1.5;
 
                         ctx.beginPath();
@@ -492,18 +535,18 @@ const LandingPage = () => {
                         ctx.fill();
                         ctx.stroke();
 
-                        // Connector Line (Triangle pointing to UFO)
+                        // Connector Triangle
                         ctx.beginPath();
                         ctx.moveTo(offsetX, -5);
-                        ctx.lineTo(30, 0); // Point touches UFO edge radius ~30
+                        ctx.lineTo(30, 0);
                         ctx.lineTo(offsetX, 5);
-                        ctx.fillStyle = "rgba(0, 255, 255, 0.6)";
+                        ctx.fillStyle = "rgba(255, 140, 0, 0.75)";
                         ctx.fill();
 
-                        // Glow Text (Optimized)
-                        ctx.fillStyle = "#0ff"; // Cyan text
+                        // Fire-colored text
+                        ctx.fillStyle = "#ffaa00";
                         ctx.font = "bold 13px 'Courier New', monospace";
-                        ctx.fillText(msg, offsetX + boxW / 2, -30 + 17); // Center text in box
+                        ctx.fillText(msg, offsetX + boxW / 2, -30 + 17);
                     }
                     ctx.restore();
                 }
@@ -647,20 +690,65 @@ const LandingPage = () => {
         document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const ScrollReveal = ({ children, delay = 0 }) => (
+    const ScrollReveal = ({ children, delay = 0, depth = false }) => (
         <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.5, delay, ease: "easeOut" }}
+            initial={depth
+                ? { opacity: 0, y: 60, rotateX: 15, scale: 0.92, z: -80 }
+                : { opacity: 0, y: 40, rotateX: 8, scale: 0.95 }
+            }
+            whileInView={depth
+                ? { opacity: 1, y: 0, rotateX: 0, scale: 1, z: 0 }
+                : { opacity: 1, y: 0, rotateX: 0, scale: 1 }
+            }
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
+            style={{ transformStyle: 'preserve-3d', perspective: 1200 }}
         >
             {children}
         </motion.div>
     );
 
     return (
-        // Added 'relative' z-index context to container to ensure canvas (absolute) sits correctly under content but over background
         <div ref={scrollRef} className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-[#020205] to-black selection:bg-orange-500 selection:text-white">
+
+            {/* GOO SVG FILTER */}
+            <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
+                <defs>
+                    <filter id="goo">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
+                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -10" result="goo" />
+                        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                    </filter>
+                </defs>
+            </svg>
+
+            {/* GOO BLOBS — background hero layer */}
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" style={{ filter: 'url(#goo)' }}>
+                <motion.div
+                    className="absolute rounded-full"
+                    style={{ width: 420, height: 420, background: 'radial-gradient(circle, rgba(255,90,0,0.22) 0%, rgba(255,30,0,0.08) 60%, transparent 100%)', top: '10%', left: '-8%' }}
+                    animate={{ x: [0, 60, -30, 0], y: [0, 40, -20, 0], scale: [1, 1.12, 0.94, 1] }}
+                    transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                    className="absolute rounded-full"
+                    style={{ width: 320, height: 320, background: 'radial-gradient(circle, rgba(180,0,255,0.18) 0%, rgba(80,0,180,0.07) 60%, transparent 100%)', top: '30%', right: '-5%' }}
+                    animate={{ x: [0, -50, 25, 0], y: [0, -30, 50, 0], scale: [1, 0.9, 1.08, 1] }}
+                    transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+                />
+                <motion.div
+                    className="absolute rounded-full"
+                    style={{ width: 260, height: 260, background: 'radial-gradient(circle, rgba(255,160,0,0.16) 0%, rgba(200,80,0,0.06) 60%, transparent 100%)', bottom: '15%', left: '35%' }}
+                    animate={{ x: [0, 40, -60, 0], y: [0, -50, 30, 0], scale: [1, 1.15, 0.88, 1] }}
+                    transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut', delay: 5 }}
+                />
+                <motion.div
+                    className="absolute rounded-full"
+                    style={{ width: 200, height: 200, background: 'radial-gradient(circle, rgba(0,200,255,0.12) 0%, rgba(0,100,200,0.05) 60%, transparent 100%)', top: '60%', left: '15%' }}
+                    animate={{ x: [0, -40, 70, 0], y: [0, 60, -40, 0], scale: [1, 1.1, 0.92, 1] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut', delay: 8 }}
+                />
+            </div>
 
             {/* CANVASES */}
             <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />
@@ -726,7 +814,7 @@ const LandingPage = () => {
                     <section className="px-6 max-w-7xl mx-auto space-y-32">
                         {/* FEATURES GRID */}
                         <div>
-                            <ScrollReveal>
+                            <ScrollReveal depth>
                                 <div className="text-center mb-16">
                                     <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">Galactic Capabilities</h2>
                                     <p className="text-gray-400 max-w-2xl mx-auto">Engineered for the modern space traveler.</p>
@@ -741,19 +829,23 @@ const LandingPage = () => {
                                     { title: "Cosmic Menu", desc: "Dishes from 500+ sectors.", icon: <Utensils className="w-8 h-8 text-purple-400" /> },
                                     { title: "Command Center", desc: "Full control via app.", icon: <Smartphone className="w-8 h-8 text-orange-400" /> }
                                 ].map((item, i) => (
-                                    <ScrollReveal key={i} delay={i * 0.05}>
-                                        <div className="group p-8 rounded-[2rem] bg-white/[0.05] backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all hover:-translate-y-2 hover:bg-white/10 text-center h-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+                                    <ScrollReveal key={i} delay={i * 0.08} depth>
+                                        <motion.div
+                                            className="group p-8 rounded-[2rem] bg-white/[0.05] backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all text-center h-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                                            whileHover={{ y: -10, scale: 1.03, boxShadow: '0 24px 60px rgba(255,100,0,0.18)', borderColor: 'rgba(255,120,0,0.4)' }}
+                                            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                                        >
                                             <div className="mb-6 inline-block opacity-90 group-hover:opacity-100 transition-opacity p-4 bg-white/5 rounded-2xl shadow-lg ring-1 ring-white/10">{item.icon}</div>
                                             <h3 className="text-xl font-bold mb-3 text-white/90">{item.title}</h3>
                                             <p className="text-gray-400 text-sm font-medium leading-relaxed">{item.desc}</p>
-                                        </div>
+                                        </motion.div>
                                     </ScrollReveal>
                                 ))}
                             </div>
                         </div>
 
                         {/* STATS */}
-                        <ScrollReveal>
+                        <ScrollReveal depth>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-white/5 bg-white/[0.02] rounded-[3rem]">
                                 {[
                                     { label: "Active Pilots", val: "12,000+" },
@@ -771,7 +863,7 @@ const LandingPage = () => {
 
                         {/* WHY US */}
                         <div className="grid md:grid-cols-2 gap-16 items-center">
-                            <ScrollReveal>
+                            <ScrollReveal depth>
                                 <div className="space-y-6">
                                     <div className="inline-block px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">Our Mission</div>
                                     <h2 className="text-4xl md:text-5xl font-black leading-tight">Food that travels<br />across dimensions.</h2>
@@ -792,15 +884,26 @@ const LandingPage = () => {
                                     </ul>
                                 </div>
                             </ScrollReveal>
-                            <ScrollReveal delay={0.2}>
-                                <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-white/10 bg-gradient-to-br from-orange-500/10 to-purple-600/10 flex items-center justify-center group">
+                            <ScrollReveal delay={0.2} depth>
+                                <motion.div
+                                    className="relative aspect-square rounded-[3rem] overflow-hidden border border-white/10 bg-gradient-to-br from-orange-500/10 to-purple-600/10 flex items-center justify-center group"
+                                    whileHover={{ scale: 1.02, boxShadow: '0 40px 90px rgba(255,80,0,0.2)' }}
+                                    transition={{ type: 'spring', stiffness: 180, damping: 20 }}
+                                >
                                     <div className="absolute inset-0 bg-black/40" />
+                                    {/* Animated goo blob inside card */}
+                                    <motion.div
+                                        className="absolute w-40 h-40 rounded-full"
+                                        style={{ background: 'radial-gradient(circle, rgba(255,100,0,0.28) 0%, transparent 70%)', filter: 'blur(24px)' }}
+                                        animate={{ x: [-20, 30, -10, -20], y: [-10, 20, -25, -10], scale: [1, 1.2, 0.85, 1] }}
+                                        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                                    />
                                     <div className="relative text-center p-8 bg-black/30 backdrop-blur-xl rounded-3xl border border-white/10 max-w-xs transform group-hover:-translate-y-2 transition-transform">
                                         <Clock className="w-10 h-10 text-orange-400 mx-auto mb-4" />
                                         <h3 className="text-2xl font-bold mb-2">24/7 Service</h3>
                                         <p className="text-sm text-gray-300">Our drones never sleep. Late night cravings or early morning fuel, we are online.</p>
                                     </div>
-                                </div>
+                                </motion.div>
                             </ScrollReveal>
                         </div>
                     </section>
