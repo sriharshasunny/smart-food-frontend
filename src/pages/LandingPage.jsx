@@ -131,27 +131,25 @@ const LandingPage = () => {
             size: isMobile ? 24 : 33
         }));
 
-        // --- FOOD ASTEROIDS (new!) ---
+        // --- FALLING FOOD DROPS (top → bottom, simple) ---
         let asteroids = [];
         let asteroidTimer = 0;
-        const MAX_ASTEROIDS = isMobile ? 4 : 7;
+        const MAX_ASTEROIDS = isMobile ? 5 : 9;
         const spawnAsteroid = () => {
             if (asteroids.length >= MAX_ASTEROIDS) return;
-            const fromLeft = Math.random() < 0.5;
-            const size = 18 + Math.random() * 18;
-            const ay    = size + Math.random() * (height - size * 2);
-            const speed = 35 + Math.random() * 45;         // px/s — gentle
+            const size = 20 + Math.random() * 16;      // emoji size px
+            const ax   = size + Math.random() * (width - size * 2); // random X across screen
+            const vy   = 55 + Math.random() * 65;                   // fall speed px/s
             asteroids.push({
-                x: fromLeft ? -size : width + size,
-                y: ay,
-                vx: fromLeft ? speed : -speed,
-                vy: (Math.random() - 0.5) * 20,
+                x: ax,
+                y: -size,                               // start just above screen
+                vx: (Math.random() - 0.5) * 12,        // tiny horizontal drift
+                vy,
                 rot: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 1.5,
+                rotSpeed: (Math.random() - 0.5) * 0.8, // gentle spin
                 emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)],
                 size,
-                trail: [],
-                opacity: 0,  // fade in
+                opacity: 0,   // fade in from top
             });
         };
 
@@ -198,24 +196,19 @@ const LandingPage = () => {
                 // Orbiting satellites
                 orbitingFood.forEach(o => { o.angle += o.speed * dt; });
 
-                // --- FOOD ASTEROIDS UPDATE ---
+                // --- FALLING FOOD UPDATE ---
                 asteroidTimer += dt;
-                const spawnInterval = isMobile ? 4.5 : 2.8;
+                const spawnInterval = isMobile ? 1.8 : 1.1;
                 if (asteroidTimer > spawnInterval) { spawnAsteroid(); asteroidTimer = 0; }
 
                 for (let i = asteroids.length - 1; i >= 0; i--) {
                     const a = asteroids[i];
-                    a.opacity = Math.min(1, a.opacity + dt * 1.5);
+                    a.opacity = Math.min(1, a.opacity + dt * 2);
                     a.x += a.vx * dt;
-                    a.y += a.vy * dt;
-                    a.vy += 8 * dt;   // very gentle gravity
+                    a.y += a.vy * dt;   // straight down
                     a.rot += a.rotSpeed * dt;
-                    // trail
-                    a.trail.push({ x: a.x, y: a.y, life: 1 });
-                    if (a.trail.length > 10) a.trail.shift();
-                    a.trail.forEach(t => { t.life -= dt * 4; });
-                    // cull when off-screen
-                    if (a.x < -120 || a.x > width + 120 || a.y > height + 120) asteroids.splice(i, 1);
+                    // cull when below screen
+                    if (a.y > height + a.size + 20) asteroids.splice(i, 1);
                 }
 
                 // emitted food (kept, no-op spawnFoodBurst)
@@ -332,24 +325,22 @@ const LandingPage = () => {
                 ufo.pos.x += ufo.vel.x * dt * 3.5;
                 ufo.pos.y += ufo.vel.y * dt * 3.5;
 
-                // --- UFO FIRE TRAIL UPDATE ---
+                // --- UFO TRAIL UPDATE (cyan/teal — Login style) ---
                 const speed = Math.hypot(ufo.vel.x, ufo.vel.y);
                 if (speed > 0.3 && ufo.opacity > 0) {
                     ufo.trail.push({
                         x: ufo.pos.x,
                         y: ufo.pos.y,
-                        size: (3 + Math.random() * 5) * ufo.scale,
+                        size: (2 + Math.random() * 4) * ufo.scale,
+                        opacity: 0.8,
                         life: 1.0,
-                        // fire color: randomly hot orange, yellow, or deep red
-                        r: 255,
-                        g: Math.floor(Math.random() * 160),
-                        b: 0
                     });
-                    if (ufo.trail.length > 28) ufo.trail.shift();
+                    if (ufo.trail.length > 20) ufo.trail.shift();
                 }
                 for (let i = ufo.trail.length - 1; i >= 0; i--) {
-                    ufo.trail[i].life -= dt * 3.5;
-                    ufo.trail[i].size *= 0.94;
+                    ufo.trail[i].life    -= dt * 4;
+                    ufo.trail[i].size    *= 0.92;
+                    ufo.trail[i].opacity *= 0.9;
                     if (ufo.trail[i].life <= 0) ufo.trail.splice(i, 1);
                 }
 
@@ -443,24 +434,11 @@ const LandingPage = () => {
                 });
                 ctx.globalAlpha = 1;
 
-                // ===== FOOD ASTEROID DRAW (below UFO) =====
+                // ===== FALLING FOOD DRAW (simple: no trail) =====
                 asteroids.forEach(a => {
-                    // asteroid fire trail
-                    if (a.trail.length > 1) {
-                        ctx.save(); ctx.lineCap = 'round';
-                        for (let i = 1; i < a.trail.length; i++) {
-                            const prog = i / a.trail.length;
-                            const lt   = a.trail[i - 1], rt = a.trail[i];
-                            ctx.globalAlpha = a.trail[i].life * 0.55 * a.opacity;
-                            ctx.strokeStyle  = `rgba(255,${Math.floor(60 + prog * 180)},0,1)`;
-                            ctx.lineWidth    = a.size * 0.28 * prog;
-                            ctx.beginPath(); ctx.moveTo(lt.x, lt.y); ctx.lineTo(rt.x, rt.y); ctx.stroke();
-                        }
-                        ctx.globalAlpha = 1; ctx.restore();
-                    }
-                    // asteroid emoji
                     ctx.save();
-                    ctx.translate(a.x, a.y); ctx.rotate(a.rot);
+                    ctx.translate(a.x, a.y);
+                    ctx.rotate(a.rot);
                     ctx.globalAlpha = a.opacity;
                     ctx.font = `${a.size}px Arial`;
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -469,100 +447,72 @@ const LandingPage = () => {
                     ctx.globalAlpha = 1;
                 });
 
-                // ===== UFO FIRE TRAIL (enhanced multi-pass) =====
-                if (ufo.opacity > 0 && ufo.trail.length > 1) {
-                    const tLen = ufo.trail.length;
-                    ufo.trail.forEach((p, idx) => {
-                        const prog  = idx / tLen;          // 0=oldest 1=newest
-                        const alpha = p.life * ufo.opacity;
-
-                        // Layer 1: wide soft outer corona (orange)
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size * 3.2, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(255,80,0,${alpha * 0.12})`;
-                        ctx.fill();
-
-                        // Layer 2: mid glow (orange→yellow gradient by progress)
-                        const gMid = Math.floor(30 + prog * 180);
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size * 1.7, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(255,${gMid},0,${alpha * 0.45})`;
-                        ctx.fill();
-
-                        // Layer 3: hot core (deep red→white-yellow)
-                        const gCore = Math.floor(60 + prog * 220);
+                // ===== UFO TRAIL — Login.jsx style (cyan/teal) =====
+                if (ufo.opacity > 0 && ufo.trail.length > 0) {
+                    ufo.trail.forEach(p => {
                         ctx.beginPath();
                         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(255,${gCore},${Math.floor(prog * 80)},${alpha * 0.95})`;
+                        ctx.fillStyle = `rgba(0, 255, 200, ${p.opacity * ufo.opacity})`;
                         ctx.fill();
-
-                        // Layer 4: random sparks (lightweight — only on newer particles)
-                        if (prog > 0.6 && Math.random() < 0.35) {
-                            const sx = p.x + (Math.random() - 0.5) * p.size * 4;
-                            const sy = p.y + (Math.random() - 0.5) * p.size * 4;
-                            ctx.beginPath();
-                            ctx.arc(sx, sy, p.size * 0.3, 0, Math.PI * 2);
-                            ctx.fillStyle = `rgba(255,240,80,${alpha * 0.8})`;
-                            ctx.fill();
-                        }
                     });
                 }
 
-                // ===== UFO BODY =====
+                // ===== UFO BODY — exact Login.jsx style =====
                 if (ufo.opacity > 0) {
+                    const renderY = ufo.pos.y + Math.sin(ufo.floatOffset) * 8; // gentle float bob
+
                     ctx.save();
-                    ctx.translate(ufo.pos.x, ufo.pos.y);
+                    ctx.globalAlpha = ufo.opacity;
+                    ctx.translate(ufo.pos.x, renderY);
                     ctx.rotate(ufo.rotation);
                     ctx.scale(ufo.scale, ufo.scale);
-                    ctx.globalAlpha = ufo.opacity;
 
-                    // Pulsing undercarriage glow (fire-amber)
-                    const glowPulse = 0.4 + 0.3 * Math.sin(ufo.floatOffset * 3);
-                    ctx.beginPath();
-                    ctx.arc(0, 6, 34, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255,110,0,${glowPulse * 0.15})`;
-                    ctx.fill();
+                    // Green shadow glow — EXACTLY like Login
+                    ctx.shadowColor = 'rgba(0, 255, 100, 0.8)';
+                    ctx.shadowBlur  = 20;
 
-                    // Outer fire ring
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(255,140,0,${0.4 + glowPulse * 0.3})`;
-                    ctx.lineWidth = 2.5; ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
-                    // Halo diffuse
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(255,60,0,${0.1 + glowPulse * 0.12})`;
-                    ctx.lineWidth = 10; ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
-                    // Inner hot ring
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(255,220,80,${0.25 + glowPulse * 0.2})`;
-                    ctx.lineWidth = 1.5; ctx.arc(0, 0, 19, 0, Math.PI * 2); ctx.stroke();
-
-                    // UFO emoji
-                    ctx.font = '40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    // UFO emoji — clean, no rings
+                    ctx.font = '40px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
                     ctx.fillText('🛸', 0, 0);
 
-                    // Message bubble (fire-themed)
-                    if (ufo.state === 'IDLE' && ufo.showMsg && scale > 0.7) {
-                        ctx.rotate(-ufo.rotation);
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
+
+                    // White message bubble ABOVE ufo — exactly Login.jsx style
+                    if (ufo.state === 'IDLE' && ufo.showMsg && ufo.opacity > 0.8) {
                         const msg = UFO_MESSAGES[ufo.msgIndex];
-                        ctx.font = 'bold 12px sans-serif';
-                        const mw = ctx.measureText(msg).width;
-                        const pad = 12, bw = mw + pad * 2, bh = 30;
-                        const ox = 46;
-                        // bubble bg
-                        ctx.fillStyle = 'rgba(18,6,0,0.9)';
-                        ctx.strokeStyle = 'rgba(255,140,0,0.8)';
-                        ctx.lineWidth = 1.5;
-                        ctx.beginPath(); ctx.roundRect(ox, -bh / 2, bw, bh, 5); ctx.fill(); ctx.stroke();
-                        // connector
-                        ctx.beginPath(); ctx.moveTo(ox, -5); ctx.lineTo(30, 0); ctx.lineTo(ox, 5);
-                        ctx.fillStyle = 'rgba(255,140,0,0.8)'; ctx.fill();
-                        // text
-                        ctx.fillStyle = '#ffb020';
-                        ctx.font = "bold 12px 'Courier New', monospace";
-                        ctx.fillText(msg, ox + bw / 2, 1);
+                        ctx.save();
+                        ctx.translate(ufo.pos.x, renderY - 50);
+                        ctx.font = 'bold 14px Segoe UI, sans-serif';
+                        const metrics = ctx.measureText(msg);
+                        const boxW = metrics.width + 24, boxH = 28;
+
+                        // White pill bubble
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+                        ctx.beginPath();
+                        ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 14);
+                        ctx.fill();
+
+                        // Small downward triangle pointer
+                        ctx.beginPath();
+                        ctx.moveTo(-6, boxH / 2 - 2);
+                        ctx.lineTo(6, boxH / 2 - 2);
+                        ctx.lineTo(0, boxH / 2 + 6);
+                        ctx.fill();
+
+                        // Black text
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = '#000';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(msg, 0, 1);
+                        ctx.restore();
                     }
                     ctx.globalAlpha = 1;
-                    ctx.restore();
                 }
 
                 // Sun (Realistic Multi-Stop Gradient)
