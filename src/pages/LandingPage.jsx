@@ -127,7 +127,7 @@ const LandingPage = () => {
             emoji: FOOD_EMOJIS[(i * 3) % FOOD_EMOJIS.length],
             angle: (i / orbitingCount) * Math.PI * 2,
             radius: (isMobile ? 85 : 125) + i * 28,
-            speed: 0.7 + i * 0.35,
+            speed: (0.49 + i * 0.245), // 30% slower than original 0.7 + i*0.35
             size: isMobile ? 24 : 33
         }));
 
@@ -446,57 +446,108 @@ const LandingPage = () => {
                     });
                 }
 
-                // ===== UFO BODY — exact Login.jsx style =====
+                // ===== UFO BODY — premium saucer style, teal theme =====
                 if (ufo.opacity > 0) {
-                    const renderY = ufo.pos.y + Math.sin(ufo.floatOffset) * 8; // gentle float bob
+                    const renderY = ufo.pos.y + Math.sin(ufo.floatOffset) * 7; // gentle bob
+                    const uScale  = ufo.scale;
 
                     ctx.save();
                     ctx.globalAlpha = ufo.opacity;
                     ctx.translate(ufo.pos.x, renderY);
-                    ctx.rotate(ufo.rotation);
-                    ctx.scale(ufo.scale, ufo.scale);
+                    ctx.rotate(ufo.rotation * 0.4); // subtle lean
 
-                    // Green shadow glow — EXACTLY like Login
-                    ctx.shadowColor = 'rgba(0, 255, 100, 0.8)';
-                    ctx.shadowBlur  = 20;
+                    // -- Tractor beam glow beneath --
+                    const beamGrad = ctx.createRadialGradient(0, 18, 2, 0, 28, 38 * uScale);
+                    beamGrad.addColorStop(0, `rgba(0,255,180,${0.28 * ufo.opacity})`);
+                    beamGrad.addColorStop(1, 'rgba(0,255,180,0)');
+                    ctx.fillStyle = beamGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 28 * uScale, 30 * uScale, 18 * uScale, 0, 0, Math.PI * 2);
+                    ctx.fill();
 
-                    // UFO emoji — clean, no rings
-                    ctx.font = '40px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('🛸', 0, 0);
+                    ctx.scale(uScale, uScale);
 
-                    ctx.shadowBlur = 0;
+                    // -- Outer glow ring (wide, soft) --
+                    const pulseCyan = 0.35 + 0.2 * Math.sin(ufo.floatOffset * 2.5);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 36, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(0,255,200,${pulseCyan * 0.4})`;
+                    ctx.lineWidth = 10;
+                    ctx.stroke();
+
+                    // -- Mid ring --
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 28, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(0,230,180,${pulseCyan * 0.65})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // -- Disc body (flat ellipse) --
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 32, 9, 0, 0, Math.PI * 2);
+                    const discGrad = ctx.createLinearGradient(0, -9, 0, 9);
+                    discGrad.addColorStop(0, 'rgba(60,200,180,0.9)');
+                    discGrad.addColorStop(1, 'rgba(10,80,70,0.95)');
+                    ctx.fillStyle = discGrad;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,255,200,0.7)';
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+
+                    // -- Dome (top half-ellipse) --
+                    ctx.beginPath();
+                    ctx.ellipse(0, -4, 18, 13, 0, Math.PI, 0); // upper arc
+                    const domeGrad = ctx.createLinearGradient(0, -17, 0, -4);
+                    domeGrad.addColorStop(0, 'rgba(160,255,230,0.85)');
+                    domeGrad.addColorStop(1, 'rgba(30,140,120,0.7)');
+                    ctx.fillStyle = domeGrad;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,255,200,0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // -- Inner bright core (highlight dot on dome) --
+                    ctx.beginPath();
+                    ctx.arc(-5, -10, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                    ctx.fill();
+
+                    // -- Bottom light nodes (3 dots like landing lights) --
+                    [-12, 0, 12].forEach(bx => {
+                        ctx.beginPath();
+                        ctx.arc(bx, 7, 2.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(0,255,200,${0.6 + 0.4 * Math.sin(ufo.floatOffset * 4 + bx)})`;
+                        ctx.fill();
+                    });
+
                     ctx.restore();
 
-                    // White message bubble ABOVE ufo — exactly Login.jsx style
+                    // -- Message bubble ABOVE ufo (white pill, Login.jsx style) --
                     if (ufo.state === 'IDLE' && ufo.showMsg && ufo.opacity > 0.8) {
                         const msg = UFO_MESSAGES[ufo.msgIndex];
                         ctx.save();
-                        ctx.translate(ufo.pos.x, renderY - 50);
-                        ctx.font = 'bold 14px Segoe UI, sans-serif';
-                        const metrics = ctx.measureText(msg);
-                        const boxW = metrics.width + 24, boxH = 28;
+                        ctx.translate(ufo.pos.x, renderY - 58);
+                        ctx.font = 'bold 13px Segoe UI, Arial, sans-serif';
+                        const mw = ctx.measureText(msg).width;
+                        const bw = mw + 22, bh = 26;
 
-                        // White pill bubble
-                        ctx.shadowBlur = 10;
-                        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+                        ctx.shadowBlur   = 8;
+                        ctx.shadowColor  = 'rgba(0,0,0,0.2)';
+                        ctx.fillStyle    = 'rgba(255,255,255,0.97)';
                         ctx.beginPath();
-                        ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 14);
+                        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 13);
                         ctx.fill();
 
-                        // Small downward triangle pointer
+                        // Downward pointer triangle
                         ctx.beginPath();
-                        ctx.moveTo(-6, boxH / 2 - 2);
-                        ctx.lineTo(6, boxH / 2 - 2);
-                        ctx.lineTo(0, boxH / 2 + 6);
+                        ctx.moveTo(-5, bh / 2 - 1);
+                        ctx.lineTo(5,  bh / 2 - 1);
+                        ctx.lineTo(0,  bh / 2 + 6);
                         ctx.fill();
 
-                        // Black text
                         ctx.shadowBlur = 0;
-                        ctx.fillStyle = '#000';
-                        ctx.textAlign = 'center';
+                        ctx.fillStyle  = '#111';
+                        ctx.textAlign  = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(msg, 0, 1);
                         ctx.restore();
