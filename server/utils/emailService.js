@@ -1,21 +1,37 @@
 const nodemailer = require('nodemailer');
 
+// Gmail App Passwords are shown with spaces (e.g. "abcd efgh ijkl mnop")
+// but SMTP requires the raw 16-char string without spaces.
+const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').replace(/\s+/g, '');
+
+if (!smtpUser || !smtpPass) {
+    console.error('[EmailService] ⚠️  SMTP_USER or SMTP_PASS is missing from environment variables!');
+}
+
 // Initialize Nodemailer transporter
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: 465, // SSL
+    port: 465,
     secure: true,
     auth: {
-        user: process.env.SMTP_USER || process.env.EMAIL_USER,
-        pass: process.env.SMTP_PASS || process.env.EMAIL_PASS
-    }
+        user: smtpUser,
+        pass: smtpPass
+    },
+    // Increase socket timeout for slow networks
+    connectionTimeout: 10000,
+    greetingTimeout: 8000,
+    socketTimeout: 15000,
 });
 
 // Verify connection configuration on startup (non-blocking)
 transporter.verify().then(() => {
-    console.log('[EmailService] Nodemailer SMTP connection verified successfully.');
+    console.log(`[EmailService] ✅ SMTP connected as ${smtpUser}`);
 }).catch((err) => {
-    console.error('[EmailService] Nodemailer SMTP connection failed (Check App Password):', err.message);
+    console.error('[EmailService] ❌ SMTP connection FAILED:', err.code, '-', err.message);
+    if (err.code === 'EAUTH') {
+        console.error('[EmailService] 💡 EAUTH: Check that SMTP_PASS is the 16-char Gmail App Password (spaces are auto-stripped).');
+    }
 });
 
 /**
@@ -26,7 +42,7 @@ transporter.verify().then(() => {
 exports.sendOTP = async (email, otp) => {
     try {
         const info = await transporter.sendMail({
-            from: `"SmartFood Security" <${process.env.SMTP_USER || process.env.EMAIL_USER}>`,
+            from: `"SmartFood Security" <${smtpUser}>`,
             to: email,
             subject: 'Your Access Code - SmartFood Delivery',
             html: `
@@ -81,7 +97,7 @@ exports.sendOrderConfirmation = async (email, order) => {
 
     try {
         const info = await transporter.sendMail({
-            from: `"SmartFood Orders" <${process.env.SMTP_USER || process.env.EMAIL_USER}>`,
+            from: `"SmartFood Orders" <${smtpUser}>`,
             to: email,
             subject: `Order Confirmed! Receipt #${orderId.toString().slice(-6)}`,
             html: `
