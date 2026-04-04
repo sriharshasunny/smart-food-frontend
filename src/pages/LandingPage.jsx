@@ -134,7 +134,7 @@ const LandingPage = () => {
         // --- FALLING FOOD DROPS (top → bottom, simple) ---
         let asteroids = [];
         let asteroidTimer = 0;
-        const MAX_ASTEROIDS = isMobile ? 5 : 9;
+        const MAX_ASTEROIDS = isMobile ? 2 : 4;
         const spawnAsteroid = () => {
             if (asteroids.length >= MAX_ASTEROIDS) return;
             const size = 20 + Math.random() * 16;      // emoji size px
@@ -198,7 +198,7 @@ const LandingPage = () => {
 
                 // --- FALLING FOOD UPDATE ---
                 asteroidTimer += dt;
-                const spawnInterval = isMobile ? 1.8 : 1.1;
+                const spawnInterval = isMobile ? 4.0 : 2.5;
                 if (asteroidTimer > spawnInterval) { spawnAsteroid(); asteroidTimer = 0; }
 
                 for (let i = asteroids.length - 1; i >= 0; i--) {
@@ -388,28 +388,17 @@ const LandingPage = () => {
                 const scrollWarpFactor = Math.min(Math.abs(scrollVel) / 12, 1.0);
                 ctx.fillStyle = 'white';
                 stars.forEach(s => {
-                    const layerSpeed = [0.04, 0.14, 0.32][s.layer];   // parallax multiplier
+                    const layerSpeed = [0.04, 0.14, 0.32][s.layer];
                     const parallaxY  = (rawScrollY * layerSpeed) % height;
 
                     let rx = s.x + mouse.x * s.layer * 18;
                     let ry = (s.y - parallaxY + height) % height;
 
-                    // scroll-warp streak: near stars streak more
-                    if (scrollWarpFactor > 0.05 && s.layer > 0) {
-                        const streakLen = scrollWarpFactor * s.layer * 22;
-                        ctx.globalAlpha = s.baseOpacity * 0.7;
-                        ctx.lineWidth   = s.size * 0.8;
-                        ctx.strokeStyle = 'white';
-                        ctx.beginPath();
-                        ctx.moveTo(rx, ry);
-                        ctx.lineTo(rx, ry + (scrollVel > 0 ? streakLen : -streakLen));
-                        ctx.stroke();
-                    } else {
-                        ctx.globalAlpha = s.baseOpacity;
-                        ctx.beginPath();
-                        ctx.arc(rx, ry, s.size, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
+                    // Always draw as dot — no streak lines
+                    ctx.globalAlpha = s.baseOpacity;
+                    ctx.beginPath();
+                    ctx.arc(rx, ry, s.size, 0, Math.PI * 2);
+                    ctx.fill();
                 });
                 ctx.globalAlpha = 1;
 
