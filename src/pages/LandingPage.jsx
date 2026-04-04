@@ -125,7 +125,7 @@ const LandingPage = () => {
         }));
 
         // --- ORBITING SATELLITES ---
-        const orbitingCount = isMobile ? 2 : 3;
+        const orbitingCount = 2; // always 2
         const orbitingFood = Array.from({ length: orbitingCount }, (_, i) => ({
             emoji: FOOD_EMOJIS[(i * 3) % FOOD_EMOJIS.length],
             angle: (i / orbitingCount) * Math.PI * 2,
@@ -137,7 +137,7 @@ const LandingPage = () => {
         // --- FALLING FOOD DROPS (top → bottom, simple) ---
         let asteroids = [];
         let asteroidTimer = 0;
-        const MAX_ASTEROIDS = isMobile ? 2 : 4;
+        const MAX_ASTEROIDS = isMobile ? 1 : 2;
         const spawnAsteroid = () => {
             if (asteroids.length >= MAX_ASTEROIDS) return;
             const size = 20 + Math.random() * 16;      // emoji size px
@@ -201,7 +201,7 @@ const LandingPage = () => {
 
                 // --- FALLING FOOD UPDATE ---
                 asteroidTimer += dt;
-                const spawnInterval = isMobile ? 4.0 : 2.5;
+                const spawnInterval = isMobile ? 8.0 : 5.0;
                 if (asteroidTimer > spawnInterval) { spawnAsteroid(); asteroidTimer = 0; }
 
                 for (let i = asteroids.length - 1; i >= 0; i--) {
