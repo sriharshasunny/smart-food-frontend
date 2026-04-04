@@ -45,7 +45,8 @@ const LandingPage = () => {
             rotation: 0, opacity: 1, scale: 1,
             trail: [], sparks: [],
             msgIndex: 0, msgTimer: 0, showMsg: true,
-            idleTimer: 0, floatOffset: 0
+            idleTimer: 0, floatOffset: 0,
+            warpStartDist: 1  // captured at click time so scale always shrinks 1→0
         };
 
         // --- input ---
@@ -68,6 +69,8 @@ const LandingPage = () => {
                 targetMouse.y = cy / height - 0.5;
             }
             if (Math.hypot(lx - ufo.pos.x, ly - ufo.pos.y) < 80 && ufo.state === 'IDLE') {
+                // Capture starting distance so warp scale always shrinks 1 → 0
+                ufo.warpStartDist = Math.max(1, Math.hypot(centerX - ufo.pos.x, centerY - ufo.pos.y));
                 ufo.state = 'WARP_TO_SUN';
             }
         };
@@ -287,7 +290,8 @@ const LandingPage = () => {
                     ufo.vel.x *= warpFriction;
                     ufo.vel.y *= warpFriction;
 
-                    ufo.scale = Math.pow(Math.max(0, dist / 600), 1.5);
+                    // Scale always shrinks 1.0 → 0 regardless of starting distance
+                    ufo.scale = Math.min(1, Math.pow(Math.max(0, dist / ufo.warpStartDist), 1.2));
                     ufo.rotation += 8 * dt;
 
                     if (dist < 20 || ufo.scale < 0.05) {
