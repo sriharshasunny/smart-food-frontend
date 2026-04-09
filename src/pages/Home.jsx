@@ -72,9 +72,9 @@ const Home = () => {
     const [activeCategory, setActiveCategory] = useState('All');
     const [subFilters, setSubFilters] = useState({
         rating45Plus: false,
-        rating4Plus: false,
-        rating35Plus: false,
         vegOnly: false,
+        nonVeg: false,
+        fastDelivery: false,
         maxPrice: 1000
     });
     const [restaurantFilters, setRestaurantFilters] = useState({
@@ -203,14 +203,24 @@ const Home = () => {
         if (subFilters.rating45Plus) {
             filteredDishes = filteredDishes.filter(d => (d.rating || 0) >= 4.5);
         }
-        if (subFilters.rating4Plus) {
-            filteredDishes = filteredDishes.filter(d => (d.rating || 0) >= 4.0);
-        }
-        if (subFilters.rating35Plus) {
-            filteredDishes = filteredDishes.filter(d => (d.rating || 0) >= 3.5);
-        }
         if (subFilters.vegOnly) {
             filteredDishes = filteredDishes.filter(d => d.isVeg);
+            // Also filter restaurants if we are checking
+            filteredRestaurants = filteredRestaurants.filter(r => {
+                const c = Array.isArray(r.cuisine) ? r.cuisine.join(' ') : (r.cuisine || '');
+                return c.toLowerCase().includes('veg') || (r.tags && (r.tags.includes('Vegetarian') || r.tags.includes('Pure Veg')));
+            });
+        }
+        if (subFilters.nonVeg) {
+            filteredDishes = filteredDishes.filter(d => !d.isVeg);
+            filteredRestaurants = filteredRestaurants.filter(r => {
+                const c = Array.isArray(r.cuisine) ? r.cuisine.join(' ') : (r.cuisine || '');
+                return c.toLowerCase().includes('non-veg') || c.toLowerCase().includes('chicken') || c.toLowerCase().includes('meat');
+            });
+        }
+        if (subFilters.fastDelivery) {
+            filteredDishes = filteredDishes.filter(d => (parseInt(d.deliveryTime) || 30) <= 30);
+            filteredRestaurants = filteredRestaurants.filter(r => (parseInt(r.deliveryTime) || 30) <= 30);
         }
         if (subFilters.maxPrice < 1000) {
             filteredDishes = filteredDishes.filter(d => d.price <= subFilters.maxPrice);
