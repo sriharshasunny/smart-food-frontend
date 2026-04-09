@@ -7,7 +7,7 @@ import RestaurantCard from '../components/RestaurantCard';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
 import { mockRestaurants, mockDishes, categories } from '../data/mockData';
-import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Flame, Zap, ChevronDown } from 'lucide-react';
+import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Flame, Zap, ChevronDown, Star, Plus } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import SkeletonCard from '../components/SkeletonCard';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +22,7 @@ const Home = () => {
     // Recommendation state for Trending Picks panel
     const [trendingRecs, setTrendingRecs] = useState([]);
     const [loadingRecs, setLoadingRecs] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false); // New state for loading effect
     const [trendingVisible, setTrendingVisible] = useState(4); // How many to show
     const TRENDING_STEP = 4;
 
@@ -279,7 +280,7 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-10 font-sans text-gray-900">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#070709] transition-colors duration-500 pb-10 font-sans text-gray-900 dark:text-gray-100">
             {/* Main Content Area - with Padding */}
             <div className="w-full px-0 sm:px-1 pt-0 space-y-3 mx-auto">
 
@@ -369,32 +370,32 @@ const Home = () => {
 
 
                     {/* ══ Right: Trending Picks ══ */}
-                    <div className="w-full xl:w-[440px] shrink-0 bg-white rounded-[2rem] border border-orange-100/60 relative overflow-hidden flex flex-col h-[400px] xl:h-full" style={{boxShadow:'0 4px 24px rgba(249,115,22,0.06), 0 1px 4px rgba(0,0,0,0.05)'}}>
+                    <div className="w-full xl:w-[440px] shrink-0 bg-white dark:bg-[#0f0f13] rounded-[2rem] border border-orange-100/60 dark:border-white/10 relative overflow-hidden flex flex-col h-[400px] xl:h-full transition-colors duration-500" style={{boxShadow:'0 4px 24px rgba(249,115,22,0.06), 0 1px 4px rgba(0,0,0,0.05)'}}>
 
                         {/* Subtle background blob */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/60 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/60 dark:bg-orange-500/10 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none blur-3xl transition-colors duration-500" />
 
                         {/* ── Header (fixed) ── */}
-                        <div className="flex justify-between items-center px-5 pt-4 pb-2.5 relative z-10 shrink-0" style={{borderBottom:'1px solid #fff7ed'}}>
-                            <div className="flex items-center gap-2.5">
-                                <div style={{width:34,height:34,borderRadius:12,background:'linear-gradient(135deg,#f97316,#dc2626)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(249,115,22,0.4)'}}>
-                                    <Flame className="w-4 h-4 text-white" />
+                        <div className="flex justify-between items-center px-6 pt-5 pb-4 border-b border-orange-50/50 dark:border-white/5 relative z-10 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-[0_4px_14px_rgba(249,115,22,0.4)]">
+                                    <Flame className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
-                                    <h2 style={{fontSize:13,fontWeight:900,color:'#111',textTransform:'uppercase',letterSpacing:'0.08em',lineHeight:1}}>Trending Picks</h2>
+                                    <h2 className="text-[14px] font-black text-gray-900 dark:text-white uppercase tracking-[0.08em] leading-tight flex items-center gap-2">
+                                        Trending Picks
+                                    </h2>
                                     <div className="flex items-center gap-1.5 mt-1">
                                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                        <span style={{fontSize:8,fontWeight:800,color:'#f97316',textTransform:'uppercase',letterSpacing:'0.12em'}}>AI Ranked</span>
+                                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.15em]">AI Ranked Engine</span>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => navigate('/recommendations')}
-                                style={{fontSize:9,fontWeight:900,color:'#f97316',textTransform:'uppercase',letterSpacing:'0.12em',display:'flex',alignItems:'center',gap:4,padding:'6px 14px',borderRadius:999,background:'#fff7ed',border:'1px solid #fed7aa',transition:'all 0.2s',cursor:'pointer'}}
-                                onMouseEnter={e=>{e.currentTarget.style.background='#f97316';e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#f97316';}}
-                                onMouseLeave={e=>{e.currentTarget.style.background='#fff7ed';e.currentTarget.style.color='#f97316';e.currentTarget.style.borderColor='#fed7aa';}}
+                                className="text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-1 px-4 py-2 rounded-full border transition-all duration-300 bg-orange-50 dark:bg-white/5 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-white/10 hover:bg-orange-500 dark:hover:bg-orange-500 hover:text-white hover:border-transparent"
                             >
-                                View All <ChevronRight size={11} />
+                                View All <ChevronRight size={12} />
                             </button>
                         </div>
 
@@ -419,53 +420,58 @@ const Home = () => {
                                         {visibleItems.map((dish, idx) => (
                                             <motion.div
                                                 key={dish.id || dish._id || idx}
-                                                initial={{ opacity: 0, scale: 0.96 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: idx * 0.04, type: "spring", stiffness: 200, damping: 20 }}
-                                                className="group relative flex items-center gap-3 md:gap-4 bg-white rounded-2xl p-2 md:p-2.5 border border-gray-100 hover:border-orange-200/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(249,115,22,0.08)]"
+                                                initial={{ opacity: 0, y: 15 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+                                                className="group relative flex items-stretch gap-4 p-3 rounded-2xl bg-white dark:bg-[#1a1c23] border border-gray-100 dark:border-white/5 hover:border-orange-500/30 dark:hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-500/10 dark:hover:shadow-orange-500/5 transition-all duration-300 w-full"
                                             >
-                                                {/* Top Inner Gloss */}
-                                                <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/50 to-transparent z-10" />
-
-                                                {/* Image Container */}
-                                                <div className="relative w-[72px] h-[72px] md:w-[84px] md:h-[84px] rounded-[14px] overflow-hidden shrink-0 bg-gray-50 shadow-inner">
-                                                    {/* Floating Rank Badge */}
-                                                    <div className={`absolute top-1.5 left-1.5 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center shadow-lg z-20 backdrop-blur-md border ${idx < 3 ? 'bg-gradient-to-br from-orange-500 to-red-500 border-white/20 text-white' : 'bg-white/90 border-gray-200 text-gray-700'}`}>
-                                                        <span className="text-[9px] font-black">{idx + 1}</span>
+                                                {/* Number Badge overlaying top left of the card, not the image */}
+                                                <div className="absolute top-0 left-0">
+                                                    <div className={`relative px-2 py-1 rounded-br-xl rounded-tl-2xl flex items-center justify-center -ml-[1px] -mt-[1px] z-20 ${idx === 0 ? 'bg-gradient-to-r from-orange-500 to-red-600 shadow-md text-white' : idx === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500 text-white' : idx === 2 ? 'bg-gradient-to-r from-orange-800 to-amber-900 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'}`}>
+                                                        <span className="text-[10px] font-black w-4 text-center">#{idx + 1}</span>
                                                     </div>
-                                                    
-                                                    <img
-                                                        src={dish.image}
-                                                        alt={dish.name}
-                                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 ease-out"
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                                 </div>
 
-                                                {/* Content */}
-                                                <div className="flex-1 min-w-0 py-1 flex flex-col justify-center">
-                                                    <div className="flex justify-between items-start gap-2 mb-0.5">
-                                                        <h4 className="font-bold text-gray-900 text-[13px] md:text-sm truncate tracking-tight leading-tight">
-                                                            {dish.name}
+                                                {/* Image Container */}
+                                                <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.08)] bg-gray-50 dark:bg-[#111]">
+                                                    <img
+                                                        src={dish.image}
+                                                        alt={dish.name || 'Dish'}
+                                                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                </div>
+
+                                                {/* Content Container (flex-1 forces it to take remaining width) */}
+                                                <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                                                    {/* Top Half: Name & Description */}
+                                                    <div>
+                                                        <h4 className="font-black text-gray-900 dark:text-gray-100 text-[15px] leading-tight truncate pr-2 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors duration-300">
+                                                            {dish.name || 'Delicious Item'}
                                                         </h4>
-                                                    </div>
-                                                    
-                                                    <div className="flex items-center gap-2 mb-2 md:mb-2.5">
-                                                        <span className="text-[11px] md:text-xs font-black text-gray-700">₹{dish.price}</span>
-                                                        <span className="w-1 h-1 rounded-full bg-gray-200" />
-                                                        <div className="flex items-center gap-0.5 text-yellow-600 bg-yellow-50 px-1 py-0.5 rounded text-[9px] md:text-[10px] font-bold border border-yellow-100">
-                                                            <span>{dish.rating || 4.5}</span>
-                                                            <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                                        </div>
+                                                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-1 font-medium pr-2">
+                                                            {dish.description || 'Highly recommended by system.'}
+                                                        </p>
                                                     </div>
 
-                                                    {/* Action Button */}
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
-                                                        className="self-start px-3.5 py-1.5 bg-gray-50 hover:bg-orange-500 text-gray-600 hover:text-white border border-gray-200 hover:border-transparent rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-1 shadow-sm active:scale-95"
-                                                    >
-                                                        Add <span className="text-[10px] leading-none">+</span>
-                                                    </button>
+                                                    {/* Bottom Half: Price, Rating & Add Button */}
+                                                    <div className="flex items-center justify-between mt-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-extrabold text-[#111] dark:text-white text-base">₹{dish.price}</span>
+                                                            <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/20 px-1.5 py-0.5 rounded border border-yellow-100 dark:border-yellow-700/30">
+                                                                <span className="text-[10px] font-bold text-yellow-700 dark:text-yellow-500">{dish.rating || 4.5}</span>
+                                                                <Star className="w-2.5 h-2.5 fill-yellow-500 text-yellow-500" />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Sleek Add Button */}
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
+                                                            className="px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all duration-300 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white hover:bg-orange-500 dark:hover:bg-orange-500 hover:border-orange-500 hover:text-white hover:shadow-[0_4px_12px_rgba(249,115,22,0.3)] active:scale-95"
+                                                        >
+                                                            Add <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -481,13 +487,27 @@ const Home = () => {
                             return hasMore ? (
                                 <div className="px-3 pb-3 pt-1.5 shrink-0 relative z-10">
                                     <button
-                                        onClick={() => setTrendingVisible(v => v + TRENDING_STEP)}
-                                        style={{width:'100%',padding:'10px',borderRadius:12,fontSize:9,fontWeight:900,textTransform:'uppercase',letterSpacing:'0.14em',color:'#f97316',border:'1.5px solid #fed7aa',background:'linear-gradient(to right,#fff7ed,#ffedd5)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,transition:'all 0.2s'}}
-                                        onMouseEnter={e=>{e.currentTarget.style.background='linear-gradient(135deg,#f97316,#ea580c)';e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='transparent';}}
-                                        onMouseLeave={e=>{e.currentTarget.style.background='linear-gradient(to right,#fff7ed,#ffedd5)';e.currentTarget.style.color='#f97316';e.currentTarget.style.borderColor='#fed7aa';}}
+                                        onClick={() => {
+                                            setLoadingMore(true);
+                                            setTimeout(() => {
+                                                setTrendingVisible(v => v + TRENDING_STEP);
+                                                setLoadingMore(false);
+                                            }, 600);
+                                        }}
+                                        disabled={loadingMore}
+                                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-300 relative overflow-hidden group border border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-[#1a1c23] hover:bg-orange-500 dark:hover:bg-orange-500 text-orange-600 dark:text-orange-400 hover:text-white dark:hover:text-white hover:border-transparent disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        <ChevronDown className="w-3.5 h-3.5" />
-                                        Load More Picks
+                                        {loadingMore ? (
+                                            <>
+                                                <div className="w-3.5 h-3.5 border-2 border-orange-500 border-t-transparent group-hover:border-white group-hover:border-t-transparent rounded-full animate-spin transition-colors" />
+                                                Loading Database...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-1" />
+                                                Load More Picks
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             ) : null;
