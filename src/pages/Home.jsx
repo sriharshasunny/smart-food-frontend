@@ -280,7 +280,7 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-500 pb-10 font-sans text-gray-900 dark:text-gray-100">
+        <div className="min-h-screen bg-gray-50 pb-10 font-sans text-gray-900">
             {/* Main Content Area - with Padding */}
             <div className="w-full px-0 sm:px-1 pt-0 space-y-3 mx-auto">
 
@@ -370,19 +370,19 @@ const Home = () => {
 
 
                     {/* ══ Right: Trending Picks ══ */}
-                    <div className="w-full xl:w-[440px] shrink-0 bg-white dark:bg-black rounded-[2rem] border border-orange-100/60 dark:border-gray-800 relative overflow-hidden flex flex-col h-[400px] xl:h-full transition-colors duration-500 shadow-sm">
+                    <div className="w-full xl:w-[440px] shrink-0 bg-white rounded-[2rem] border border-orange-100/60 relative overflow-hidden flex flex-col h-[400px] xl:h-full shadow-[0_4px_24px_rgba(249,115,22,0.06),0_1px_4px_rgba(0,0,0,0.05)]">
 
                         {/* Subtle background blob */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/60 dark:bg-orange-500/10 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none blur-3xl transition-colors duration-500" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/60 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none blur-3xl opacity-60" />
 
                         {/* ── Header (fixed) ── */}
-                        <div className="flex justify-between items-center px-6 pt-5 pb-4 border-b border-orange-50/50 dark:border-white/5 relative z-10 shrink-0">
+                        <div className="flex justify-between items-center px-6 pt-5 pb-4 border-b border-orange-50/50 relative z-10 shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-[0_4px_14px_rgba(249,115,22,0.4)]">
                                     <Flame className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="text-[14px] font-black text-gray-900 dark:text-white uppercase tracking-[0.08em] leading-tight flex items-center gap-2">
+                                    <h2 className="text-[14px] font-black text-gray-900 uppercase tracking-[0.08em] leading-tight flex items-center gap-2">
                                         Trending Picks
                                     </h2>
                                     <div className="flex items-center gap-1.5 mt-1">
@@ -393,7 +393,7 @@ const Home = () => {
                             </div>
                             <button
                                 onClick={() => navigate('/recommendations')}
-                                className="text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-1 px-4 py-2 rounded-full border transition-all duration-300 bg-orange-50 dark:bg-white/5 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-white/10 hover:bg-orange-500 dark:hover:bg-orange-500 hover:text-white hover:border-transparent"
+                                className="text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-1 px-4 py-2 rounded-full border transition-all duration-300 bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-500 hover:text-white hover:border-transparent"
                             >
                                 View All <ChevronRight size={12} />
                             </button>
@@ -423,17 +423,17 @@ const Home = () => {
                                                 initial={{ opacity: 0, y: 15 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 25 }}
-                                                className="group relative flex items-stretch gap-4 p-3 rounded-2xl bg-white dark:bg-[#111] border border-gray-100 dark:border-gray-800 hover:border-orange-200 dark:hover:border-orange-500/50 hover:shadow-lg dark:hover:shadow-orange-500/10 transition-all duration-300 w-full"
+                                                className="group relative flex items-stretch gap-4 p-3 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-lg transition-all duration-300 w-full"
                                             >
-                                                {/* Number Badge overlaying top left of the card */}
+                                                {/* Number Badge */}
                                                 <div className="absolute top-0 left-0">
-                                                    <div className={`relative px-2 py-1.5 rounded-br-xl rounded-tl-2xl flex items-center justify-center -ml-[1px] -mt-[1px] z-20 shadow-sm ${idx < 3 ? 'bg-gradient-to-br from-orange-500 to-red-600 text-white' : 'bg-gray-900 dark:bg-white text-white dark:text-black'}`}>
+                                                    <div className={`relative px-2 py-1.5 rounded-br-xl rounded-tl-2xl flex items-center justify-center -ml-[1px] -mt-[1px] z-20 shadow-sm ${idx < 3 ? 'bg-gradient-to-br from-orange-500 to-red-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
                                                         <span className="text-[10px] font-black w-4 text-center">#{idx + 1}</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Image Container */}
-                                                <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-50 dark:bg-[#222]">
+                                                <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-50">
                                                     <img
                                                         src={dish.image}
                                                         alt={dish.name || 'Dish'}
@@ -443,22 +443,20 @@ const Home = () => {
 
                                                 {/* Content Container */}
                                                 <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
-                                                    {/* Top Half: Name & Description */}
                                                     <div>
-                                                        <h4 className="font-extrabold text-gray-900 dark:text-white text-[15px] leading-tight truncate pr-2 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors duration-300">
+                                                        <h4 className="font-extrabold text-gray-900 text-[15px] leading-tight truncate pr-2 group-hover:text-orange-500 transition-colors duration-300">
                                                             {dish.name || 'Delicious Item'}
                                                         </h4>
-                                                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-1 font-medium pr-2">
+                                                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-1 font-medium pr-2">
                                                             {dish.description || 'Highly recommended by system.'}
                                                         </p>
                                                     </div>
 
-                                                    {/* Bottom Half: Price, Rating & Add Button */}
                                                     <div className="flex items-center justify-between mt-3">
                                                         <div className="flex items-center gap-3">
-                                                            <span className="font-extrabold text-gray-900 dark:text-white text-base">₹{dish.price}</span>
-                                                            <div className="flex items-center gap-1 bg-gray-50 dark:bg-[#222] px-1.5 py-0.5 rounded border border-gray-100 dark:border-gray-700">
-                                                                <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{dish.rating || 4.5}</span>
+                                                            <span className="font-extrabold text-gray-900 text-base">₹{dish.price}</span>
+                                                            <div className="flex items-center gap-1 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-100">
+                                                                <span className="text-[10px] font-bold text-yellow-700">{dish.rating || 4.5}</span>
                                                                 <Star className="w-2.5 h-2.5 fill-yellow-500 text-yellow-500" />
                                                             </div>
                                                         </div>
@@ -466,7 +464,7 @@ const Home = () => {
                                                         {/* Sleek Add Button */}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
-                                                            className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all duration-300 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-500/30 hover:bg-orange-500 dark:hover:bg-orange-500 hover:text-white dark:hover:text-white active:scale-95"
+                                                            className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all duration-300 bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-500 hover:text-white active:scale-95"
                                                         >
                                                             Add <Plus className="w-3 h-3" />
                                                         </button>
@@ -494,11 +492,11 @@ const Home = () => {
                                             }, 600);
                                         }}
                                         disabled={loadingMore}
-                                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-300 relative overflow-hidden group border border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-[#1a1c23] hover:bg-orange-500 dark:hover:bg-orange-500 text-orange-600 dark:text-orange-400 hover:text-white dark:hover:text-white hover:border-transparent disabled:opacity-70 disabled:cursor-not-allowed"
+                                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-300 relative overflow-hidden group border border-orange-200 bg-orange-50 hover:bg-orange-500 text-orange-600 hover:text-white hover:border-transparent disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
                                         {loadingMore ? (
                                             <>
-                                                <div className="w-3.5 h-3.5 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin transition-colors" />
+                                                <div className="w-3.5 h-3.5 border-2 border-orange-500 group-hover:border-white border-t-transparent group-hover:border-t-transparent rounded-full animate-spin transition-colors" />
                                                 Loading...
                                             </>
                                         ) : (
@@ -518,19 +516,19 @@ const Home = () => {
                 {/* --- MENU PARTITION --- */}
 
                 {/* 1. Premium Divider */}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent" />
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
                 {/* 2. Menu Section Header (Glowing Gradient Line) */}
                 <div ref={sectionHeaderRef} className="flex items-center justify-center relative py-6 md:py-8 overflow-hidden group">
-                    <div className="h-px bg-gradient-to-r from-transparent via-orange-300 dark:via-orange-500/50 to-transparent flex-1 opacity-50"></div>
+                    <div className="h-px bg-gradient-to-r from-transparent via-orange-300 to-transparent flex-1 opacity-50"></div>
 
                     <div className="px-6 relative">
-                        <span className="relative px-6 py-2 bg-white dark:bg-[#111] rounded-full border border-orange-100 dark:border-orange-500/30 text-sm md:text-base font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600 uppercase shadow-sm">
+                        <span className="relative px-6 py-2 bg-white rounded-full border border-orange-100 text-sm md:text-base font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600 uppercase shadow-sm">
                             Explore Food Items
                         </span>
                     </div>
 
-                    <div className="h-px bg-gradient-to-r from-orange-300 via-pink-300 dark:via-orange-500 to-transparent flex-1 opacity-50"></div>
+                    <div className="h-px bg-gradient-to-r from-orange-300 via-pink-300 to-transparent flex-1 opacity-50"></div>
                 </div>
 
                 {/* 3. Filter Stack (MAIN + STICKY) */}
