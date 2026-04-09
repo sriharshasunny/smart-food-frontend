@@ -37,7 +37,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                 </div>
 
                 {/* 2. Secondary Filters (Right Side) */}
-                <div className={`flex-shrink-0 flex ${isSticky ? 'items-center gap-3' : 'flex-col items-stretch gap-2 justify-center ml-2 border-l border-gray-100 pl-4 py-2'}`}>
+                <div className={`flex-shrink-0 flex ${isSticky ? 'items-center gap-3' : 'flex-col items-stretch gap-2 justify-start ml-2 border-l border-gray-100 pl-4 py-1 h-[110px] overflow-y-auto hide-scrollbar snap-y'}`}>
 
                     {/* Top Rated */}
                     <motion.button
