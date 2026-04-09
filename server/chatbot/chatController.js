@@ -272,9 +272,9 @@ Return JSON ONLY:
 "intent":"mixed_query",
 "tasks":[
   {
-  "type":"food or restaurant",
+  "type":"food | restaurant | get_orders",
   "name":"",
-  "intent":"",
+  "intent":"food_search | food_recommendation | restaurant_search | get_orders",
   "quantity":10,
   "filters":{
     "price":null,
@@ -289,7 +289,7 @@ Return JSON ONLY:
 }
 
 User query to analyze:
-${message}`;
+${message} (If user asks "what did I order" or "past food items", use intent "get_orders")`;
 
             try {
                 const result = await generateWithRetry(model, combinedPrompt);
@@ -485,16 +485,66 @@ async function advancedSearchFood(baseFilters) {
 
 async function advancedGetOrders(userId, filters) {
     if (!userId || userId === 'guest') return { available: [], unavailable: [], similar: [], original_orders: [] };
+    
+    // Fetch recent 10 orders to get a good history span
     const { data: orders, error } = await supabase.from('orders')
         .select('*, items:order_items(*, food:foods(*, restaurant:restaurants(*)))')
-        .eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
-    if (error) throw error;
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+    if (error) {
+        console.error('[Chat] History Fetch Error:', error.message);
+        throw error;
+    }
+
     if (!orders?.length) return { available: [], unavailable: [], similar: [] };
-    const available = [];
-    orders.forEach(o => (o.items || []).forEach(({ food }) => {
-        if (food && food.available !== false && !available.find(f => f.id === food.id)) available.push(food);
-    }));
-    return { available, unavailable: [], similar: [], original_orders: orders };
+
+    const allItems = [];
+    const seenFoodIds = new Set();
+    const seenNames = new Set();
+
+    orders.forEach(order => {
+        (order.items || []).forEach(item => {
+            const food = item.food;
+            
+            // Availability Logic:
+            // 1. If food record exists and available is true -> Available
+            // 2. Otherwise (food deleted, or available: false) -> Unavailable
+            const isAvailableNow = food && food.available !== false;
+
+            // Use Order Item snapshots (name, price, image) as fallback if food record is missing
+            const itemData = {
+                id: food?.id || `historical_${item.id}`,
+                name: food?.name || item.name || 'Unknown Item',
+                price: food?.price || item.price || 0,
+                image: food?.image || item.image || '',
+                is_veg: food?.is_veg ?? true,
+                rating: food?.rating || 4.0,
+                available: isAvailableNow, // Current availability
+                was_ordered: true,
+                order_date: order.created_at,
+                is_history: true
+            };
+
+            // Deduplicate: same food item or same name (if food deleted)
+            const key = food?.id || item.name;
+            if (!seenFoodIds.has(food?.id) && !seenNames.has(item.name)) {
+                if (food?.id) seenFoodIds.add(food.id);
+                seenNames.add(item.name);
+                allItems.push(itemData);
+            }
+        });
+    });
+
+    // Split based on availability as requested
+    const available = allItems.filter(i => i.available);
+    const unavailable = allItems.filter(i => !i.available);
+
+    return { 
+        available: [...available, ...unavailable], // Standard result set
+        original_orders: orders 
+    };
 }
 
 async function searchRestaurants(filters = {}) {

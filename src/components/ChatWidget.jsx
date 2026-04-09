@@ -114,7 +114,12 @@ const ChatFoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
 
             {/* Body */}
             <div className="p-2.5">
-                <h4 className="font-bold text-white text-[12px] leading-tight line-clamp-1 mb-0.5">{food.name}</h4>
+                <div className="flex items-center justify-between mb-1">
+                    <h4 className="font-bold text-white text-[12px] leading-tight line-clamp-1 flex-1">{food.name}</h4>
+                    {food.is_history && (
+                        <span className="text-[8px] font-black bg-white/10 text-white/40 px-1.5 py-0.5 rounded uppercase tracking-widest ml-1 shrink-0">Ordered</span>
+                    )}
+                </div>
                 {food.restaurant?.name && (
                     <button
                         onClick={() => onViewRestaurant?.(food.restaurant?.id || food.restaurant?._id)}
@@ -127,7 +132,7 @@ const ChatFoodCard = memo(({ food, onAdd, onViewRestaurant, index = 0 }) => {
                 <div className="flex items-center justify-between">
                     <span className="text-green-600 font-black text-[13px]">₹{food.price}</span>
                     {isSuspended ? (
-                        <span className="text-[9px] text-red-500 font-semibold">N/A</span>
+                        <span className="text-[9px] text-red-500 font-semibold italic">Not Available</span>
                     ) : (
                         <button
                             onClick={() => onAdd(food)}
@@ -439,17 +444,30 @@ const ChatWidget = () => {
                                     </div>
 
                                     <div className="space-y-1.5 relative z-10">
-                                        {(order.items || []).slice(0, 3).map((item, j) => (
-                                            <div key={j} className="flex justify-between items-start text-[12px]">
-                                                <div className="flex items-start gap-2 max-w-[75%]">
-                                                    <span className="text-themeAccent-400 font-bold bg-themeAccent-500/10 px-1.5 py-0.5 rounded-md text-[10px]">{item.quantity}×</span>
-                                                    <span className="text-white/80 font-medium line-clamp-1 translate-y-px">{item.food?.name || 'Item'}</span>
+                                        {(order.items || []).slice(0, 5).map((item, j) => {
+                                            const itemName = item.food?.name || item.name || 'Item';
+                                            const itemPrice = item.food?.price || item.price || 0;
+                                            const isItemUnavailable = !item.food || item.food.available === false;
+
+                                            return (
+                                                <div key={j} className="flex justify-between items-start text-[12px]">
+                                                    <div className="flex items-start gap-2 max-w-[75%]">
+                                                        <span className="text-themeAccent-400 font-bold bg-themeAccent-500/10 px-1.5 py-0.5 rounded-md text-[10px]">{item.quantity}×</span>
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-white/80 font-medium line-clamp-1 translate-y-px ${isItemUnavailable ? 'opacity-50' : ''}`}>
+                                                                {itemName}
+                                                            </span>
+                                                            {isItemUnavailable && (
+                                                                <span className="text-[8px] text-red-500/80 font-bold uppercase tracking-tighter -mt-0.5 italic">Currently Unavailable</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-white/50 font-medium">₹{itemPrice * item.quantity}</span>
                                                 </div>
-                                                <span className="text-white/50 font-medium">₹{(item.food?.price || 0) * item.quantity}</span>
-                                            </div>
-                                        ))}
-                                        {(order.items || []).length > 3 && (
-                                            <div className="text-[10px] text-white/30 font-medium pl-8 italic">+{order.items.length - 3} more item(s)</div>
+                                            );
+                                        })}
+                                        {(order.items || []).length > 5 && (
+                                            <div className="text-[10px] text-white/30 font-medium pl-8 italic">+{order.items.length - 5} more item(s)</div>
                                         )}
                                     </div>
 
