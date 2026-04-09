@@ -112,112 +112,75 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         )}
                     </motion.button>
 
-                    {/* Budget Filter */}
-                    <div className="relative">
-                        <motion.button
-                            whileTap={{ scale: 0.98 }}
-                            whileHover={{ scale: 1.02 }}
-                            onClick={() => setShowPriceSlider(!showPriceSlider)}
-                            className={`transition-all shadow-sm flex items-center justify-between gap-2 border
-                                ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-lg text-[10px] font-bold'}
-                                ${subFilters.maxPrice < 1000
-                                    ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/20 ring-1 ring-orange-500/20'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-sm'
-                                }`}
-                        >
-                            {isSticky ? (
-                                <>
-                                    <span>{subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}</span>
-                                    {subFilters.maxPrice < 1000 && (
-                                        <X size={12} className="ml-1 z-10" onClick={(e) => { e.stopPropagation(); setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); }} />
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    <span className="flex items-center gap-1">
+                    {/* Premium Inline Expanding Budget Slider */}
+                    <motion.div
+                        layout
+                        className={`transition-all overflow-hidden flex-shrink-0 border 
+                            ${showPriceSlider ? 'w-full min-w-[200px] bg-white rounded-xl shadow-md border-orange-200' : 'bg-transparent border-transparent'}
+                        `}
+                    >
+                        {!showPriceSlider ? (
+                            <motion.button
+                                layout
+                                whileTap={{ scale: 0.98 }}
+                                whileHover={{ scale: 1.02 }}
+                                onClick={() => setShowPriceSlider(true)}
+                                className={`transition-all shadow-sm flex items-center justify-between gap-2 border w-full
+                                    ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-bold'}
+                                    ${subFilters.maxPrice < 1000
+                                        ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/20 ring-1 ring-orange-500/20 border-transparent'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-sm'
+                                    }`}
+                            >
+                                {isSticky ? (
+                                    <>
+                                        <span>{subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}</span>
                                         {subFilters.maxPrice < 1000 && (
-                                            <X size={10} className="mr-1 opacity-70 hover:opacity-100 z-10" onClick={(e) => { e.stopPropagation(); setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); }} />
+                                            <X size={12} className="ml-1 z-10" onClick={(e) => { e.stopPropagation(); setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); }} />
                                         )}
-                                        {subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}
-                                    </span>
-                                    <span className={subFilters.maxPrice < 1000 ? 'text-white' : 'text-orange-500'}>₹</span>
-                                </>
-                            )}
-                        </motion.button>
-
-                        <AnimatePresence>
-                            {showPriceSlider && (
-                                <>
-                                    {/* Backdrop */}
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        onClick={() => setShowPriceSlider(false)}
-                                        className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="flex items-center gap-1">
+                                            {subFilters.maxPrice < 1000 && (
+                                                <X size={10} className="mr-1 opacity-70 hover:opacity-100 z-10" onClick={(e) => { e.stopPropagation(); setSubFilters(prev => ({ ...prev, maxPrice: 1000 })); }} />
+                                            )}
+                                            {subFilters.maxPrice < 1000 ? `Under ₹${subFilters.maxPrice}` : 'Budget'}
+                                        </span>
+                                        <span className={subFilters.maxPrice < 1000 ? 'text-white' : 'text-orange-500'}>₹</span>
+                                    </>
+                                )}
+                            </motion.button>
+                        ) : (
+                            <motion.div 
+                                initial={{ opacity: 0 }} 
+                                animate={{ opacity: 1 }} 
+                                className="p-3 py-3.5 flex flex-col gap-3 w-full"
+                            >
+                                <div className="flex justify-between items-center w-full">
+                                    <span className="text-[11px] font-black text-gray-800">Max ₹{subFilters.maxPrice}</span>
+                                    <X size={14} className="cursor-pointer text-gray-400 hover:text-black shrink-0" onClick={() => setShowPriceSlider(false)} />
+                                </div>
+                                <div className="relative h-4 flex items-center w-full">
+                                    <div className="absolute w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-orange-500 transition-all duration-75"
+                                            style={{ width: `${(subFilters.maxPrice / 1000) * 100}%` }}
+                                        />
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="100"
+                                        max="1000"
+                                        step="50"
+                                        value={subFilters.maxPrice || 1000}
+                                        onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                        className="w-full h-1.5 absolute z-20 cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-orange-500 [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                                     />
-                                    
-                                    {/* Modal Container */}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                                        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-2xl shadow-2xl border border-gray-200 z-[101] w-[280px]"
-                                    >
-                                        <div className="flex justify-between items-center mb-5">
-                                            <span className="text-sm font-black text-gray-800">Set Max Price</span>
-                                            <span className="text-sm font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">₹{subFilters.maxPrice}</span>
-                                        </div>
-
-                                        <div className="relative h-6 flex items-center mb-2">
-                                            {/* Custom Track Background */}
-                                            <div className="absolute w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-orange-500 transition-all duration-75"
-                                                    style={{ width: `${(subFilters.maxPrice / 1000) * 100}%` }}
-                                                />
-                                            </div>
-                                            
-                                            {/* Top Native Input (Invisble but handles interaction) */}
-                                            <input
-                                                type="range"
-                                                min="100"
-                                                max="1000"
-                                                step="50"
-                                                value={subFilters.maxPrice || 1000}
-                                                onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                                className="absolute w-full h-full opacity-0 cursor-pointer z-30"
-                                            />
-
-                                            {/* Visible Custom Thumb (managed via pseudo classes for cross-browser visual support) */}
-                                            <input
-                                                type="range"
-                                                min="100"
-                                                max="1000"
-                                                step="50"
-                                                value={subFilters.maxPrice || 1000}
-                                                onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                                className="w-full h-2 absolute z-20 cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-orange-500 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
-                                            />
-                                        </div>
-
-                                        <div className="flex justify-between text-[11px] text-gray-400 font-bold mb-4">
-                                            <span>₹100</span>
-                                            <span>₹500</span>
-                                            <span>₹1000+</span>
-                                        </div>
-                                        
-                                        <button 
-                                            onClick={() => setShowPriceSlider(false)}
-                                            className="w-full py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all"
-                                        >
-                                            Apply Filter
-                                        </button>
-                                    </motion.div>
-                                </>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </motion.div>
                 </div>
             </div>
         </div>
