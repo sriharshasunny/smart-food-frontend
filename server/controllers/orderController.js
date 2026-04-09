@@ -69,32 +69,47 @@ exports.verifyOrder = async (req, res) => {
 
         console.log(`[Order] Verified Order ${orderId}`);
 
-        // Send Email (Adapt to snake_case if needed or map before sending)
-        if (guestEmail) {
-            // Map back to camelCase for email template compatibility if needed
-            // Or ensure emailService handles both. Assuming emailService expects objects.
-            // Let's provide a compatible object
-            const orderForEmail = {
-                ...updatedOrder,
-                _id: updatedOrder.id, // Map id to _id for email template
-                guestInfo: updatedOrder.guest_info,
-                totalAmount: updatedOrder.total_amount,
-                invoiceLink: `${process.env.CLIENT_URL || 'http://localhost:5173'}/orders/${updatedOrder.id}/invoice`,
-                items: [] // fetch items if needed for email, but verifyOrder usually just confirms
-            };
-            // Fetch items for email if essential
-            const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderId);
-            orderForEmail.items = items || [];
+        // Determine proper recipient email for user
+        let recipientEmail = guestEmail;
 
-            console.log(`[Order] Sending confirmation email to: ${guestEmail}`);
-            console.log(`[Order] Email Payload Items Count: ${orderForEmail.items.length}`);
-
-            emailService.sendOrderConfirmation(guestEmail, orderForEmail)
-                .then(() => console.log(`[Order] Email sent successfully to ${guestEmail}`))
-                .catch(err => console.error("[Order] Background Email Error:", err));
-        } else {
-            console.warn("[Order] No guest email found for order", orderId);
+        if (finalUserId) {
+            // Priority: Fetch actual user email if they are logged in but guest_info was fallback
+            const { data: userData } = await supabase.from('users').select('email, name').eq('id', finalUserId).single();
+            if (userData && userData.email && userData.email !== 'guest@example.com') {
+                recipientEmail = userData.email;
+                if (!updatedOrder.guest_info || updatedOrder.guest_info.name === 'Guest') {
+                     updatedOrder.guest_info = { name: userData.name || 'User', email: userData.email };
+                }
+            }
         }
+
+        // Prepare email payload
+        const orderForEmail = {
+            ...updatedOrder,
+            _id: updatedOrder.id,
+            guestInfo: updatedOrder.guest_info,
+            totalAmount: updatedOrder.total_amount,
+            invoiceLink: `${process.env.CLIENT_URL || 'http://localhost:5173'}/orders/${updatedOrder.id}/invoice`,
+            items: [] 
+        };
+        const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderId);
+        orderForEmail.items = items || [];
+
+        // Send Email to User (only if it's a valid email)
+        if (recipientEmail && recipientEmail !== 'guest@example.com') {
+            console.log(`[Order] Sending confirmation email to user: ${recipientEmail}`);
+            emailService.sendOrderConfirmation(recipientEmail, orderForEmail)
+                .then(() => console.log(`[Order] User Email sent successfully to ${recipientEmail}`))
+                .catch(err => console.error("[Order] Background User Email Error:", err));
+        } else {
+            console.warn("[Order] No valid user email found for order", orderId, "Skipping user email.");
+        }
+
+        // Send Email to Admin/Restaurant
+        console.log(`[Order] Sending admin notification email...`);
+        emailService.sendAdminOrderNotification(orderForEmail)
+            .then(() => console.log(`[Order] Admin Notification sent successfully`))
+            .catch(err => console.error("[Order] Background Admin Email Error:", err));
 
         res.status(200).json({ message: "Order verified", order: updatedOrder });
 

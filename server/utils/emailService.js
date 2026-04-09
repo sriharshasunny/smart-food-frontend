@@ -162,3 +162,66 @@ exports.sendOrderConfirmation = async (email, order) => {
         return null;
     }
 };
+
+/**
+ * Send Admin/Restaurant Order Notification
+ * @param {object} order - Order object
+ */
+exports.sendAdminOrderNotification = async (order) => {
+    console.log(`[EmailService] Preparing to send admin notification via Nodemailer to ${smtpUser}`);
+
+    // Extract relevant data safely
+    const items = order.items || [];
+    const orderId = order._id || order.id || 'N/A';
+    const total = order.totalAmount || order.total_amount || 0;
+    const customerName = order.guestInfo?.name || order.guest_info?.name || 'Customer';
+    const customerEmail = order.guestInfo?.email || order.guest_info?.email || 'N/A';
+
+    // Build items HTML list
+    const itemListHtml = items.map(i => `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px; color: #1e293b;">${i.name}</td>
+            <td style="text-align: center; padding: 10px; color: #475569;">x${i.quantity}</td>
+            <td style="text-align: right; padding: 10px; color: #1e293b;">₹${(i.price * i.quantity).toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    try {
+        const info = await transporter.sendMail({
+            from: `"SmartFood System" <${smtpUser}>`,
+            to: smtpUser, // Send to self (admin)
+            subject: `🚨 New Order Received! #${orderId.toString().slice(-6)} - ₹${total}`,
+            html: `
+            <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <h2 style="color: #ea580c; border-bottom: 2px solid #ea580c; padding-bottom: 10px;">New Order Received!</h2>
+                
+                <p><strong>Order ID:</strong> ${orderId}</p>
+                <p><strong>Customer:</strong> ${customerName} (${customerEmail})</p>
+                <p><strong>Total Amount:</strong> ₹${Number(total).toFixed(2)}</p>
+
+                <h3 style="margin-top: 20px; color: #0f172a;">Items</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                    <thead>
+                        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                            <th style="text-align: left; padding: 10px;">Item</th>
+                            <th style="text-align: center; padding: 10px;">Qty</th>
+                            <th style="text-align: right; padding: 10px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemListHtml}
+                    </tbody>
+                </table>
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+                <p style="font-size: 14px; color: #64748b;">Please prepare the order as soon as possible.</p>
+            </div>
+            `
+        });
+
+        console.log(`[EmailService] Admin Notification sent successfully. ID: ${info.messageId}`);
+        return info;
+    } catch (error) {
+        console.error("Failed to send admin notification via Nodemailer:", error);
+        return null;
+    }
+};
