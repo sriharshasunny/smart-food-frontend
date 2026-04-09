@@ -41,10 +41,13 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
 
                     {/* Top Rated */}
                     <motion.button
-                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border
-                            ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-lg text-[10px] font-bold'}
+                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.02 }}
+                        onClick={() => toggleSubFilter('rating45Plus')}
+                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border whitespace-nowrap
+                            ${isSticky ? 'px-3 py-1.5 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-full text-[10px] font-bold'}
                             ${subFilters.rating45Plus
-                                ? 'bg-gradient-to-br from-black to-gray-800 text-white shadow-md shadow-black/20 ring-1 ring-black/5'
+                                ? 'bg-gradient-to-br from-black to-gray-800 text-white shadow-md shadow-black/20 ring-1 ring-black/5 border-transparent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:shadow-sm'
                             }`}
                     >
@@ -60,10 +63,10 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         whileTap={{ scale: 0.98 }}
                         whileHover={{ scale: 1.02 }}
                         onClick={() => toggleSubFilter('vegOnly')}
-                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border
-                            ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-lg text-[10px] font-bold'}
+                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border whitespace-nowrap
+                            ${isSticky ? 'px-3 py-1.5 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-full text-[10px] font-bold'}
                             ${subFilters.vegOnly
-                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-md shadow-green-500/20 ring-1 ring-green-500/20'
+                                ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-md shadow-green-500/20 ring-1 ring-green-500/20 border-transparent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:text-green-600 hover:shadow-sm'
                             }`}
                     >
@@ -79,10 +82,10 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         whileTap={{ scale: 0.98 }}
                         whileHover={{ scale: 1.02 }}
                         onClick={() => toggleSubFilter('nonVeg')}
-                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border
-                            ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-lg text-[10px] font-bold'}
+                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border whitespace-nowrap
+                            ${isSticky ? 'px-3 py-1.5 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-full text-[10px] font-bold'}
                             ${subFilters.nonVeg
-                                ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/20 ring-1 ring-red-500/20'
+                                ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/20 ring-1 ring-red-500/20 border-transparent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600 hover:shadow-sm'
                             }`}
                     >
@@ -98,10 +101,10 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         whileTap={{ scale: 0.98 }}
                         whileHover={{ scale: 1.02 }}
                         onClick={() => toggleSubFilter('fastDelivery')}
-                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border
-                            ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-lg text-[10px] font-bold'}
+                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border whitespace-nowrap
+                            ${isSticky ? 'px-3 py-1.5 rounded-full text-[11px] font-bold' : 'w-full px-3 py-1.5 rounded-full text-[10px] font-bold'}
                             ${subFilters.fastDelivery
-                                ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-500/20'
+                                ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-500/20 border-transparent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600 hover:shadow-sm'
                             }`}
                     >
@@ -117,8 +120,8 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                         whileTap={{ scale: 0.98 }}
                         whileHover={{ scale: 1.02 }}
                         onClick={() => setShowPriceSlider(!showPriceSlider)}
-                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border w-full flex-shrink-0
-                            ${isSticky ? 'px-4 py-2 rounded-full text-[11px] font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-bold'}
+                        className={`transition-all shadow-sm flex items-center justify-between gap-2 border flex-shrink-0 whitespace-nowrap
+                            ${isSticky ? 'px-3 py-1.5 rounded-full text-[11px] font-bold w-auto' : 'px-3 py-1.5 rounded-full text-[10px] font-bold w-full'}
                             ${subFilters.maxPrice < 1000
                                 ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/20 ring-1 ring-orange-500/20 border-transparent'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-sm'
