@@ -419,75 +419,53 @@ const Home = () => {
                                         {visibleItems.map((dish, idx) => (
                                             <motion.div
                                                 key={dish.id || dish._id || idx}
-                                                initial={{ opacity: 0, y: 8 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.04 }}
-                                                style={{
-                                                    background: '#fff',
-                                                    borderRadius: 16,
-                                                    padding: '8px 10px 8px 8px',
-                                                    display: 'flex',
-                                                    gap: 10,
-                                                    border: '1.5px solid #f5f5f5',
-                                                    alignItems: 'center',
-                                                    flexShrink: 0,
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.25s ease',
-                                                    position: 'relative',
-                                                    overflow: 'hidden',
-                                                }}
-                                                className="group/item hover:border-orange-200 hover:shadow-md"
-                                                onMouseEnter={e => e.currentTarget.style.boxShadow='0 6px 20px rgba(249,115,22,0.12)'}
-                                                onMouseLeave={e => e.currentTarget.style.boxShadow='none'}
+                                                initial={{ opacity: 0, scale: 0.96 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: idx * 0.04, type: "spring", stiffness: 200, damping: 20 }}
+                                                className="group relative flex items-center gap-3 md:gap-4 bg-white rounded-2xl p-2 md:p-2.5 border border-gray-100 hover:border-orange-200/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(249,115,22,0.08)]"
                                             >
-                                                {/* Rank badge */}
-                                                <div style={{
-                                                    position: 'absolute', top: 8, left: 8, zIndex: 10,
-                                                    width: 18, height: 18, borderRadius: '50%',
-                                                    background: idx < 3 ? 'linear-gradient(135deg,#f97316,#dc2626)' : '#111',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                                                }}>
-                                                    <span style={{ fontSize: 7, fontWeight: 900, color: '#fff' }}>{idx + 1}</span>
-                                                </div>
+                                                {/* Top Inner Gloss */}
+                                                <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/50 to-transparent z-10" />
 
-                                                {/* Image */}
-                                                <div style={{ width: 72, height: 72, borderRadius: 12, overflow: 'hidden', flexShrink: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}>
+                                                {/* Image Container */}
+                                                <div className="relative w-[72px] h-[72px] md:w-[84px] md:h-[84px] rounded-[14px] overflow-hidden shrink-0 bg-gray-50 shadow-inner">
+                                                    {/* Floating Rank Badge */}
+                                                    <div className={`absolute top-1.5 left-1.5 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center shadow-lg z-20 backdrop-blur-md border ${idx < 3 ? 'bg-gradient-to-br from-orange-500 to-red-500 border-white/20 text-white' : 'bg-white/90 border-gray-200 text-gray-700'}`}>
+                                                        <span className="text-[9px] font-black">{idx + 1}</span>
+                                                    </div>
+                                                    
                                                     <img
                                                         src={dish.image}
                                                         alt={dish.name}
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
-                                                        className="group-hover/item:scale-110"
+                                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 ease-out"
                                                     />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                                 </div>
 
                                                 {/* Content */}
-                                                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingTop: 2, paddingBottom: 2 }}>
-                                                    <div>
-                                                        <h4 style={{ fontWeight: 900, color: '#111', fontSize: 13, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                <div className="flex-1 min-w-0 py-1 flex flex-col justify-center">
+                                                    <div className="flex justify-between items-start gap-2 mb-0.5">
+                                                        <h4 className="font-bold text-gray-900 text-[13px] md:text-sm truncate tracking-tight leading-tight">
                                                             {dish.name}
                                                         </h4>
-                                                        <p style={{ fontSize: 9, color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>
-                                                            ₹{dish.price} &nbsp;·&nbsp; {dish.rating || 4.5} ⭐
-                                                        </p>
                                                     </div>
-                                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
-                                                            style={{
-                                                                padding: '4px 12px', borderRadius: 999,
-                                                                background: '#fff7ed', color: '#f97316',
-                                                                border: '1px solid #fed7aa',
-                                                                fontSize: 9, fontWeight: 900,
-                                                                textTransform: 'uppercase', letterSpacing: '0.08em',
-                                                                cursor: 'pointer', transition: 'all 0.2s',
-                                                            }}
-                                                            onMouseEnter={e => { e.currentTarget.style.background='#f97316'; e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='#f97316'; }}
-                                                            onMouseLeave={e => { e.currentTarget.style.background='#fff7ed'; e.currentTarget.style.color='#f97316'; e.currentTarget.style.borderColor='#fed7aa'; }}
-                                                        >
-                                                            Add +
-                                                        </button>
+                                                    
+                                                    <div className="flex items-center gap-2 mb-2 md:mb-2.5">
+                                                        <span className="text-[11px] md:text-xs font-black text-gray-700">₹{dish.price}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-gray-200" />
+                                                        <div className="flex items-center gap-0.5 text-yellow-600 bg-yellow-50 px-1 py-0.5 rounded text-[9px] md:text-[10px] font-bold border border-yellow-100">
+                                                            <span>{dish.rating || 4.5}</span>
+                                                            <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                        </div>
                                                     </div>
+
+                                                    {/* Action Button */}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); addToCart(dish); }}
+                                                        className="self-start px-3.5 py-1.5 bg-gray-50 hover:bg-orange-500 text-gray-600 hover:text-white border border-gray-200 hover:border-transparent rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-1 shadow-sm active:scale-95"
+                                                    >
+                                                        Add <span className="text-[10px] leading-none">+</span>
+                                                    </button>
                                                 </div>
                                             </motion.div>
                                         ))}
