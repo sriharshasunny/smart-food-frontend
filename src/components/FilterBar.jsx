@@ -37,7 +37,7 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
                 </div>
 
                 {/* 2. Secondary Filters (Right Side) */}
-                <div data-lenis-prevent className={`flex-shrink-0 flex ${isSticky ? 'items-center gap-3' : 'flex-col items-stretch gap-2 justify-start ml-2 border-l border-gray-100 pl-4 py-1 h-[110px] overflow-y-auto hide-scrollbar'}`}>
+                <div data-lenis-prevent className={`flex-shrink-0 flex ${isSticky ? 'items-center gap-3' : 'flex-col items-stretch gap-[6px] justify-start ml-1 border-l border-gray-100 pl-2 py-0.5 h-[110px] w-[110px] overflow-y-auto hide-scrollbar'}`}>
 
                     {/* Top Rated */}
                     <motion.button
@@ -147,54 +147,74 @@ const FilterBar = ({ activeCategory, setActiveCategory, subFilters, setSubFilter
 
                         <AnimatePresence>
                             {showPriceSlider && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: isSticky ? 0 : 10, y: isSticky ? 10 : 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, x: isSticky ? 0 : 10, y: isSticky ? 10 : 0, scale: 0.95 }}
-                                    className={`absolute ${isSticky ? 'right-0 top-full mt-3 origin-top-right' : 'right-full top-1/2 -translate-y-1/2 mr-3 origin-right'} bg-white p-4 rounded-xl shadow-xl border border-gray-200 z-[100] w-64`}
-                                >
-                                    <div className="flex justify-between items-center mb-4">
-                                        <span className="text-sm font-bold text-gray-800">Max Price</span>
-                                        <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">₹{subFilters.maxPrice}</span>
-                                    </div>
+                                <>
+                                    {/* Backdrop */}
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        onClick={() => setShowPriceSlider(false)}
+                                        className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
+                                    />
+                                    
+                                    {/* Modal Container */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                                        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-2xl shadow-2xl border border-gray-200 z-[101] w-[280px]"
+                                    >
+                                        <div className="flex justify-between items-center mb-5">
+                                            <span className="text-sm font-black text-gray-800">Set Max Price</span>
+                                            <span className="text-sm font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">₹{subFilters.maxPrice}</span>
+                                        </div>
 
-                                    <div className="relative h-6 flex items-center">
-                                        {/* Custom Track Background */}
-                                        <div className="absolute w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-orange-500 transition-all duration-75"
-                                                style={{ width: `${(subFilters.maxPrice / 1000) * 100}%` }}
+                                        <div className="relative h-6 flex items-center mb-2">
+                                            {/* Custom Track Background */}
+                                            <div className="absolute w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-orange-500 transition-all duration-75"
+                                                    style={{ width: `${(subFilters.maxPrice / 1000) * 100}%` }}
+                                                />
+                                            </div>
+                                            
+                                            {/* Top Native Input (Invisble but handles interaction) */}
+                                            <input
+                                                type="range"
+                                                min="100"
+                                                max="1000"
+                                                step="50"
+                                                value={subFilters.maxPrice || 1000}
+                                                onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                                className="absolute w-full h-full opacity-0 cursor-pointer z-30"
+                                            />
+
+                                            {/* Visible Custom Thumb (managed via pseudo classes for cross-browser visual support) */}
+                                            <input
+                                                type="range"
+                                                min="100"
+                                                max="1000"
+                                                step="50"
+                                                value={subFilters.maxPrice || 1000}
+                                                onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+                                                className="w-full h-2 absolute z-20 cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-orange-500 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                                             />
                                         </div>
-                                        <input
-                                            type="range"
-                                            min="100"
-                                            max="1000"
-                                            step="50"
-                                            value={subFilters.maxPrice || 1000}
-                                            onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                            className="absolute w-full h-full opacity-0 cursor-pointer"
-                                        />
-                                        {/* Custom Thumb handle managed via CSS normally, but native slider with opacity 0 above works for interactions. 
-                                            Let's use standard accent-color for simplicity but higher quality. 
-                                         */}
-                                        <input
-                                            type="range"
-                                            min="100"
-                                            max="1000"
-                                            step="50"
-                                            value={subFilters.maxPrice || 1000}
-                                            onChange={(e) => setSubFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                                            className="w-full h-1.5 absolute z-20 cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-orange-500 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
-                                        />
-                                    </div>
 
-                                    <div className="flex justify-between text-[10px] text-gray-400 font-bold mt-2">
-                                        <span>₹100</span>
-                                        <span>₹500</span>
-                                        <span>₹1000+</span>
-                                    </div>
-                                </motion.div>
+                                        <div className="flex justify-between text-[11px] text-gray-400 font-bold mb-4">
+                                            <span>₹100</span>
+                                            <span>₹500</span>
+                                            <span>₹1000+</span>
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={() => setShowPriceSlider(false)}
+                                            className="w-full py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all"
+                                        >
+                                            Apply Filter
+                                        </button>
+                                    </motion.div>
+                                </>
                             )}
                         </AnimatePresence>
                     </div>
