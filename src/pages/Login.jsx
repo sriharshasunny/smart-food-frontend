@@ -115,7 +115,7 @@ const Auth = () => {
         };
 
         const render = () => {
-            ctx.fillStyle = '#020205'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Stars
             stars.forEach(star => {
@@ -137,7 +137,7 @@ const Auth = () => {
                 if (food.y < -50) food.y = canvas.height + 50; if (food.y > canvas.height + 50) food.y = -50;
                 ctx.save(); ctx.translate(food.x, food.y); ctx.rotate(food.rotation);
                 ctx.font = `${food.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.globalAlpha = 0.5; ctx.fillText(food.emoji, 0, 0); ctx.restore();
+                ctx.globalAlpha = 0.2; ctx.fillText(food.emoji, 0, 0); ctx.restore();
             });
 
             // Asteroids Removed
@@ -216,7 +216,7 @@ const Auth = () => {
     const handleResetPassword = async (e) => { e.preventDefault(); setLoading(true); try { const res = await fetch(`${API_URL}/api/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: formData.email, otp: formData.otp, newPassword: formData.newPassword }) }); if (res.ok) { setSuccessMsg('Success!'); setTimeout(() => switchMode('login'), 2000); } else setError('Failed'); } catch { setError('Error'); } finally { setLoading(false); } };
 
     return (
-        <div className="h-[100dvh] w-full text-white flex flex-col items-center justify-center relative overflow-hidden font-sans bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950 via-[#050510] to-black">
+        <div className="h-[100dvh] w-full text-white flex flex-col items-center justify-center relative overflow-hidden font-sans bg-black">
             <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
 
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-[420px] px-4 md:px-0 flex flex-col items-center">
